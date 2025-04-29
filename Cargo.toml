@@ -1,0 +1,34 @@
+[package]
+name = "basic_stats"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Lightweight library with basic statistical estimators and hypothesis tests."
+repository = "https://github.com/pvillela/rust-thread-map/tree/main"
+documentation = "https://docs.rs/thread_map/latest/thread_map/"
+readme = "README.md"
+keywords = ["statistics", "estimators", "hypothesis", "tests", "non-parametric"]
+categories = ["mathematics"]
+exclude = ["CHANGELOG.md", "*.sh", ".gitignore"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+statrs = "0.18"
+# Optional:
+hdrhistogram = { version = "7.5", optional = true }
+hypors = { version = "0.2", optional = true }
+polars = { version = "0.43", optional = true }      # required by hypors
+
+[features]
+bernoulli = []
+wilcoxon = ["dep:hdrhistogram"]
+all = ["bernoulli", "wilcoxon"]
+# Private:
+_hypors = [
+    "dep:hypors",
+    "dep:polars",
+] # to enable testing Wilcoxon rank sum test functionality
+
+[package.metadata.docs.rs]
+all-features = true
