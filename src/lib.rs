@@ -8,6 +8,5 @@ pub mod bernoulli;
 
 pub mod normal;
 
-#[allow(unused)]
 #[cfg(feature = "wilcoxon")]
 pub mod wilcoxon;
