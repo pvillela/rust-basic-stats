@@ -1,10 +1,14 @@
-pub struct IterWithCounts<I, V> {
+/// Wraps a source iterator, transforming it into an iterator that yields pairs of type `(V, u64)` such
+/// that each pair corresponds to a grouping of the contiguous items from the source iterator that have the
+/// same value, where the pair's first component is the value and the pair's second component is the count of
+/// items from the source iterator in the grouping.
+struct IterWithCounts<I, V> {
     source: I,
     prev_value: Option<V>,
 }
 
 impl<I, V> IterWithCounts<I, V> {
-    pub fn new(source: I) -> Self {
+    fn new(source: I) -> Self {
         Self {
             source,
             prev_value: None,
@@ -43,6 +47,16 @@ where
     }
 }
 
+/// Returns an iterator that yields pairs of type `(V, u64)` such
+/// that each pair corresponds to a grouping of the contiguous items from `source` that have the
+/// same value, where the pair's first component is the value and the pair's second component is the count of
+/// items from `source` in the grouping.
+pub fn iter_with_counts<V: PartialEq + Clone>(
+    source: impl Iterator<Item = V>,
+) -> impl Iterator<Item = (V, u64)> {
+    IterWithCounts::new(source)
+}
+
 #[cfg(test)]
 mod iter_test {
     use super::*;
@@ -50,7 +64,7 @@ mod iter_test {
     #[test]
     fn iter_test() {
         let dat = [1., 3., 9., 9., 10., 10., 10., 10., 20.];
-        let dat_c = IterWithCounts::new(dat.into_iter()).collect::<Vec<_>>();
+        let dat_c = iter_with_counts(dat.into_iter()).collect::<Vec<_>>();
         let exp_dat_c = vec![(1., 1), (3., 1), (9., 2), (10., 4), (20., 1)];
         assert_eq!(exp_dat_c, dat_c);
     }

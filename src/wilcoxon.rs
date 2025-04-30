@@ -1,7 +1,7 @@
 use crate::{
     core::{AltHyp, HypTestResult},
     error::OrderingError,
-    iter::IterWithCounts,
+    iter::iter_with_counts,
     normal::z_to_p,
 };
 
@@ -200,8 +200,8 @@ impl RankSum {
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
     ) -> Result<RankSum, OrderingError> {
-        let itc_x = IterWithCounts::new(it_x);
-        let itc_y = IterWithCounts::new(it_y);
+        let itc_x = iter_with_counts(it_x);
+        let itc_y = iter_with_counts(it_y);
         Self::from_iter_with_counts(itc_x, itc_y)
     }
 
