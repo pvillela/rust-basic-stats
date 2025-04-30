@@ -1,8 +1,9 @@
-use super::{
+use crate::{
     core::{AltHyp, HypTestResult},
+    error::OrderingError,
+    iter::IterWithCounts,
     normal::z_to_p,
 };
-use crate::iter::{IterWithCounts, OrderingError};
 
 /// The result of the Wilcoxon rank sum computations on two data samples.
 /// This struct's methods implement the Wilcoxon rank sum test and related statistics.

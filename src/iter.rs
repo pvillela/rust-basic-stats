@@ -1,8 +1,3 @@
-use std::{
-    error::Error,
-    fmt::{Debug, Display},
-};
-
 pub struct IterWithCounts<I, V> {
     source: I,
     prev_value: Option<V>,
@@ -47,18 +42,6 @@ where
         }
     }
 }
-
-/// Signals that an iterator violates an ordering requirement for its values.
-#[derive(Debug)]
-pub struct OrderingError;
-
-impl Display for OrderingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Debug::fmt(&self, f)
-    }
-}
-
-impl Error for OrderingError {}
 
 #[cfg(test)]
 mod iter_test {

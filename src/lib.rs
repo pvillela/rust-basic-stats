@@ -1,14 +1,13 @@
 pub mod core;
-
+pub mod error;
 pub mod iter;
-
-#[cfg(test)]
-pub(crate) mod dev_utils;
+pub mod normal;
 
 #[cfg(feature = "bernoulli")]
 pub mod bernoulli;
 
-pub mod normal;
-
 #[cfg(feature = "wilcoxon")]
 pub mod wilcoxon;
+
+#[cfg(test)]
+pub(crate) mod dev_utils;
