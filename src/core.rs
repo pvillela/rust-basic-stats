@@ -62,10 +62,11 @@ pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> f64 {
     sample_var(n, sum, sum2).sqrt()
 }
 
-/// Contains a sample's size and first and second moments (sum and sum of squares),
-/// optionally also including the sample min and max.
+/// Holds summary information for a sample, sufficient to compute a sample's first and second moments.
 ///
-/// This is a lightweight data structure used by several functions and methods in this library.
+/// Includes sample size and, optionally, sample min and max values.
+///
+/// Used by several by functions in this library.
 pub struct SampleMoments {
     count: u64,
     sum: f64,
@@ -75,19 +76,21 @@ pub struct SampleMoments {
 }
 
 impl SampleMoments {
-    /// Instantiates `Self` with sample size, first moment, and second moment equal to `0`, and
-    /// with min and max values of `NaN`.
+    /// Instantiates `Self` with an empty sample.
+    ///
+    /// Minimum and maximum sample values are defaulted to `NaN`.
     pub fn new_empty() -> Self {
         Self::new(0, 0., 0.)
     }
 
-    /// Instantiates `Self` with given values for sample size, first moment, and second moment,
-    /// and with min and max values defaulting to `NaN`.
+    /// Instantiates `Self` with given values for sample size, sample sum, and sample sum of squares.
+    ///
+    /// Minimum and maximum sample values are defaulted to `NaN`.
     pub fn new(count: u64, sum: f64, sum2: f64) -> Self {
         Self::new_with_min_max(count, sum, sum2, f64::NAN, f64::NAN)
     }
 
-    /// Instantiates `Self`, with given values for sample size, first and second moments, min, and max.
+    /// Instantiates `Self`, with given values for sample size, sample sum, sample sum of squares, min, and max.
     pub fn new_with_min_max(count: u64, sum: f64, sum2: f64, min: f64, max: f64) -> Self {
         Self {
             count,
@@ -132,7 +135,7 @@ impl SampleMoments {
         self.count as f64
     }
 
-    /// Sample sum (first moment).
+    /// Sample sum.
     pub fn sum(&self) -> f64 {
         self.sum
     }
@@ -144,7 +147,7 @@ impl SampleMoments {
         self.sum / self.nf()
     }
 
-    /// Sample sum of squares (second moment).
+    /// Sample sum of squares.
     pub fn sum2(&self) -> f64 {
         self.sum2
     }
