@@ -25,7 +25,7 @@ pub fn sample_mean(n: u64, sum: f64) -> f64 {
 /// - `sum2` - sample sum of squares.
 #[inline(always)]
 pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> f64 {
-    if n <= 0 {
+    if n == 0 {
         return f64::NAN;
     }
     sum2 - sum.powi(2) / n as f64
@@ -41,7 +41,7 @@ pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> f64 {
 /// - `sum2` - sample sum of squares.
 #[inline(always)]
 pub fn sample_var(n: u64, sum: f64, sum2: f64) -> f64 {
-    if n <= 0 {
+    if n <= 1 {
         return f64::NAN;
     }
     sample_sum2_deviations(n, sum, sum2) / (n as f64 - 1.)
@@ -106,13 +106,10 @@ impl SampleMoments {
     }
 
     /// Instatiates `Self` from an iterator.
-    pub fn from_iterator(mut dataset: impl Iterator<Item = f64>) -> Self {
+    pub fn from_iterator(dataset: impl Iterator<Item = f64>) -> Self {
         let mut moments = SampleMoments::new_empty();
-        loop {
-            match dataset.next() {
-                Some(v) => moments.collect_value(v),
-                None => break,
-            }
+        for v in dataset {
+            moments.collect_value(v);
         }
         moments
     }

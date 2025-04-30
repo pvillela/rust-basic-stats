@@ -16,13 +16,12 @@ exclude = ["CHANGELOG.md", "*.sh", ".gitignore"]
 [dependencies]
 statrs = "0.18"
 # Optional:
-hdrhistogram = { version = "7.5", optional = true }
 hypors = { version = "0.2", optional = true }
-polars = { version = "0.43", optional = true }      # required by hypors
+polars = { version = "0.43", optional = true } # required by hypors
 
 [features]
 bernoulli = []
-wilcoxon = ["dep:hdrhistogram"]
+wilcoxon = []
 all = ["bernoulli", "wilcoxon"]
 # Private:
 _hypors = [

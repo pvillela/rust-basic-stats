@@ -1,5 +1,7 @@
 pub mod core;
 
+pub mod iter;
+
 #[cfg(test)]
 pub(crate) mod dev_utils;
 

@@ -7,4 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-XX-XX
 
-Initial release, extracted from `bench_diff` crate.
+Initial release, based on code extracted from `bench_diff` crate:
+- Removed dependence on `hdrhistogram`.
+- Additional types and functions.
+- Additional documentation.
+- Additional tests.

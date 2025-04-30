@@ -165,6 +165,7 @@ pub fn student_one_sample_test(
 }
 
 #[cfg(test)]
+#[allow(clippy::too_many_arguments)]
 mod test {
     //! Used R's t.test function to generate expected values.
     //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test
