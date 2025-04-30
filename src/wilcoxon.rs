@@ -23,7 +23,7 @@ impl RankSum {
     /// number of occurrences of the value in the sample.
     ///
     /// # Errors
-    /// - Returns an error if the iterators do not yield data values in strictly increasing order.
+    /// - Returns an error if an iterator does not yield data values in strictly increasing order.
     pub fn from_iter_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,
@@ -198,7 +198,7 @@ impl RankSum {
     /// by the iterators is a data value.
     ///
     /// # Errors
-    /// - Returns an error if the iterators do not yield data values in non-decreasing order.
+    /// - Returns an error if an iterator does not yield data values in non-decreasing order.
     pub fn from_iter(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
@@ -208,20 +208,27 @@ impl RankSum {
         Self::from_iter_with_counts(itc_x, itc_y)
     }
 
+    /// Size of first sample (X).
     pub fn n_x(&self) -> u64 {
         self.n_x
     }
 
+    /// Size of second sample (Y).
     pub fn n_y(&self) -> u64 {
         self.n_y
     }
+
+    /// Wilcoxon rank sum `W` statistic.
+    ///
+    /// As defined in the book Nonparametric Statistical Methods, 3rd Edition,
+    /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
 
     pub fn w(&self) -> f64 {
         self.w
     }
 
-    /// The `w` value computed by `R`'s `wilcox.test` function, which is the Mann-Whitney U for the
-    /// first sample (`hist_x`).
+    /// The `W` value computed by `R`'s `wilcox.test` function, which is the Mann-Whitney U for the
+    /// first sample (X).
     ///
     /// See explanation in the book Nonparametric Statistical Methods, 3rd Edition,
     /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
@@ -229,21 +236,27 @@ impl RankSum {
         self.mann_whitney_u_x()
     }
 
+    /// Mann-Whitney U statistic for the second sample (Y).
     pub fn mann_whitney_u_y(&self) -> f64 {
         let n_y = self.n_y as f64;
         self.w - n_y * (n_y + 1.) / 2.
     }
 
+    /// Mann-Whitney U statistic for the first sample (X).
     pub fn mann_whitney_u_x(&self) -> f64 {
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
         (n_x * n_y) - self.mann_whitney_u_y()
     }
 
+    /// Mann-Whitney U statistic.
+    ///
+    /// It is the min of [`mann_whitney_u_x`](Self::mann_whitney_u_x) and [`mann_whitney_u_y`](Self::mann_whitney_u_y).
     pub fn mann_whitney_u(&self) -> f64 {
         self.mann_whitney_u_y().min(self.mann_whitney_u_x())
     }
 
+    /// z-value from the large sample normal approximation.
     pub fn z(&self) -> f64 {
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
@@ -272,6 +285,10 @@ impl RankSum {
         -w_star
     }
 
+    /// p-value from the large sample normal approximation.
+    ///
+    /// Arguments:
+    /// - `alt_hyp`: alternative hypothesis.
     pub fn p(&self, alt_hyp: AltHyp) -> f64 {
         let z = self.z();
         z_to_p(z, alt_hyp)
@@ -283,6 +300,11 @@ impl RankSum {
         z_to_p(z, alt_hyp)
     }
 
+    /// Wilcoxon rank sum test.
+    ///
+    /// Arguments:
+    /// - `alt_hyp`: alternative hypothesis.
+    /// - `alpha`: confidence level = `1 - alpha`.
     pub fn test(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
         let p = self.p(alt_hyp);
         HypTestResult::new(p, alpha, alt_hyp)
