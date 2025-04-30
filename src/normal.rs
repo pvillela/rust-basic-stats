@@ -38,50 +38,50 @@ pub fn t_alpha(df: f64, alpha: f64) -> f64 {
     stud.cdf(-alpha)
 }
 
-pub fn welch_t(moments_a: &SampleMoments, moments_b: &SampleMoments) -> f64 {
-    let n_a = moments_a.nf();
-    let n_b = moments_b.nf();
-    let dx = moments_a.mean() - moments_b.mean();
-    let s2_a = moments_a.stdev().powi(2);
-    let s2_b = moments_b.stdev().powi(2);
-    let s2_mean_a = s2_a / n_a;
-    let s2_mean_b = s2_b / n_b;
-    let s_dx = (s2_mean_a + s2_mean_b).sqrt();
-    dx / s_dx
+pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
+    let n_x = moments_x.nf();
+    let n_y = moments_y.nf();
+    let d_means = moments_x.mean() - moments_y.mean();
+    let s2_x = moments_x.stdev().powi(2);
+    let s2_y = moments_y.stdev().powi(2);
+    let s2_mean_x = s2_x / n_x;
+    let s2_mean_y = s2_y / n_y;
+    let s_d_means = (s2_mean_x + s2_mean_y).sqrt();
+    d_means / s_d_means
 }
 
-pub fn welch_df(moments_a: &SampleMoments, moments_b: &SampleMoments) -> f64 {
-    let n_a = moments_a.nf();
-    let n_b = moments_b.nf();
-    let s2_a = moments_a.stdev().powi(2);
-    let s2_b = moments_b.stdev().powi(2);
-    let s2_mean_a = s2_a / n_a;
-    let s2_mean_b = s2_b / n_b;
-    let numerator = (s2_mean_a + s2_mean_b).powi(2);
-    let denominator = s2_mean_a.powi(2) / (n_a - 1.) + s2_mean_b.powi(2) / (n_b - 1.);
+pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
+    let n_x = moments_x.nf();
+    let n_y = moments_y.nf();
+    let s2_x = moments_x.stdev().powi(2);
+    let s2_y = moments_y.stdev().powi(2);
+    let s2_mean_x = s2_x / n_x;
+    let s2_mean_y = s2_y / n_y;
+    let numerator = (s2_mean_x + s2_mean_y).powi(2);
+    let denominator = s2_mean_x.powi(2) / (n_x - 1.) + s2_mean_y.powi(2) / (n_y - 1.);
     numerator / denominator
 }
 
-pub fn welch_p(moments_a: &SampleMoments, moments_b: &SampleMoments, alt_hyp: AltHyp) -> f64 {
-    let t = welch_t(moments_a, moments_b);
-    let df = welch_df(moments_a, moments_b);
+pub fn welch_p(moments_x: &SampleMoments, moments_y: &SampleMoments, alt_hyp: AltHyp) -> f64 {
+    let t = welch_t(moments_x, moments_y);
+    let df = welch_df(moments_x, moments_y);
     t_to_p(t, df, alt_hyp)
 }
 
 pub fn welch_alt_hyp_ci(
-    moments_a: &SampleMoments,
-    moments_b: &SampleMoments,
+    moments_x: &SampleMoments,
+    moments_y: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> Ci {
-    let n_a = moments_a.nf();
-    let n_b = moments_b.nf();
-    let dx = moments_a.mean() - moments_b.mean();
-    let s2_a = moments_a.stdev().powi(2);
-    let s2_b = moments_b.stdev().powi(2);
-    let s2_mean_a = s2_a / n_a;
-    let s2_mean_b = s2_b / n_b;
-    let df = welch_df(moments_a, moments_b);
+    let n_x = moments_x.nf();
+    let n_y = moments_y.nf();
+    let d_means = moments_x.mean() - moments_y.mean();
+    let s2_x = moments_x.stdev().powi(2);
+    let s2_y = moments_y.stdev().powi(2);
+    let s2_mean_x = s2_x / n_x;
+    let s2_mean_y = s2_y / n_y;
+    let df = welch_df(moments_x, moments_y);
 
     let stud = StudentsT::new(0., 1., df).expect("Welch degrees of freedom must be > 0");
     let t0 = match alt_hyp {
@@ -89,8 +89,8 @@ pub fn welch_alt_hyp_ci(
         _ => -stud.inverse_cdf(alpha),
     };
 
-    let mid = dx;
-    let delta = (s2_mean_a + s2_mean_b).sqrt() * t0;
+    let mid = d_means;
+    let delta = (s2_mean_x + s2_mean_y).sqrt() * t0;
 
     match alt_hyp {
         AltHyp::Lt => Ci(-f64::INFINITY, mid + delta),
@@ -99,17 +99,17 @@ pub fn welch_alt_hyp_ci(
     }
 }
 
-pub fn welch_ci(moments_a: &SampleMoments, moments_b: &SampleMoments, alpha: f64) -> Ci {
-    welch_alt_hyp_ci(moments_a, moments_b, AltHyp::Ne, alpha)
+pub fn welch_ci(moments_x: &SampleMoments, moments_y: &SampleMoments, alpha: f64) -> Ci {
+    welch_alt_hyp_ci(moments_x, moments_y, AltHyp::Ne, alpha)
 }
 
 pub fn welch_test(
-    moments_a: &SampleMoments,
-    moments_b: &SampleMoments,
+    moments_x: &SampleMoments,
+    moments_y: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> HypTestResult {
-    let p = welch_p(moments_a, moments_b, alt_hyp);
+    let p = welch_p(moments_x, moments_y, alt_hyp);
     HypTestResult::new(p, alpha, alt_hyp)
 }
 
@@ -180,8 +180,8 @@ mod test {
     const EPSILON: f64 = 0.0005;
 
     fn check_welch(
-        dataset_a: &[f64],
-        dataset_b: &[f64],
+        dataset_x: &[f64],
+        dataset_y: &[f64],
         alt_hyp: AltHyp,
         exp_t: f64,
         exp_df: f64,
@@ -189,14 +189,14 @@ mod test {
         exp_ci: Ci,
         exp_accept_hyp: Hyp,
     ) {
-        let moments_a = SampleMoments::from_slice(dataset_a);
-        let moments_b = SampleMoments::from_slice(dataset_b);
+        let moments_x = SampleMoments::from_slice(dataset_x);
+        let moments_y = SampleMoments::from_slice(dataset_y);
 
-        let t = welch_t(&moments_a, &moments_b);
-        let df = welch_df(&moments_a, &moments_b);
+        let t = welch_t(&moments_x, &moments_y);
+        let df = welch_df(&moments_x, &moments_y);
         let p = t_to_p(t, df, alt_hyp);
-        let ci = welch_alt_hyp_ci(&moments_a, &moments_b, alt_hyp, ALPHA);
-        let res = welch_test(&moments_a, &moments_b, alt_hyp, ALPHA);
+        let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA);
+        let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA);
 
         assert!(
             exp_t.approx_eq(t, EPSILON),

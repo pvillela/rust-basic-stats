@@ -7,8 +7,8 @@ use crate::iter::{IterWithCounts, OrderingError};
 /// The result of the Wilcoxon rank sum computations on two data samples.
 /// This struct's methods implement the Wilcoxon rank sum test and related statistics.
 pub struct RankSum {
-    n_a: u64,
-    n_b: u64,
+    n_x: u64,
+    n_y: u64,
     w: f64,
     ties_sum_prod: u64,
 }
@@ -21,14 +21,14 @@ impl RankSum {
     /// # Errors
     /// - Returns an error if the iterators do not yield data values in strictly increasing order.
     pub fn from_iter_with_counts(
-        mut itc_a: impl Iterator<Item = (f64, u64)>,
-        mut itc_b: impl Iterator<Item = (f64, u64)>,
+        mut itc_x: impl Iterator<Item = (f64, u64)>,
+        mut itc_y: impl Iterator<Item = (f64, u64)>,
     ) -> Result<RankSum, OrderingError> {
-        let mut n_a = 0;
-        let mut n_b = 0;
+        let mut n_x = 0;
+        let mut n_y = 0;
         let mut ties_sum_prod = 0;
-        let mut prev_item_a: Option<(f64, u64)> = None;
-        let mut prev_item_b: Option<(f64, u64)> = None;
+        let mut prev_item_x: Option<(f64, u64)> = None;
+        let mut prev_item_y: Option<(f64, u64)> = None;
 
         fn enforce_order(
             prev_item: &mut Option<(f64, u64)>,
@@ -65,105 +65,105 @@ impl RankSum {
             Ok((rank_sum, new_prev_rank))
         }
 
-        let rank_sum_b: f64 = {
-            let mut rank_sum_a = 0.;
-            let mut rank_sum_b = 0.;
-            let (mut item_a_opt, mut item_b_opt) = (itc_a.next(), itc_b.next());
-            enforce_order(&mut prev_item_a, &item_a_opt)?;
-            enforce_order(&mut prev_item_b, &item_b_opt)?;
+        let rank_sum_y: f64 = {
+            let mut rank_sum_x = 0.;
+            let mut rank_sum_y = 0.;
+            let (mut item_x_opt, mut item_y_opt) = (itc_x.next(), itc_y.next());
+            enforce_order(&mut prev_item_x, &item_x_opt)?;
+            enforce_order(&mut prev_item_y, &item_y_opt)?;
             let mut prev_rank = 0.;
 
             loop {
-                match (&mut item_a_opt, &mut item_b_opt) {
-                    (Some(item_a), None) => {
-                        let count = item_a.1;
+                match (&mut item_x_opt, &mut item_y_opt) {
+                    (Some(item_x), None) => {
+                        let count = item_x.1;
                         let (rank_sum, new_prev_rank) = rank_item(
                             count,
                             0,
                             prev_rank,
-                            &mut n_a,
-                            &mut itc_a,
-                            &mut item_a_opt,
-                            &mut prev_item_a,
+                            &mut n_x,
+                            &mut itc_x,
+                            &mut item_x_opt,
+                            &mut prev_item_x,
                             &mut ties_sum_prod,
                         )?;
-                        rank_sum_a += rank_sum;
+                        rank_sum_x += rank_sum;
                         prev_rank = new_prev_rank;
                     }
 
-                    (Some(item_a), Some(item_b)) if item_a.0 < item_b.0 => {
+                    (Some(item_x), Some(item_y)) if item_x.0 < item_y.0 => {
                         let (rank_sum, new_prev_rank) = rank_item(
-                            item_a.1,
+                            item_x.1,
                             0,
                             prev_rank,
-                            &mut n_a,
-                            &mut itc_a,
-                            &mut item_a_opt,
-                            &mut prev_item_a,
+                            &mut n_x,
+                            &mut itc_x,
+                            &mut item_x_opt,
+                            &mut prev_item_x,
                             &mut ties_sum_prod,
                         )?;
-                        rank_sum_a += rank_sum;
+                        rank_sum_x += rank_sum;
                         prev_rank = new_prev_rank;
                     }
 
-                    (None, Some(item_b)) => {
+                    (None, Some(item_y)) => {
                         let (rank_sum, new_prev_rank) = rank_item(
-                            item_b.1,
+                            item_y.1,
                             0,
                             prev_rank,
-                            &mut n_b,
-                            &mut itc_b,
-                            &mut item_b_opt,
-                            &mut prev_item_b,
+                            &mut n_y,
+                            &mut itc_y,
+                            &mut item_y_opt,
+                            &mut prev_item_y,
                             &mut ties_sum_prod,
                         )?;
-                        rank_sum_b += rank_sum;
+                        rank_sum_y += rank_sum;
                         prev_rank = new_prev_rank;
                     }
 
-                    (Some(item_a), Some(item_b)) if item_a.0 > item_b.0 => {
+                    (Some(item_x), Some(item_y)) if item_x.0 > item_y.0 => {
                         let (rank_sum, new_prev_rank) = rank_item(
-                            item_b.1,
+                            item_y.1,
                             0,
                             prev_rank,
-                            &mut n_b,
-                            &mut itc_b,
-                            &mut item_b_opt,
-                            &mut prev_item_b,
+                            &mut n_y,
+                            &mut itc_y,
+                            &mut item_y_opt,
+                            &mut prev_item_y,
                             &mut ties_sum_prod,
                         )?;
-                        rank_sum_b += rank_sum;
+                        rank_sum_y += rank_sum;
                         prev_rank = new_prev_rank;
                     }
 
-                    // if item_a.0 == item_b.0
-                    (Some(item_a), Some(item_b)) => {
-                        let count_a = item_a.1;
-                        let count_b = item_b.1;
+                    // if item_x.0 == item_y.0
+                    (Some(item_x), Some(item_y)) => {
+                        let count_x = item_x.1;
+                        let count_y = item_y.1;
 
                         let (rank_sum, _) = rank_item(
-                            count_a,
-                            count_b,
+                            count_x,
+                            count_y,
                             prev_rank,
-                            &mut n_a,
-                            &mut itc_a,
-                            &mut item_a_opt,
-                            &mut prev_item_a,
+                            &mut n_x,
+                            &mut itc_x,
+                            &mut item_x_opt,
+                            &mut prev_item_x,
                             &mut ties_sum_prod,
                         )?;
-                        rank_sum_a += rank_sum;
+                        rank_sum_x += rank_sum;
 
                         let (rank_sum, new_prev_rank) = rank_item(
-                            count_b,
-                            count_a,
+                            count_y,
+                            count_x,
                             prev_rank,
-                            &mut n_b,
-                            &mut itc_b,
-                            &mut item_b_opt,
-                            &mut prev_item_b,
+                            &mut n_y,
+                            &mut itc_y,
+                            &mut item_y_opt,
+                            &mut prev_item_y,
                             &mut ties_sum_prod,
                         )?;
-                        rank_sum_b += rank_sum;
+                        rank_sum_y += rank_sum;
                         prev_rank = new_prev_rank;
                     }
 
@@ -173,19 +173,19 @@ impl RankSum {
 
             // Check rank-sum calculation.
             {
-                let nf_a = n_a as f64;
-                let nf_b = n_b as f64;
-                let expected_rank_sum_a = (1. + nf_a + nf_b) * (nf_a + nf_b) / 2. - rank_sum_b;
-                debug_assert_eq!(expected_rank_sum_a, rank_sum_a, "rank_sum_a check");
+                let nf_x = n_x as f64;
+                let nf_y = n_y as f64;
+                let expected_rank_sum_x = (1. + nf_x + nf_y) * (nf_x + nf_y) / 2. - rank_sum_y;
+                debug_assert_eq!(expected_rank_sum_x, rank_sum_x, "rank_sum_x check");
             }
 
-            rank_sum_b
+            rank_sum_y
         };
 
         Ok(RankSum {
-            n_a,
-            n_b,
-            w: rank_sum_b,
+            n_x,
+            n_y,
+            w: rank_sum_y,
             ties_sum_prod,
         })
     }
@@ -196,20 +196,20 @@ impl RankSum {
     /// # Errors
     /// - Returns an error if the iterators do not yield data values in strictly increasing order.
     pub fn from_iter(
-        it_a: impl Iterator<Item = f64>,
-        it_b: impl Iterator<Item = f64>,
+        it_x: impl Iterator<Item = f64>,
+        it_y: impl Iterator<Item = f64>,
     ) -> Result<RankSum, OrderingError> {
-        let itc_a = IterWithCounts::new(it_a);
-        let itc_b = IterWithCounts::new(it_b);
-        Self::from_iter_with_counts(itc_a, itc_b)
+        let itc_x = IterWithCounts::new(it_x);
+        let itc_y = IterWithCounts::new(it_y);
+        Self::from_iter_with_counts(itc_x, itc_y)
     }
 
-    pub fn n_a(&self) -> u64 {
-        self.n_a
+    pub fn n_x(&self) -> u64 {
+        self.n_x
     }
 
-    pub fn n_b(&self) -> u64 {
-        self.n_b
+    pub fn n_y(&self) -> u64 {
+        self.n_y
     }
 
     pub fn w(&self) -> f64 {
@@ -217,37 +217,37 @@ impl RankSum {
     }
 
     /// The `w` value computed by `R`'s `wilcox.test` function, which is the Mann-Whitney U for the
-    /// first sample (`hist_a`).
+    /// first sample (`hist_x`).
     ///
     /// See explanation in the book Nonparametric Statistical Methods, 3rd Edition,
     /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
     pub fn r_w(&self) -> f64 {
-        self.mann_whitney_u_a()
+        self.mann_whitney_u_x()
     }
 
-    pub fn mann_whitney_u_b(&self) -> f64 {
-        let n_b = self.n_b as f64;
-        self.w - n_b * (n_b + 1.) / 2.
+    pub fn mann_whitney_u_y(&self) -> f64 {
+        let n_y = self.n_y as f64;
+        self.w - n_y * (n_y + 1.) / 2.
     }
 
-    pub fn mann_whitney_u_a(&self) -> f64 {
-        let n_a = self.n_a as f64;
-        let n_b = self.n_b as f64;
-        (n_a * n_b) - self.mann_whitney_u_b()
+    pub fn mann_whitney_u_x(&self) -> f64 {
+        let n_x = self.n_x as f64;
+        let n_y = self.n_y as f64;
+        (n_x * n_y) - self.mann_whitney_u_y()
     }
 
     pub fn mann_whitney_u(&self) -> f64 {
-        self.mann_whitney_u_b().min(self.mann_whitney_u_a())
+        self.mann_whitney_u_y().min(self.mann_whitney_u_x())
     }
 
     pub fn z(&self) -> f64 {
-        let n_a = self.n_a as f64;
-        let n_b = self.n_b as f64;
+        let n_x = self.n_x as f64;
+        let n_y = self.n_y as f64;
         let w = self.w;
         let ties_sum_prod = self.ties_sum_prod as f64;
-        let e0_w = n_b * (n_a + n_b + 1.) / 2.;
-        let var0_w_base = n_a * n_b * (n_a + n_b + 1.) / 12.;
-        let var0_w_ties_adjust = n_a * n_b / (12. * (n_a + n_b) * (n_a + n_b - 1.)) * ties_sum_prod;
+        let e0_w = n_y * (n_x + n_y + 1.) / 2.;
+        let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
+        let var0_w_ties_adjust = n_x * n_y / (12. * (n_x + n_y) * (n_x + n_y - 1.)) * ties_sum_prod;
         let var0_w = var0_w_base - var0_w_ties_adjust;
         let w_star = (w - e0_w) / var0_w.sqrt();
 
@@ -256,11 +256,11 @@ impl RankSum {
 
     #[cfg(test)]
     fn z_no_ties_adjust(&self) -> f64 {
-        let n_a = self.n_a as f64;
-        let n_b = self.n_b as f64;
+        let n_x = self.n_x as f64;
+        let n_y = self.n_y as f64;
         let w = self.w;
-        let e0_w = n_b * (n_a + n_b + 1.) / 2.;
-        let var0_w_base = n_a * n_b * (n_a + n_b + 1.) / 12.;
+        let e0_w = n_y * (n_x + n_y + 1.) / 2.;
+        let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
         let var0_w_ties_adjust = 0.;
         let var0_w = var0_w_base - var0_w_ties_adjust;
         let w_star = (w - e0_w) / var0_w.sqrt();
@@ -313,38 +313,38 @@ mod base_test {
     const EPSILON: f64 = 0.0005;
 
     fn book_data() -> (Vec<f64>, Vec<f64>) {
-        let sample_a = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
-        let sample_b = vec![0.74, 0.88, 0.90, 1.15, 1.21];
-        (sample_a, sample_b)
+        let sample_x = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
+        let sample_y = vec![0.74, 0.88, 0.90, 1.15, 1.21];
+        (sample_x, sample_y)
     }
 
     fn contrived_data() -> (Vec<f64>, Vec<f64>) {
-        let mut sample_a = vec![
+        let mut sample_x = vec![
             85., 90., 78., 92., 88., 76., 95., 89., 91., 82., 115., 120., 108., 122., 118., 106.,
             125., 119., 121., 112., 145., 150., 138., 152., 148., 136., 155., 149., 151., 142.,
             175., 180., 168., 182., 178., 166., 185., 179., 181., 172., 205., 210., 198., 212.,
             208., 196., 215., 209., 211., 202.,
         ];
-        sort_array(&mut sample_a);
+        sort_array(&mut sample_x);
 
-        let mut sample_b = vec![
+        let mut sample_y = vec![
             70., 85., 80., 90., 75., 88., 92., 79., 86., 81., 92., 100., 115., 110., 120., 105.,
             118., 122., 109., 116., 111., 122., 130., 145., 140., 150., 135., 148., 152., 139.,
             146., 141., 152., 160., 175., 170., 180., 165., 178., 182., 169., 176., 171., 182.,
             190., 205., 200., 210., 195., 208., 212., 199., 206., 201., 212.,
         ];
-        sort_array(&mut sample_b);
+        sort_array(&mut sample_y);
 
-        (sample_a, sample_b)
+        (sample_x, sample_y)
     }
 
     fn shifted_contrived_data() -> (Vec<f64>, Vec<f64>) {
-        let (mut sample_a, sample_b) = contrived_data();
-        let mut sample_b = sample_b.into_iter().map(|v| v + 35.).collect::<Vec<_>>();
-        sort_array(&mut sample_a);
-        sort_array(&mut sample_b);
+        let (mut sample_x, sample_y) = contrived_data();
+        let mut sample_y = sample_y.into_iter().map(|v| v + 35.).collect::<Vec<_>>();
+        sort_array(&mut sample_x);
+        sort_array(&mut sample_y);
 
-        (sample_a, sample_b)
+        (sample_x, sample_y)
     }
 
     #[test]
@@ -352,11 +352,11 @@ mod base_test {
     /// Nonparametric Statistical Methods, 3rd Edition, by Myles Hollander, Douglas A. Wolfe, Eric Chicken
     /// Example 4.1.
     fn test_w() -> Result<(), Box<dyn Error>> {
-        let (dat_a, dat_b) = book_data();
+        let (dat_x, dat_y) = book_data();
 
         // The iterator must yield f64 values, so use either `.iter().cloned()` or `.into_iter()`.
         // The latter is more efficient if the data set can be consumed.
-        let rank_sum = RankSum::from_iter(dat_a.iter().cloned(), dat_b.into_iter())?;
+        let rank_sum = RankSum::from_iter(dat_x.iter().cloned(), dat_y.into_iter())?;
 
         let expected_w = 30.;
         let actual_w = rank_sum.w();
@@ -407,10 +407,10 @@ mod base_test {
             "alt_hyp={alt_hyp:?} -- res.accepted"
         );
 
-        let mann_whitney_u_a = rank_sum.mann_whitney_u_a();
-        println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_a={mann_whitney_u_a}");
-        let mann_whitney_u_b = rank_sum.mann_whitney_u_b();
-        println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_b={mann_whitney_u_b}");
+        let mann_whitney_u_x = rank_sum.mann_whitney_u_x();
+        println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_x={mann_whitney_u_x}");
+        let mann_whitney_u_y = rank_sum.mann_whitney_u_y();
+        println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_y={mann_whitney_u_y}");
         let mann_whitney_u = rank_sum.mann_whitney_u();
         println!("alt_hyp={alt_hyp:?} -- mann_whitney_u={mann_whitney_u}");
     }
@@ -420,8 +420,8 @@ mod base_test {
     /// Nonparametric Statistical Methods, 3rd Edition, by Myles Hollander, Douglas A. Wolfe, Eric Chicken
     /// Example 4.1.
     fn test_book_data() -> Result<(), Box<dyn Error>> {
-        let (dat_a, dat_b) = book_data();
-        let rank_sum = RankSum::from_iter(dat_a.into_iter(), dat_b.into_iter())?;
+        let (dat_x, dat_y) = book_data();
+        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 35.;
 
@@ -451,8 +451,8 @@ mod base_test {
 
     #[test]
     fn test_contrived_data() -> Result<(), Box<dyn Error>> {
-        let (dat_a, dat_b) = contrived_data();
-        let rank_sum = RankSum::from_iter(dat_a.into_iter(), dat_b.into_iter())?;
+        let (dat_x, dat_y) = contrived_data();
+        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 1442.5;
 
@@ -482,8 +482,8 @@ mod base_test {
 
     #[test]
     fn test_shifted_contrived_data() -> Result<(), Box<dyn Error>> {
-        let (dat_a, dat_b) = shifted_contrived_data();
-        let rank_sum = RankSum::from_iter(dat_a.into_iter(), dat_b.into_iter())?;
+        let (dat_x, dat_y) = shifted_contrived_data();
+        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 840.;
 
@@ -525,45 +525,45 @@ mod test_with_hypors {
 
     const ALPHA: f64 = 0.05;
 
-    fn process_samples(sample_a: Vec<f64>, sample_b: Vec<f64>) -> Result<(), Box<dyn Error>> {
-        let rank_sum = RankSum::from_iter(sample_a.iter().cloned(), sample_b.iter().cloned())?;
+    fn process_samples(sample_x: Vec<f64>, sample_y: Vec<f64>) -> Result<(), Box<dyn Error>> {
+        let rank_sum = RankSum::from_iter(sample_x.iter().cloned(), sample_y.iter().cloned())?;
 
-        let rank_sum_b = rank_sum.w();
-        println!("rank_sum_b={rank_sum_b}");
+        let rank_sum_y = rank_sum.w();
+        println!("rank_sum_y={rank_sum_y}");
 
-        let n_a = rank_sum.n_a() as f64;
-        let n_b = rank_sum.n_b() as f64;
-        let rank_sum_a = (1. + n_a + n_b) * (n_a + n_b) / 2. - rank_sum_b;
-        println!("rank_sum_a={rank_sum_a}");
+        let n_x = rank_sum.n_x() as f64;
+        let n_y = rank_sum.n_y() as f64;
+        let rank_sum_x = (1. + n_x + n_y) * (n_x + n_y) / 2. - rank_sum_y;
+        println!("rank_sum_x={rank_sum_x}");
 
-        let wilcoxon_rank_sum_a_lt_b_p = rank_sum.p(AltHyp::Lt);
-        println!("wilcoxon_rank_sum_a_lt_b_p={wilcoxon_rank_sum_a_lt_b_p}");
-        let wilcoxon_rank_sum_a_lt_b_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Lt);
+        let wilcoxon_rank_sum_x_lt_y_p = rank_sum.p(AltHyp::Lt);
+        println!("wilcoxon_rank_sum_x_lt_y_p={wilcoxon_rank_sum_x_lt_y_p}");
+        let wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Lt);
         println!(
-            "wilcoxon_rank_sum_a_lt_b_p_no_ties_adjust={wilcoxon_rank_sum_a_lt_b_p_no_ties_adjust}"
+            "wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust={wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust}"
         );
-        let wilcoxon_rank_sum_a_gt_b_p = rank_sum.p(AltHyp::Gt);
-        println!("wilcoxon_rank_sum_a_gt_b_p={wilcoxon_rank_sum_a_gt_b_p}");
-        let wilcoxon_rank_sum_a_ne_b_p: f64 = rank_sum.p(AltHyp::Ne);
-        println!("wilcoxon_rank_sum_a_ne_b_p={wilcoxon_rank_sum_a_ne_b_p}");
-        let wilcoxon_rank_sum_a_ne_b_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Ne);
+        let wilcoxon_rank_sum_x_gt_y_p = rank_sum.p(AltHyp::Gt);
+        println!("wilcoxon_rank_sum_x_gt_y_p={wilcoxon_rank_sum_x_gt_y_p}");
+        let wilcoxon_rank_sum_x_ne_y_p: f64 = rank_sum.p(AltHyp::Ne);
+        println!("wilcoxon_rank_sum_x_ne_y_p={wilcoxon_rank_sum_x_ne_y_p}");
+        let wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Ne);
         println!(
-            "wilcoxon_rank_sum_a_ne_b_p_no_ties_adjust={wilcoxon_rank_sum_a_ne_b_p_no_ties_adjust}"
+            "wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust={wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust}"
         );
 
-        let mann_whitney_a_lt_b_u = rank_sum.mann_whitney_u_b();
-        println!("mann_whitney_a_lt_b_u={mann_whitney_a_lt_b_u}");
-        let mann_whitney_a_gt_b_u = rank_sum.mann_whitney_u_a();
-        println!("mann_whitney_a_gt_b_u={mann_whitney_a_gt_b_u}");
-        let mann_whitney_a_ne_b_u = rank_sum.mann_whitney_u();
-        println!("mann_whitney_a_ne_b_u={mann_whitney_a_ne_b_u}");
+        let mann_whitney_x_lt_y_u = rank_sum.mann_whitney_u_y();
+        println!("mann_whitney_x_lt_y_u={mann_whitney_x_lt_y_u}");
+        let mann_whitney_x_gt_y_u = rank_sum.mann_whitney_u_x();
+        println!("mann_whitney_x_gt_y_u={mann_whitney_x_gt_y_u}");
+        let mann_whitney_x_ne_y_u = rank_sum.mann_whitney_u();
+        println!("mann_whitney_x_ne_y_u={mann_whitney_x_ne_y_u}");
 
         {
-            let series_a = Series::new("a".into(), sample_a);
-            let series_b = Series::new("b".into(), sample_b);
+            let series_x = Series::new("a".into(), sample_x);
+            let series_y = Series::new("b".into(), sample_y);
 
             {
-                let result = u_test(&series_a, &series_b, ALPHA, TailType::Two);
+                let result = u_test(&series_x, &series_y, ALPHA, TailType::Two);
                 println!("result(two tail)={result:?}");
 
                 let result = result.unwrap();
@@ -573,19 +573,19 @@ mod test_with_hypors {
                 println!("Reject Null: {}", result.reject_null);
 
                 assert_eq!(
-                    result.test_statistic, mann_whitney_a_ne_b_u,
+                    result.test_statistic, mann_whitney_x_ne_y_u,
                     "comparison of U statistics"
                 );
 
                 assert_eq!(
                     result.p_value.round_to(5),
-                    wilcoxon_rank_sum_a_ne_b_p_no_ties_adjust.round_to(5),
+                    wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust.round_to(5),
                     "comparison of p values for non-equality (no ties adjustment)"
                 );
                 // Below fails because `hypors` does not compute ties adjustment.
                 // assert_eq!(
                 //     result.p_value.round_to_sig_decimals(5),
-                //     wilcoxon_rank_sum_a_ne_b_p.round_to_sig_decimals(5),
+                //     wilcoxon_rank_sum_x_ne_y_p.round_to_sig_decimals(5),
                 //     "comparison of p values for non-equality"
                 // );
             }
@@ -612,44 +612,44 @@ mod test_with_hypors {
             "***** Samples from Nonparametric Statistical Methods, 3rd Edition, Example 4.1. *****"
         );
         {
-            let sample_a = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
-            let sample_b = vec![0.74, 0.88, 0.90, 1.15, 1.21];
+            let sample_x = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
+            let sample_y = vec![0.74, 0.88, 0.90, 1.15, 1.21];
 
-            process_samples(sample_a, sample_b)
+            process_samples(sample_x, sample_y)
         }
     }
 
     #[test]
     fn test_contrived_data() {
-        let sample_a0 = vec![85., 90., 78., 92., 88., 76., 95., 89., 91., 82.];
-        let sample_b0 = vec![70., 85., 80., 90., 75., 88., 92., 79., 86., 81., 92.];
+        let sample_x0 = vec![85., 90., 78., 92., 88., 76., 95., 89., 91., 82.];
+        let sample_y0 = vec![70., 85., 80., 90., 75., 88., 92., 79., 86., 81., 92.];
 
         println!("***** Original samples *****");
         {
-            let mut sorted_a = sample_a0.clone();
-            sort_array(&mut sorted_a);
+            let mut sorted_x = sample_x0.clone();
+            sort_array(&mut sorted_x);
 
-            let mut sorted_b = sample_b0.clone();
-            sort_array(&mut sorted_b);
+            let mut sorted_y = sample_y0.clone();
+            sort_array(&mut sorted_y);
 
             {
-                let mut combined = sorted_a
+                let mut combined = sorted_x
                     .iter()
                     .cloned()
-                    .chain(sorted_b.iter().cloned())
+                    .chain(sorted_y.iter().cloned())
                     .collect::<Vec<_>>();
                 sort_array(&mut combined);
 
-                let exp_ranks_b = [1., 2., 5., 6., 7., 9.5, 11., 12.5, 15.5, 19., 19.];
-                let exp_rank_sum_b = exp_ranks_b.iter().sum::<f64>();
+                let exp_ranks_y = [1., 2., 5., 6., 7., 9.5, 11., 12.5, 15.5, 19., 19.];
+                let exp_rank_sum_y = exp_ranks_y.iter().sum::<f64>();
 
-                println!("sorted_a={sorted_a:?}");
-                println!("sorted_b={sorted_b:?}");
+                println!("sorted_x={sorted_x:?}");
+                println!("sorted_y={sorted_y:?}");
                 println!("combined={combined:?}");
-                println!("exp_ranks_b={exp_ranks_b:?}");
-                println!("exp_rank_sum_b={exp_rank_sum_b:?}");
+                println!("exp_ranks_y={exp_ranks_y:?}");
+                println!("exp_rank_sum_y={exp_rank_sum_y:?}");
             }
-            process_samples(sorted_a, sorted_b).unwrap();
+            process_samples(sorted_x, sorted_y).unwrap();
         }
 
         println!();
@@ -657,23 +657,23 @@ mod test_with_hypors {
         {
             let delta = 30.;
             let nrepeats = 5;
-            let sample_a = expand_sample(&sample_a0, delta, nrepeats);
-            let sample_b = expand_sample(&sample_b0, delta, nrepeats);
-            process_samples(sample_a, sample_b).unwrap();
+            let sample_x = expand_sample(&sample_x0, delta, nrepeats);
+            let sample_y = expand_sample(&sample_y0, delta, nrepeats);
+            process_samples(sample_x, sample_y).unwrap();
         }
 
         println!();
-        println!("***** sample_a < sample_b *****");
+        println!("***** sample_x < sample_y *****");
         {
             let delta = 30.;
             let nrepeats = 5;
-            let sample_a = expand_sample(&sample_a0, delta, nrepeats);
-            let sample_b = expand_sample(&sample_b0, delta, nrepeats);
+            let sample_x = expand_sample(&sample_x0, delta, nrepeats);
+            let sample_y = expand_sample(&sample_y0, delta, nrepeats);
 
             let shift = 35.;
-            let sample_b = sample_b.iter().map(|x| x + shift).collect::<Vec<_>>();
+            let sample_y = sample_y.iter().map(|x| x + shift).collect::<Vec<_>>();
 
-            process_samples(sample_a, sample_b).unwrap()
+            process_samples(sample_x, sample_y).unwrap()
         }
     }
 }
