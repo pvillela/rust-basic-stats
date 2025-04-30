@@ -1,3 +1,5 @@
+//! Errors returned by functions in this library.
+
 use std::{
     error::Error,
     fmt::{Debug, Display},

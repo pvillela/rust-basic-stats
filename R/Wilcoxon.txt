@@ -1,0 +1,206 @@
+WILCOXON
+--------
+
+*** BOOK DATA ***
+
+> a <- c(0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91)
+> b <- c(0.74, 0.88, 0.90, 1.15, 1.21)
+
+> wilcox.test(a, b, exact=FALSE, correct=FALSE, alternative='less')
+
+	Wilcoxon rank sum test
+
+data:  a and b
+W = 35, p-value = 0.8897
+alternative hypothesis: true location shift is less than 0
+
+> wilcox.test(a, b, exact=FALSE, correct=FALSE, alternative='two.sided')
+
+	Wilcoxon rank sum test
+
+data:  a and b
+W = 35, p-value = 0.2207
+alternative hypothesis: true location shift is not equal to 0
+
+> wilcox.test(a, b, exact=FALSE, correct=FALSE, alternative='greater')
+
+	Wilcoxon rank sum test
+
+data:  a and b
+W = 35, p-value = 0.1103
+alternative hypothesis: true location shift is greater than 0
+
+> 
+> wilcox.test(a, b, exact=TRUE, correct=TRUE, alternative='less')
+
+	Wilcoxon rank sum exact test
+
+data:  a and b
+W = 35, p-value = 0.8968
+alternative hypothesis: true location shift is less than 0
+
+> wilcox.test(a, b, exact=TRUE, correct=TRUE, alternative='two.sided')
+
+	Wilcoxon rank sum exact test
+
+data:  a and b
+W = 35, p-value = 0.2544
+alternative hypothesis: true location shift is not equal to 0
+
+> wilcox.test(a, b, exact=TRUE, correct=TRUE, alternative='greater')
+
+	Wilcoxon rank sum exact test
+
+data:  a and b
+W = 35, p-value = 0.1272
+alternative hypothesis: true location shift is greater than 0
+
+
+*** CONTRIVED DATA ***
+
+> dat$a
+ [1]  85  90  78  92  88  76  95  89  91  82  NA  NA 115 120 108 122 118 106 125
+[20] 119 121 112  NA  NA 145 150 138 152 148 136 155 149 151 142  NA  NA 175 180
+[39] 168 182 178 166 185 179 181 172  NA  NA 205 210 198 212 208 196 215 209 211
+[58] 202  NA
+> dat$b
+ [1]  70  85  80  90  75  88  92  79  86  81  92  NA 100 115 110 120 105 118 122
+[20] 109 116 111 122  NA 130 145 140 150 135 148 152 139 146 141 152  NA 160 175
+[39] 170 180 165 178 182 169 176 171 182  NA 190 205 200 210 195 208 212 199 206
+[58] 201 212
+
+> wilcox.test(dat$a, dat$b, exact=FALSE, correct=FALSE, alternative='less')
+
+	Wilcoxon rank sum test
+
+data:  dat$a and dat$b
+W = 1442.5, p-value = 0.6675
+alternative hypothesis: true location shift is less than 0
+
+> wilcox.test(dat$a, dat$b, exact=FALSE, correct=FALSE, alternative='two.sided')
+
+	Wilcoxon rank sum test
+
+data:  dat$a and dat$b
+W = 1442.5, p-value = 0.6649
+alternative hypothesis: true location shift is not equal to 0
+
+> wilcox.test(dat$a, dat$b, exact=FALSE, correct=FALSE, alternative='greater')
+
+	Wilcoxon rank sum test
+
+data:  dat$a and dat$b
+W = 1442.5, p-value = 0.3325
+alternative hypothesis: true location shift is greater than 0
+
+> wilcox.test(dat$a, dat$b, exact=TRUE, correct=TRUE, alternative='less')
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  dat$a and dat$b
+W = 1442.5, p-value = 0.6687
+alternative hypothesis: true location shift is less than 0
+
+Warning message:
+In wilcox.test.default(dat$a, dat$b, exact = TRUE, correct = TRUE,  :
+  cannot compute exact p-value with ties
+
+> wilcox.test(dat$a, dat$b, exact=TRUE, correct=TRUE, alternative='two.sided')
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  dat$a and dat$b
+W = 1442.5, p-value = 0.6673
+alternative hypothesis: true location shift is not equal to 0
+
+Warning message:
+In wilcox.test.default(dat$a, dat$b, exact = TRUE, correct = TRUE,  :
+  cannot compute exact p-value with ties
+
+> wilcox.test(dat$a, dat$b, exact=TRUE, correct=TRUE, alternative='greater')
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  dat$a and dat$b
+W = 1442.5, p-value = 0.3336
+alternative hypothesis: true location shift is greater than 0
+
+Warning message:
+In wilcox.test.default(dat$a, dat$b, exact = TRUE, correct = TRUE,  :
+  cannot compute exact p-value with ties
+
+
+*** SHIFTED CONTRIVED DATA ***
+
+> dat$a
+ [1]  85  90  78  92  88  76  95  89  91  82  NA  NA 115 120 108 122 118 106 125
+[20] 119 121 112  NA  NA 145 150 138 152 148 136 155 149 151 142  NA  NA 175 180
+[39] 168 182 178 166 185 179 181 172  NA  NA 205 210 198 212 208 196 215 209 211
+[58] 202  NA
+> sb <- dat$b + 35
+> sb
+ [1] 105 120 115 125 110 123 127 114 121 116 127  NA 135 150 145 155 140 153 157
+[20] 144 151 146 157  NA 165 180 175 185 170 183 187 174 181 176 187  NA 195 210
+[39] 205 215 200 213 217 204 211 206 217  NA 225 240 235 245 230 243 247 234 241
+[58] 236 247
+
+> wilcox.test(dat$a, sb, exact=FALSE, correct=FALSE, alternative='less')
+
+	Wilcoxon rank sum test
+
+data:  dat$a and sb
+W = 840, p-value = 0.0002987
+alternative hypothesis: true location shift is less than 0
+
+> wilcox.test(dat$a, sb, exact=FALSE, correct=FALSE, alternative='two.sided')
+
+	Wilcoxon rank sum test
+
+data:  dat$a and sb
+W = 840, p-value = 0.0005974
+alternative hypothesis: true location shift is not equal to 0
+
+> wilcox.test(dat$a, sb, exact=FALSE, correct=FALSE, alternative='greater')
+
+	Wilcoxon rank sum test
+
+data:  dat$a and sb
+W = 840, p-value = 0.9997
+alternative hypothesis: true location shift is greater than 0
+
+> wilcox.test(dat$a, sb, exact=TRUE, correct=TRUE, alternative='less')
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  dat$a and sb
+W = 840, p-value = 0.0003022
+alternative hypothesis: true location shift is less than 0
+
+Warning message:
+In wilcox.test.default(dat$a, sb, exact = TRUE, correct = TRUE,  :
+  cannot compute exact p-value with ties
+
+> wilcox.test(dat$a, sb, exact=TRUE, correct=TRUE, alternative='two.sided')
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  dat$a and sb
+W = 840, p-value = 0.0006045
+alternative hypothesis: true location shift is not equal to 0
+
+Warning message:
+In wilcox.test.default(dat$a, sb, exact = TRUE, correct = TRUE,  :
+  cannot compute exact p-value with ties
+
+> wilcox.test(dat$a, sb, exact=TRUE, correct=TRUE, alternative='greater')
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  dat$a and sb
+W = 840, p-value = 0.9997
+alternative hypothesis: true location shift is greater than 0
+
+Warning message:
+In wilcox.test.default(dat$a, sb, exact = TRUE, correct = TRUE,  :
+  cannot compute exact p-value with ties
+

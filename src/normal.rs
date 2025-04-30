@@ -1,8 +1,15 @@
+//! Statistics related to the Normal distribution and Student's t distribution,
+//! including the Student one-sample t-test and the
+//! Welch two-sample t-test (for samples from distributions that may have different variances).
+
 use super::core::{AltHyp, Ci, HypTestResult, SampleMoments};
 use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
 
-/// Returns the p-value for a z-value from the standard normal.
-/// `alt_hyp` is the alternative hypothesis. The null hypothesis is that the sample distribution's mean is 0.
+/// Returns the the probability that the standard normal distribution will produce a more extreme value
+/// than the argument `z`, with alternative hypothesis `alt_hyp`.
+///
+/// This function implements the z-test table, with `alt_hyp` defining whether the look-up is left-tailed,
+/// right-tailed, or two-tailed.
 pub fn z_to_p(z: f64, alt_hyp: AltHyp) -> f64 {
     let normal = Normal::standard();
 
@@ -13,8 +20,11 @@ pub fn z_to_p(z: f64, alt_hyp: AltHyp) -> f64 {
     }
 }
 
-/// Returns the p-value for a t-value from the Student distribution with location 0, scale 1, and `df` degrees of freedom.
-/// `alt_hyp` is the alternative hypothesis. The null hypothesis is that the sample distribution's mean is 0.
+/// Returns the the probability that the Student distribution with location 0, scale 1, and `df` degrees of freedom
+/// will produce a more extreme value than the argument `t`, with alternative hypothesis `alt_hyp`.
+///
+/// This function implements the t-test table, with `alt_hyp` defining whether the look-up is left-tailed,
+/// right-tailed, or two-tailed.
 pub fn t_to_p(t: f64, df: f64, alt_hyp: AltHyp) -> f64 {
     let stud = StudentsT::new(0., 1., df).expect("degrees of freedom must be > 0");
 
@@ -38,6 +48,11 @@ pub fn t_alpha(df: f64, alpha: f64) -> f64 {
     stud.cdf(-alpha)
 }
 
+/// Welch's two-sample t statistic.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `moments_y`: second sample's moments struct.
 pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
@@ -50,6 +65,11 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
     d_means / s_d_means
 }
 
+/// Degrees of freedom for Welch's two-sample t-test.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `moments_y`: second sample's moments struct.
 pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
@@ -62,12 +82,25 @@ pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
     numerator / denominator
 }
 
+/// p-value of Welch's two-sample t-test for equality.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `moments_y`: second sample's moments struct.
+/// - `alt_hyp`: alternative hypothesis.
 pub fn welch_p(moments_x: &SampleMoments, moments_y: &SampleMoments, alt_hyp: AltHyp) -> f64 {
     let t = welch_t(moments_x, moments_y);
     let df = welch_df(moments_x, moments_y);
     t_to_p(t, df, alt_hyp)
 }
 
+/// Welch's confidence interval for the difference of means (μ(X) - μ(Y)) of two distributions.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `moments_y`: second sample's moments struct.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn welch_alt_hyp_ci(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
@@ -99,10 +132,24 @@ pub fn welch_alt_hyp_ci(
     }
 }
 
+/// Welch's confidence interval for the difference of means (μ(X) - μ(Y)) of two distributions,
+/// with the alternative hypothesis of inequality (two-tailed).
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `moments_y`: second sample's moments struct.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn welch_ci(moments_x: &SampleMoments, moments_y: &SampleMoments, alpha: f64) -> Ci {
     welch_alt_hyp_ci(moments_x, moments_y, AltHyp::Ne, alpha)
 }
 
+/// Welch's two-sample t-test for equality of means of two distributions.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `moments_y`: second sample's moments struct.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn welch_test(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
@@ -113,6 +160,11 @@ pub fn welch_test(
     HypTestResult::new(p, alpha, alt_hyp)
 }
 
+/// Student's one-sample t statistic.
+///
+/// Arguments:
+/// - `moments`: sample moments struct.
+/// - `mu0`: hypothesized distribution mean.
 pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> f64 {
     let n = moments.nf();
     let mean = moments.mean();
@@ -120,16 +172,32 @@ pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> f64 {
     (mean - mu0) / s * n.sqrt()
 }
 
+/// Degrees of freedom for Student's one-sample t-test.
+///
+/// Arguments:
+/// - `moments`: sample moments struct.
 pub fn student_one_sample_df(moments: &SampleMoments) -> f64 {
     moments.nf() - 1.
 }
 
+/// p-value of Student's one-sample t-test for equality.
+///
+/// Arguments:
+/// - `moments`: sample moments struct.
+/// - `mu0`: hypothesized distribution mean.
+/// - `alt_hyp`: alternative hypothesis.
 pub fn student_one_sample_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) -> f64 {
     let t = student_one_sample_t(moments, mu0);
     let df = student_one_sample_df(moments);
     t_to_p(t, df, alt_hyp)
 }
 
+/// Student's one-sample confidence interval for the distribution mean.
+///
+/// Arguments:
+/// - `moments`: sample moments struct.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, alpha: f64) -> Ci {
     let df = student_one_sample_df(moments);
 
@@ -150,10 +218,23 @@ pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, a
     }
 }
 
+/// Student's one-sample confidence interval for the distribution mean,
+/// with the alternative hypothesis of inequality (two-tailed).
+///
+/// Arguments:
+/// - `moments`: sample moments struct.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> Ci {
     student_one_sample_alt_hyp_ci(moments, AltHyp::Ne, alpha)
 }
 
+/// Student's one-sample t-test for equality.
+///
+/// Arguments:
+/// - `moments`: sample moments struct.
+/// - `mu0`: hypothesized distribution mean.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn student_one_sample_test(
     moments: &SampleMoments,
     mu0: f64,

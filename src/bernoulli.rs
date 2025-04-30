@@ -1,3 +1,5 @@
+//! Statistics related to the Bernoulli distribution. Gated by feature **bernoulli**.
+
 use super::{
     core::{AltHyp, Ci, HypTestResult},
     normal::{z_alpha, z_to_p},
@@ -19,7 +21,7 @@ pub fn bernoulli_p_hat(n: u64, successes: f64) -> f64 {
 /// Arguments:
 /// - `n`: number of trials.
 /// - `p_hat`: estimate of mean of the Bernoulli distribution. See [`bernoulli_p_hat`].
-/// - `alpha`: confidence level.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn bernoulli_psucc_ci(n: u64, p_hat: f64, alpha: f64) -> Ci {
     let nf = n as f64;
     let p = p_hat;
@@ -53,6 +55,15 @@ pub fn bernoulli_normal_approx_p(n: u64, p_hat: f64, p0: f64, alt_hyp: AltHyp) -
     z_to_p(z, alt_hyp)
 }
 
+/// Test of the hypothesis that probability of success is `p0`, with alternative
+/// hypothesis alt_hyp and confidence level (1 - alpha).
+///
+/// Arguments:
+/// - `n`: number of trials.
+/// - `p_hat`: estimate of mean of the Bernoulli distribution. See [`bernoulli_p_hat`].
+/// - `p0`: probability of success under null hypothesis.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
 pub fn bernoulli_test(n: u64, p_hat: f64, p0: f64, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
     let p = bernoulli_normal_approx_p(n, p_hat, p0, alt_hyp);
     HypTestResult::new(p, alpha, alt_hyp)

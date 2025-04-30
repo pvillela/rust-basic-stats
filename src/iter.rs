@@ -1,3 +1,5 @@
+//! Iterator functionality.
+
 /// Wraps a source iterator, transforming it into an iterator that yields pairs of type `(V, u64)` such
 /// that each pair corresponds to a grouping of the contiguous items from the source iterator that have the
 /// same value, where the pair's first component is the value and the pair's second component is the count of
@@ -47,10 +49,13 @@ where
     }
 }
 
-/// Returns an iterator that yields pairs of type `(V, u64)` such
-/// that each pair corresponds to a grouping of the contiguous items from `source` that have the
-/// same value, where the pair's first component is the value and the pair's second component is the count of
-/// items from `source` in the grouping.
+/// Transforms an iterator of values into an iterator of value-count pairs.
+///
+/// The pairs of type `(V, u64)` are such that:
+/// - Each pair corresponds to a grouping of the contiguous items from `source` that have the
+/// same value.
+/// - The pair's first component is the value from `source`.
+/// - The pair's second component is the count of items from `source` in the grouping.
 pub fn iter_with_counts<V: PartialEq + Clone>(
     source: impl Iterator<Item = V>,
 ) -> impl Iterator<Item = (V, u64)> {

@@ -1,10 +1,10 @@
 # basic_stats
 
-A lightweight library that provides basic statistical estimators and hypothesis tests.
+A lightweight library that provides some basic parametric and non-parametric statistics and hypothesis tests.
 
 ## Documentation
 
-See the [API documentation](https://docs.rs/thread_map/latest/basic_stats/) on docs.rs, which includes an overview and usage examples, and the source [repo](https://github.com/pvillela/rust-basic-stats/tree/main).
+See the [API documentation](https://docs.rs/basic_stats/latest/basic_stats/) on docs.rs, which includes an overview and usage examples, and the source [repo](https://github.com/pvillela/rust-basic-stats/tree/main).
 
 ## Support
 

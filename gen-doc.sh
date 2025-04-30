@@ -1,4 +1,6 @@
 #!/bin/bash
 
-cargo makedocs -e log
-cargo doc -p thread_map --no-deps --all-features
+rm -r target/doc
+
+cargo makedocs -e hypors -e polars -e statrs
+cargo doc -p basic_stats --no-deps --all-features

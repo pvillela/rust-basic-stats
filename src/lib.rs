@@ -1,3 +1,8 @@
+//! A lightweight library that provides some basic parametric and non-parametric statistics and hypothesis tests.
+//!
+//! Some modules are gated by cargo features, as indicated in module documentation.
+//! The feature **"all"** includes all features.
+
 pub mod core;
 pub mod error;
 pub mod iter;

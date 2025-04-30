@@ -1,0 +1,87 @@
+WELCH
+-----
+
+> sample1 <- c(14, 15, 15, 15, 16, 18, 22, 23, 24, 25, 25)
+> sample2 <- c(10, 12, 14, 15, 18, 22, 24, 27, 31, 33, 34, 34, 34)
+
+> t.test(sample1, sample2)
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = -1.5379, df = 18.137, p-value = 0.1413
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -10.453875   1.614714
+sample estimates:
+mean of x mean of y 
+ 19.27273  23.69231 
+
+> t.test(sample1, sample2, alternative = 'greater')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = -1.5379, df = 18.137, p-value = 0.9293
+alternative hypothesis: true difference in means is greater than 0
+95 percent confidence interval:
+ -9.40084      Inf
+sample estimates:
+mean of x mean of y 
+ 19.27273  23.69231 
+
+> t.test(sample1, sample2, alternative = 'less')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = -1.5379, df = 18.137, p-value = 0.07067
+alternative hypothesis: true difference in means is less than 0
+95 percent confidence interval:
+      -Inf 0.5616789
+sample estimates:
+mean of x mean of y 
+ 19.27273  23.69231 
+
+
+> sample1 <- c(24, 28, 32, 29, 35, 36, 30, 32, 25, 31)
+> sample2 <- c(5, 10, 25, 15, 16, 20)
+
+> t.test(sample1, sample2)
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = 4.7857, df = 6.8409, p-value = 0.00213
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+  7.57018 22.49649
+sample estimates:
+mean of x mean of y 
+ 30.20000  15.16667 
+
+> t.test(sample1, sample2, alternative = 'greater')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = 4.7857, df = 6.8409, p-value = 0.001065
+alternative hypothesis: true difference in means is greater than 0
+95 percent confidence interval:
+ 9.061005      Inf
+sample estimates:
+mean of x mean of y 
+ 30.20000  15.16667 
+
+> t.test(sample1, sample2, alternative = 'less')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = 4.7857, df = 6.8409, p-value = 0.9989
+alternative hypothesis: true difference in means is less than 0
+95 percent confidence interval:
+     -Inf 21.00566
+sample estimates:
+mean of x mean of y 
+ 30.20000  15.16667 

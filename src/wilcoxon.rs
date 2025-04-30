@@ -1,3 +1,6 @@
+//! Statistics related to the Wilcoxon rank sum two-sample test, also known as the Mann-Whitney U test.
+//! Gated by feature **wilcoxon**.
+
 use crate::{
     core::{AltHyp, HypTestResult},
     error::OrderingError,
@@ -5,7 +8,7 @@ use crate::{
     normal::z_to_p,
 };
 
-/// The result of the Wilcoxon rank sum computations on two data samples.
+/// Encapsulates the Wilcoxon rank sum computations on two data samples.
 /// This struct's methods implement the Wilcoxon rank sum test and related statistics.
 pub struct RankSum {
     n_x: u64,
@@ -195,7 +198,7 @@ impl RankSum {
     /// by the iterators is a data value.
     ///
     /// # Errors
-    /// - Returns an error if the iterators do not yield data values in strictly increasing order.
+    /// - Returns an error if the iterators do not yield data values in non-decreasing order.
     pub fn from_iter(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
