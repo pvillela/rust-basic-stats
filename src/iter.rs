@@ -1,5 +1,7 @@
 //! Iterator functionality.
 
+use std::mem::replace;
+
 /// Wraps a source iterator, transforming it into an iterator that yields pairs of type `(V, u64)` such
 /// that each pair corresponds to a grouping of the contiguous items from the source iterator that have the
 /// same value, where the pair's first component is the value and the pair's second component is the count of
@@ -20,7 +22,7 @@ impl<I, V> IterWithCounts<I, V> {
 
 impl<I, V> Iterator for IterWithCounts<I, V>
 where
-    V: PartialEq + Clone,
+    V: PartialEq,
     I: Iterator<Item = V>,
 {
     type Item = (V, u64);
@@ -29,19 +31,18 @@ where
         let mut count = 1;
         loop {
             let curr_value = self.source.next();
-            let prev_value = self.prev_value.clone();
-            match (curr_value, prev_value) {
-                (Some(v), Some(prev)) if v == prev => count += 1,
-                (Some(v), Some(prev)) => {
-                    self.prev_value = Some(v);
-                    return Some((prev, count));
+            match (curr_value, &self.prev_value) {
+                (Some(v), Some(prev)) if v == *prev => count += 1,
+                (Some(v), Some(_)) => {
+                    let ret_v = replace(&mut self.prev_value, Some(v));
+                    return Some((ret_v.unwrap_or_else(|| panic!("can't fail")), count));
                 }
                 (Some(v), None) => {
                     self.prev_value = Some(v);
                 }
-                (None, Some(prev)) => {
-                    self.prev_value = None;
-                    return Some((prev, count));
+                (None, Some(_)) => {
+                    let ret_v = replace(&mut self.prev_value, None);
+                    return Some((ret_v.unwrap_or_else(|| panic!("can't fail")), count));
                 }
                 (None, None) => return None,
             }
@@ -56,7 +57,7 @@ where
 /// same value.
 /// - The pair's first component is the value from `source`.
 /// - The pair's second component is the count of items from `source` in the grouping.
-pub fn iter_with_counts<V: PartialEq + Clone>(
+pub fn iter_with_counts<V: PartialEq>(
     source: impl Iterator<Item = V>,
 ) -> impl Iterator<Item = (V, u64)> {
     IterWithCounts::new(source)
