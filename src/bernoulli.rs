@@ -53,14 +53,18 @@ pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> 
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> Ci {
+///
+/// # Errors
+///
+/// Returns an error if `alpha` not in `[0, 1]`.
+pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     let p_hat = bernoulli_p_hat(n, n_s);
     let nr = n as f64;
 
     let z_alpha = if let AltHyp::Ne = alt_hyp {
-        z_alpha(alpha / 2.)
+        z_alpha(alpha / 2.)?
     } else {
-        z_alpha(alpha)
+        z_alpha(alpha)?
     };
 
     let base = 2. * nr * p_hat + z_alpha.powi(2);
@@ -73,7 +77,7 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
         AltHyp::Gt => ((base - delta) / denom, 1.),
     };
 
-    Ci(lo, hi)
+    Ok(Ci(lo, hi))
 }
 
 /// Binomial proportion confidence interval (Wilson score without continuity correction).
@@ -88,7 +92,11 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> Ci {
+///
+/// # Errors
+///
+/// Returns an error if `alpha` not in `[0, 1]`.
+pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
     binomial_ws_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
 
@@ -108,9 +116,9 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
     }
 
     let lo_beta =
-        Beta::new(n_s as f64, (n - n_s + 1) as f64).as_my_result("invalid arg `n` or `n_s`")?;
+        Beta::new(n_s as f64, (n - n_s + 1) as f64).stats_result("invalid arg `n` or `n_s`")?;
     let hi_beta =
-        Beta::new((n_s + 1) as f64, (n - n_s) as f64).as_my_result("invalid arg `n` or `n_s`")?;
+        Beta::new((n_s + 1) as f64, (n - n_s) as f64).stats_result("invalid arg `n` or `n_s`")?;
     let (lo, hi) = match alt_hyp {
         AltHyp::Lt => {
             let lo = 0.;
@@ -162,7 +170,7 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// Returns an error if `p0` not in `[0, 1]`.
 pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
-    let binomial = Binomial::new(p0, n).as_my_result("invalid arg `p0`")?;
+    let binomial = Binomial::new(p0, n).stats_result("invalid arg `p0`")?;
     let prob_le = binomial.cdf(n_s);
     let _prob_lt = binomial.cdf(n_s - 1);
     let prob_ge = binomial.cdf(n) - _prob_lt;
@@ -228,7 +236,7 @@ mod test {
         exp_accept_hyp: Hyp,
     ) {
         let cp_ci = binomial_cp_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
-        let ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA);
+        let ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
         let res = exact_binomial_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
         let p = res.p();
 

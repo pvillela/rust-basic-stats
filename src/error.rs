@@ -21,14 +21,14 @@ impl Display for StatsError {
 impl Error for StatsError {}
 
 pub(crate) trait AsStatsResult<V> {
-    fn as_my_result(self, msg: &'static str) -> StatsResult<V>;
+    fn stats_result(self, msg: &'static str) -> StatsResult<V>;
 }
 
 impl<V, E> AsStatsResult<V> for Result<V, E>
 where
     E: Error,
 {
-    fn as_my_result(self: Result<V, E>, msg: &'static str) -> StatsResult<V> {
+    fn stats_result(self: Result<V, E>, msg: &'static str) -> StatsResult<V> {
         self.map_err(|_| StatsError(msg))
     }
 }
