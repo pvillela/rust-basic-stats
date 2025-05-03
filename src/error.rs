@@ -8,9 +8,12 @@ use std::{
 /// Alias for results in this library.
 pub(crate) type StatsResult<V> = Result<V, StatsError>;
 
-/// Signals an error in a function in this library.
+/// Used for errors from functions in this library.
 #[derive(Debug)]
-pub struct StatsError(pub &'static str);
+pub struct StatsError(
+    /// Error message
+    pub &'static str,
+);
 
 impl Display for StatsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
