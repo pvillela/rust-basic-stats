@@ -35,17 +35,20 @@ pub fn t_to_p(t: f64, df: f64, alt_hyp: AltHyp) -> f64 {
     }
 }
 
-/// Returns the probability that the standard normal distribution produces a value greater than `alpha`.
+/// Returns the value `v` for which `alpha` is the probability that the
+/// standard normal distribution
+/// is greater than `v`.
 pub fn z_alpha(alpha: f64) -> f64 {
     let normal = Normal::standard();
-    normal.cdf(-alpha)
+    normal.inverse_cdf(1. - alpha)
 }
 
-/// Returns the probability that the Student distribution with location 0, scale 1, and `df` degrees of freedom
-/// produces a value greater than `alpha`.
+/// Returns the value `v` for which `alpha` is the probability that the
+/// Student distribution with location 0, scale 1, and `df` degrees of freedom
+/// is greater than `v`.
 pub fn t_alpha(df: f64, alpha: f64) -> f64 {
     let stud = StudentsT::new(0., 1., df).expect("degrees of freedom must be > 0");
-    stud.cdf(-alpha)
+    stud.inverse_cdf(1. - alpha)
 }
 
 /// Welch's two-sample t statistic.
@@ -133,7 +136,7 @@ pub fn welch_alt_hyp_ci(
 }
 
 /// Welch's confidence interval for the difference of means (μ(X) - μ(Y)) of two distributions,
-/// with the alternative hypothesis of inequality (two-tailed).
+/// with the alternative hypothesis of inequality (two-sided).
 ///
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
@@ -219,7 +222,7 @@ pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, a
 }
 
 /// Student's one-sample confidence interval for the distribution mean,
-/// with the alternative hypothesis of inequality (two-tailed).
+/// with the alternative hypothesis of inequality (two-sided).
 ///
 /// Arguments:
 /// - `moments`: sample moments struct.

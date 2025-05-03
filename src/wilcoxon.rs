@@ -3,7 +3,7 @@
 
 use crate::{
     core::{AltHyp, HypTestResult},
-    error::OrderingError,
+    error::StatsError,
     iter::iter_with_counts,
     normal::z_to_p,
 };
@@ -27,7 +27,7 @@ impl RankSum {
     pub fn from_iter_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,
-    ) -> Result<RankSum, OrderingError> {
+    ) -> Result<RankSum, StatsError> {
         let mut n_x = 0;
         let mut n_y = 0;
         let mut ties_sum_prod = 0;
@@ -37,10 +37,10 @@ impl RankSum {
         fn enforce_order(
             prev_item: &mut Option<(f64, u64)>,
             curr_item: &Option<(f64, u64)>,
-        ) -> Result<(), OrderingError> {
+        ) -> Result<(), StatsError> {
             match (&prev_item, curr_item) {
                 (Some((prev, _)), Some((curr, _))) if *prev < *curr => *prev_item = *curr_item,
-                (Some(_), Some(_)) => return Err(OrderingError),
+                (Some(_), Some(_)) => return Err(StatsError::Ordering),
                 (None, Some(_)) => *prev_item = *curr_item,
                 (_, None) => (),
             }
@@ -57,7 +57,7 @@ impl RankSum {
             item_opt_i: &mut Option<(f64, u64)>,
             prev_item_i: &mut Option<(f64, u64)>,
             ties_sum_prod: &mut u64,
-        ) -> Result<(f64, f64), OrderingError> {
+        ) -> Result<(f64, f64), StatsError> {
             let count = count_i + count_other;
             let rank = prev_rank + (count as f64 + 1.) / 2.;
             let rank_sum = count_i as f64 * rank;
@@ -202,7 +202,7 @@ impl RankSum {
     pub fn from_iter(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
-    ) -> Result<RankSum, OrderingError> {
+    ) -> Result<RankSum, StatsError> {
         let itc_x = iter_with_counts(it_x);
         let itc_y = iter_with_counts(it_y);
         Self::from_iter_with_counts(itc_x, itc_y)

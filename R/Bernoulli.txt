@@ -1,0 +1,173 @@
+BERNOULLI
+=========
+
+> install.packages('Rlab')
+Installing package into ‘/usr/local/lib/R/site-library’
+(as ‘lib’ is unspecified)
+Warning in install.packages("Rlab") :
+  'lib = "/usr/local/lib/R/site-library"' is not writable
+Would you like to use a personal library instead? (yes/No/cancel) yes
+Would you like to create a personal library
+‘~/R/x86_64-pc-linux-gnu-library/4.1’
+to install packages into? (yes/No/cancel) yes
+trying URL 'https://cloud.r-project.org/src/contrib/Rlab_4.0.tar.gz'
+Content type 'application/x-gzip' length 99164 bytes (96 KB)
+==================================================
+downloaded 96 KB
+
+* installing *source* package ‘Rlab’ ...
+** package ‘Rlab’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (Rlab)
+
+The downloaded source packages are in
+	‘/tmp/RtmpHjMQyi/downloaded_packages’
+
+> library(Rlab)
+Rlab 4.0 attached.
+
+
+Attaching package: ‘Rlab’
+
+The following objects are masked from ‘package:stats’:
+
+    dexp, dgamma, dweibull, pexp, pgamma, pweibull, qexp, qgamma,
+    qweibull, rexp, rgamma, rweibull
+
+The following object is masked from ‘package:datasets’:
+
+    precip
+
+
+> rbern
+function (n, prob) 
+{
+    rbinom(n, size = 1, prob = prob)
+}
+<bytecode: 0x604cbd12eff8>
+<environment: namespace:Rlab>
+
+> dat <- rbern(100, 0.4)
+> 
+> dat
+  [1] 0 1 0 1 0 1 0 0 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 1 1 0 0 0 1 0
+ [38] 1 0 0 0 1 1 0 0 1 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 1 1 1 1 0 1 1 1 1 1 0
+ [75] 1 0 0 0 0 0 0 0 0 0 1 0 1 1 0 1 0 1 0 0 1 1 1 0 1 0
+
+# The number of successes in the sample is exactly 40.
+
+> binom.test(40, 100, 0.5, alternative="less")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 0.02844
+alternative hypothesis: true probability of success is less than 0.5
+95 percent confidence interval:
+ 0.0000000 0.4870242
+sample estimates:
+probability of success 
+                   0.4 
+
+> binom.test(40, 100, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 0.05689
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.3032948 0.5027908
+sample estimates:
+probability of success 
+                   0.4 
+
+> binom.test(40, 100, 0.5, alternative="greater")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 0.9824
+alternative hypothesis: true probability of success is greater than 0.5
+95 percent confidence interval:
+ 0.317526 1.000000
+sample estimates:
+probability of success 
+                   0.4 
+
+> binom.test(40, 100, 0.4, alternative="two.sided")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 1
+alternative hypothesis: true probability of success is not equal to 0.4
+95 percent confidence interval:
+ 0.3032948 0.5027908
+sample estimates:
+probability of success 
+                   0.4 
+##################
+# prop.test: used for Wilson score confidence intervals
+
+> prop.test(40, 100, 0.5, alternative='less', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.5
+X-squared = 4, df = 1, p-value = 0.02275
+alternative hypothesis: true p is less than 0.5
+95 percent confidence interval:
+ 0.0000000 0.4821905
+sample estimates:
+  p 
+0.4 
+
+> prop.test(40, 100, 0.5, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.5
+X-squared = 4, df = 1, p-value = 0.0455
+alternative hypothesis: true p is not equal to 0.5
+95 percent confidence interval:
+ 0.3094013 0.4979974
+sample estimates:
+  p 
+0.4 
+
+> prop.test(40, 100, 0.5, alternative='greater', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.5
+X-squared = 4, df = 1, p-value = 0.9772
+alternative hypothesis: true p is greater than 0.5
+95 percent confidence interval:
+ 0.3230781 1.0000000
+sample estimates:
+  p 
+0.4 
+
+> prop.test(40, 100, 0.4, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.4
+X-squared = 0, df = 1, p-value = 1
+alternative hypothesis: true p is not equal to 0.4
+95 percent confidence interval:
+ 0.3094013 0.4979974
+sample estimates:
+  p 
+0.4 
+

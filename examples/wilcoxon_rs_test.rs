@@ -1,10 +1,14 @@
-use basic_stats::{core::AltHyp, error::OrderingError, wilcoxon::RankSum};
+use basic_stats::{
+    core::{AltHyp, Hyp},
+    error::StatsError,
+    wilcoxon::RankSum,
+};
 
 fn sort_array(arr: &mut [f64]) {
     arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
 }
 
-fn main() -> Result<(), OrderingError> {
+fn main() -> Result<(), StatsError> {
     let mut dat_x = vec![
         85., 90., 78., 92., 88., 76., 95., 89., 91., 82., 115., 120., 108., 122., 118., 106., 125.,
         119., 121., 112., 145., 150., 138., 152., 148., 136., 155., 149., 151., 142., 175., 180.,
@@ -23,6 +27,7 @@ fn main() -> Result<(), OrderingError> {
 
     let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
     let test_res = rank_sum.test(AltHyp::Gt, 0.05);
+    assert_eq!(Hyp::Null, test_res.accepted());
     println!("test result: {test_res:?}");
     // test result: HypTestResult { p: 0.33244724790581637, alpha: 0.05, alt_hyp: Gt, accepted: Null }
 
