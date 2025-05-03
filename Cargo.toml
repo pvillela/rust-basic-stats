@@ -21,6 +21,7 @@ polars = { version = "0.43", optional = true } # required by hypors
 
 [features]
 bernoulli = []
+binomial = ["bernoulli"]
 wilcoxon = []
 all = ["bernoulli", "wilcoxon"]
 # Private:

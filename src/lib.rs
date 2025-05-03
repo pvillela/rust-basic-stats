@@ -17,6 +17,8 @@ pub mod wilcoxon;
 #[cfg(test)]
 pub(crate) mod dev_utils;
 
+#[cfg(feature = "binomial")]
 pub mod binomial {
+    //! Alias for module [`crate::bernoulli`]. Gated by feature **binomial**, which includes feature **bernoulli**.
     pub use super::bernoulli::*;
 }
