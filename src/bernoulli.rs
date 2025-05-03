@@ -4,7 +4,7 @@ use super::{
     core::{AltHyp, Ci, HypTestResult},
     normal::{z_alpha, z_to_p},
 };
-use crate::error::Result;
+use crate::error::{AsStatsResult, StatsError, StatsResult};
 use statrs::distribution::{Beta, Binomial, ContinuousCDF, DiscreteCDF};
 
 /// Estimator of mean of Bernoulli distribution.
@@ -63,10 +63,6 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
         z_alpha(alpha)
     };
 
-    // let base = p_hat + z_alpha.powi(2) / (2. * nr);
-    // let delta = z_alpha * (p_hat * (1. - p_hat) / nr + z_alpha.powi(2) / (4. * nr.powi(2))).sqrt();
-    // let denom = 1. + z_alpha.powi(2) / nr;
-
     let base = 2. * nr * p_hat + z_alpha.powi(2);
     let delta = z_alpha * (z_alpha.powi(2) + 4. * nr * p_hat * (1. - p_hat)).sqrt();
     let denom = 2. * (nr + z_alpha.powi(2));
@@ -93,14 +89,6 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alpha`: confidence level = `1 - alpha`.
 pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> Ci {
-    // let p_hat = bernoulli_p_hat(n, n_s);
-    // let nr = n as f64;
-    // let z_alpha_2 = z_alpha(alpha / 2.);
-    // let mid = p_hat + z_alpha_2.powi(2) / (2. * nr);
-    // let delta =
-    //     z_alpha_2 * (p_hat * (1. - p_hat) / nr + z_alpha_2.powi(2) / (4. * nr.powi(2))).sqrt();
-    // let denom = 1. + z_alpha_2.powi(2) / nr;
-    // Ci((mid - delta) / denom, (mid + delta) / denom)
     binomial_ws_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
 
@@ -108,9 +96,21 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> Ci {
 /// ([Clopper–Pearson](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Clopper%E2%80%93Pearson_interval)).
 ///
 /// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
-pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> Result<Ci> {
-    let lo_beta = Beta::new(n_s as f64, (n - n_s + 1) as f64)?;
-    let hi_beta = Beta::new((n_s + 1) as f64, (n - n_s) as f64)?;
+///
+/// # Errors
+///
+/// Returns an error in any of these circumstances:
+/// - `n_s == 0` or `n <= n_s`.
+/// - `alpha` is not in `[0, 1]`.
+pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
+    if !(0.0..=1.0).contains(&alpha) {
+        return Err(StatsError("arg `alpha` not in interval `[0, 1]`"));
+    }
+
+    let lo_beta =
+        Beta::new(n_s as f64, (n - n_s + 1) as f64).as_my_result("invalid arg `n` or `n_s`")?;
+    let hi_beta =
+        Beta::new((n_s + 1) as f64, (n - n_s) as f64).as_my_result("invalid arg `n` or `n_s`")?;
     let (lo, hi) = match alt_hyp {
         AltHyp::Lt => {
             let lo = 0.;
@@ -128,6 +128,7 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
             (lo, hi)
         }
     };
+
     Ok(Ci(lo, hi))
 }
 
@@ -136,12 +137,16 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// with the alternative hypothesis of inequality (two-sided).
 ///
 /// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
-pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> Result<Ci> {
-    // let lo_beta = Beta::new(n_s as f64, (n - n_s + 1) as f64)?;
-    // let lo = lo_beta.inverse_cdf(alpha / 2.);
-    // let hi_beta = Beta::new((n_s + 1) as f64, (n - n_s) as f64)?;
-    // let hi = hi_beta.inverse_cdf(1. - alpha / 2.);
-    // Ok(Ci(lo, hi))
+///
+/// # Errors
+///
+/// Returns an error in any of these circumstances:
+/// - `n_s == 0` or `n <= n_s`.
+/// - `alpha` is not in `[0, 1]`.
+pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
+    if !(0.0..=1.0).contains(&alpha) {
+        return Err(StatsError("arg `alpha` not in interval `[0, 1]`"));
+    }
     binomial_cp_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
 
@@ -154,11 +159,10 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> Result<Ci> {
 /// - `alt_hyp`: alternative hypothesis.
 ///
 /// # Errors
-/// Returns an error under any of these conditions:
-/// - `n == 0`.
-/// - `p0` not strictly between `0` and `1`.
-pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> Result<f64> {
-    let binomial = Binomial::new(p0, n)?;
+///
+/// Returns an error if `p0` not in `[0, 1]`.
+pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let binomial = Binomial::new(p0, n).as_my_result("invalid arg `p0`")?;
     let prob_le = binomial.cdf(n_s);
     let _prob_lt = binomial.cdf(n_s - 1);
     let prob_ge = binomial.cdf(n) - _prob_lt;
@@ -190,17 +194,15 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> Result<f6
 /// - `alpha`: confidence level = `1 - alpha`.
 ///
 /// # Errors
-/// Returns an error under any of these conditions:
-/// - `n == 0`.
-/// - `p0` not strictly between `0` and `1`.
-/// - `alpha < 0` or `alpha > 1`.
+///
+/// Returns an error if `p0` not in `[0, 1]`.
 pub fn exact_binomial_test(
     n: u64,
     n_s: u64,
     p0: f64,
     alt_hyp: AltHyp,
     alpha: f64,
-) -> Result<HypTestResult> {
+) -> StatsResult<HypTestResult> {
     let p_value = exact_binomial_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
     Ok(test_res)

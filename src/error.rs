@@ -5,20 +5,12 @@ use std::{
     fmt::{Debug, Display},
 };
 
-use statrs::distribution::{BetaError, BinomialError};
-
 /// Alias for results in this library.
-pub(crate) type Result<V> = std::result::Result<V, StatsError>;
+pub(crate) type StatsResult<V> = Result<V, StatsError>;
 
 /// Signals an error in a function in this library.
 #[derive(Debug)]
-pub enum StatsError {
-    /// Violation of an ordering requirement.
-    Ordering,
-
-    /// One or more arguments are outside the legal range.
-    ArgOutOfRange(String),
-}
+pub struct StatsError(pub &'static str);
 
 impl Display for StatsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -28,14 +20,15 @@ impl Display for StatsError {
 
 impl Error for StatsError {}
 
-impl From<BinomialError> for StatsError {
-    fn from(value: BinomialError) -> Self {
-        StatsError::ArgOutOfRange(value.to_string())
-    }
+pub(crate) trait AsStatsResult<V> {
+    fn as_my_result(self, msg: &'static str) -> StatsResult<V>;
 }
 
-impl From<BetaError> for StatsError {
-    fn from(value: BetaError) -> Self {
-        StatsError::ArgOutOfRange(value.to_string())
+impl<V, E> AsStatsResult<V> for Result<V, E>
+where
+    E: Error,
+{
+    fn as_my_result(self: Result<V, E>, msg: &'static str) -> StatsResult<V> {
+        self.map_err(|_| StatsError(msg))
     }
 }

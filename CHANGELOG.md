@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2025-05-XX
 
-Includes several breaking changes -- see below.
+Includes breaking changes impacting all modules -- see below.
 
 ### Added
 
@@ -18,7 +18,7 @@ Includes several breaking changes -- see below.
 
 #### Breaking
 
-- Enhanced `error` module.
+- Enhanced `error` module and implemented more appropriate error handling throughout the library.
 - Thoroughly reimplemented `bernoulli` module.
 
 #### Non-breaking

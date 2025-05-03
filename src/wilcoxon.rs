@@ -40,7 +40,11 @@ impl RankSum {
         ) -> Result<(), StatsError> {
             match (&prev_item, curr_item) {
                 (Some((prev, _)), Some((curr, _))) if *prev < *curr => *prev_item = *curr_item,
-                (Some(_), Some(_)) => return Err(StatsError::Ordering),
+                (Some(_), Some(_)) => {
+                    return Err(StatsError(
+                        "invalid iterator argument: items not ordered properly",
+                    ));
+                }
                 (None, Some(_)) => *prev_item = *curr_item,
                 (_, None) => (),
             }

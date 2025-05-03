@@ -11,7 +11,9 @@ fn rank_value_sum_prod(data_set: impl Iterator<Item = f64>) -> Result<f64, Stats
 
     for (i, value) in data_set.enumerate() {
         if value < last_value {
-            return Err(StatsError::Ordering);
+            return Err(StatsError(
+                "invalid iterator argument: items not properly ordered",
+            ));
         }
         sum_prod += (i + 1) as f64 * value;
         last_value = value;
