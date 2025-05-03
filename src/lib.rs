@@ -16,3 +16,7 @@ pub mod wilcoxon;
 
 #[cfg(test)]
 pub(crate) mod dev_utils;
+
+pub mod binomial {
+    pub use super::bernoulli::*;
+}

@@ -45,7 +45,7 @@ pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> 
 ///
 /// References:
 /// [Wikipedia](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval),
-/// [Statistics How To]((https://www.statisticshowto.com/wilson-ci/),
+/// [Statistics How To](https://www.statisticshowto.com/wilson-ci/),
 /// [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf)
 ///
 /// Arguments:
@@ -85,7 +85,7 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 ///
 /// References:
 /// [Wikipedia](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval),
-/// [Statistics How To]((https://www.statisticshowto.com/wilson-ci/),
+/// [Statistics How To](https://www.statisticshowto.com/wilson-ci/),
 /// [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf)
 ///
 /// Arguments:
@@ -106,6 +106,8 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> Ci {
 
 /// Binomial proportion confidence interval
 /// ([Clopper–Pearson](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Clopper%E2%80%93Pearson_interval)).
+///
+/// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
 pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> Result<Ci> {
     let lo_beta = Beta::new(n_s as f64, (n - n_s + 1) as f64)?;
     let hi_beta = Beta::new((n_s + 1) as f64, (n - n_s) as f64)?;
@@ -132,6 +134,8 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// Binomial proportion confidence interval
 /// ([Clopper–Pearson](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Clopper%E2%80%93Pearson_interval)),
 /// with the alternative hypothesis of inequality (two-sided).
+///
+/// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
 pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> Result<Ci> {
     // let lo_beta = Beta::new(n_s as f64, (n - n_s + 1) as f64)?;
     // let lo = lo_beta.inverse_cdf(alpha / 2.);
@@ -148,13 +152,11 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> Result<Ci> {
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
 /// - `alt_hyp`: alternative hypothesis.
-/// - `alpha`: confidence level = `1 - alpha`.
 ///
 /// # Errors
 /// Returns an error under any of these conditions:
 /// - `n == 0`.
 /// - `p0` not strictly between `0` and `1`.
-/// - `alpha < 0` or `alpha > 1`.
 pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> Result<f64> {
     let binomial = Binomial::new(p0, n)?;
     let prob_le = binomial.cdf(n_s);
@@ -211,21 +213,8 @@ mod test {
     use super::*;
 
     const ALPHA: f64 = 0.05;
-    const EPSILON: f64 = 0.0005;
+    const EPSILON: f64 = 0.00005;
 
-    fn n_n_s() -> (u64, u64) {
-        // Data generated with p0 = 0.4.
-        let dat = [
-            0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-            0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
-            0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
-            1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0,
-        ];
-
-        let n = dat.len() as u64;
-        let n_s = dat.into_iter().sum::<u64>();
-        (n, n_s)
-    }
     fn check_bernoulli(
         n: u64,
         n_s: u64,
@@ -287,8 +276,8 @@ mod test {
     }
 
     #[test]
-    fn test_bern_lt() {
-        let (n, n_s) = n_n_s();
+    fn test_bern_lt_100_40_05() {
+        let (n, n_s) = (100, 40);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Lt;
         let exp_p = 0.02844;
@@ -309,8 +298,8 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq() {
-        let (n, n_s) = n_n_s();
+    fn test_bern_eq_100_40_05() {
+        let (n, n_s) = (100, 40);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.05689;
@@ -331,8 +320,8 @@ mod test {
     }
 
     #[test]
-    fn test_bern_gt() {
-        let (n, n_s) = n_n_s();
+    fn test_bern_gt_100_40_05() {
+        let (n, n_s) = (100, 40);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Gt;
         let exp_p = 0.9824;
@@ -353,13 +342,57 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_40() {
-        let (n, n_s) = n_n_s();
+    fn test_bern_eq_100_40_04() {
+        let (n, n_s) = (100, 40);
         let p0 = 0.4;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
         let exp_cp_ci = Ci(0.3032948, 0.5027908);
         let exp_ws_ci = Ci(0.3094013, 0.4979974);
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_100_4_0055() {
+        let (n, n_s) = (100, 4);
+        let p0 = 0.055;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 0.6626;
+        let exp_cp_ci = Ci(0.01100449, 0.09925716);
+        let exp_ws_ci = Ci(0.01566330, 0.09837071);
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_100_96_0945() {
+        let (n, n_s) = (100, 96);
+        let p0 = 0.945;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 0.6626;
+        let exp_cp_ci = Ci(0.9007428, 0.9889955);
+        let exp_ws_ci = Ci(0.9016293, 0.9843367);
         let exp_accept_hyp = Hyp::Null;
 
         check_bernoulli(

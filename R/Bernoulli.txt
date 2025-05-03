@@ -171,3 +171,58 @@ sample estimates:
   p 
 0.4 
 
+
+#########################
+# Extreme values of prob success
+
+> binom.test(4, 100, 0.055, alternative="two.sided")
+
+	Exact binomial test
+
+data:  4 and 100
+number of successes = 4, number of trials = 100, p-value = 0.6626
+alternative hypothesis: true probability of success is not equal to 0.055
+95 percent confidence interval:
+ 0.01100449 0.09925716
+sample estimates:
+probability of success 
+                  0.04 
+
+> prop.test(4, 100, 0.055, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  4 out of 100, null probability 0.055
+X-squared = 0.4329, df = 1, p-value = 0.5106
+alternative hypothesis: true p is not equal to 0.055
+95 percent confidence interval:
+ 0.01566330 0.09837071
+sample estimates:
+   p 
+0.04 
+
+> binom.test(96, 100, 0.945, alternative="two.sided")
+
+	Exact binomial test
+
+data:  96 and 100
+number of successes = 96, number of trials = 100, p-value = 0.6626
+alternative hypothesis: true probability of success is not equal to 0.945
+95 percent confidence interval:
+ 0.9007428 0.9889955
+sample estimates:
+probability of success 
+                  0.96 
+
+> prop.test(96, 100, 0.945, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  96 out of 100, null probability 0.945
+X-squared = 0.4329, df = 1, p-value = 0.5106
+alternative hypothesis: true p is not equal to 0.945
+95 percent confidence interval:
+ 0.9016293 0.9843367
+sample estimates:
+   p 
+0.96 

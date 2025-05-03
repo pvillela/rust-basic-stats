@@ -11,7 +11,8 @@ Includes several breaking changes -- see below.
 
 ### Added
 
-- Added examples and tests for all modules.
+- Examples and tests for all modules.
+- `binomial` module, which is an alias for the `bernoulli` module.
 
 ### Changed
 
