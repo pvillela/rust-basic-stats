@@ -47,10 +47,10 @@ pub fn t_to_p(t: f64, df: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
 ///
 /// # Errors
 ///
-/// Returns an error if `alpha` not in `[0, 1]`.
+/// Returns an error if `alpha` not in `(0, 1)`.
 pub fn z_alpha(alpha: f64) -> StatsResult<f64> {
-    if !(0.0..=1.0).contains(&alpha) {
-        return Err(StatsError("arg `alpha` must be in [0, 1]"));
+    if !(0.0..1.0).contains(&alpha) || alpha == 0. {
+        return Err(StatsError("arg `alpha` must be in (0, 1)"));
     }
 
     let normal = Normal::standard();

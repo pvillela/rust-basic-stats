@@ -12,8 +12,15 @@ use statrs::distribution::{Beta, Binomial, ContinuousCDF, DiscreteCDF};
 /// Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
-pub fn bernoulli_p_hat(n: u64, n_s: u64) -> f64 {
-    n_s as f64 / n as f64
+///
+/// # Errors
+///
+/// Returns an error if `n == 0`
+pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
+    if n == 0 {
+        return Err(StatsError("arg `n` is invalid"));
+    }
+    Ok(n_s as f64 / n as f64)
 }
 
 /// Normal approximation z-value for the standardized sample mean of a Bernoulli distribution
@@ -23,9 +30,19 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> f64 {
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
-pub fn bernoulli_normal_approx_z(n: u64, n_s: u64, p0: f64) -> f64 {
-    let p_hat = bernoulli_p_hat(n, n_s);
-    (p_hat - p0) / (p0 * (1. - p0) / n as f64).sqrt()
+///
+/// # Errors
+///
+/// Returns an error in any of these circumstances:
+/// - `n == 0`.
+/// - `p0` not in `(0, 1)`.
+pub fn bernoulli_normal_approx_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
+    if !(0.0..1.0).contains(&p0) || p0 == 0.0 {
+        return Err(StatsError("arg `p0` is invalid"));
+    }
+    let p_hat = bernoulli_p_hat(n, n_s)?;
+    let ret = (p_hat - p0) / (p0 * (1. - p0) / n as f64).sqrt();
+    Ok(ret)
 }
 
 /// Normal approximation p-value for the standardized sample mean of Bernoulli distribution
@@ -36,9 +53,15 @@ pub fn bernoulli_normal_approx_z(n: u64, n_s: u64, p0: f64) -> f64 {
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
 /// - `alt_hyp`: alternative hypothesis.
-pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> f64 {
-    let z = bernoulli_normal_approx_z(n, n_s, p0);
-    z_to_p(z, alt_hyp)
+///
+/// # Errors
+///
+/// Returns an error in any of these circumstances:
+/// - `n == 0`.
+/// - `p0` not in `(0, 1)`.
+pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let z = bernoulli_normal_approx_z(n, n_s, p0)?;
+    Ok(z_to_p(z, alt_hyp))
 }
 
 /// Binomial proportion confidence interval (Wilson score without continuity correction).
@@ -58,10 +81,14 @@ pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> 
 ///
 /// Returns an error if `alpha` not in `[0, 1]`.
 pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
-    let p_hat = bernoulli_p_hat(n, n_s);
+    let p_hat = bernoulli_p_hat(n, n_s)?;
+
     let nr = n as f64;
 
     let z_alpha = if let AltHyp::Ne = alt_hyp {
+        if alpha == 1. {
+            return Err(StatsError("arg `alpha` must be in (0, 1)"));
+        }
         z_alpha(alpha / 2.)?
     } else {
         z_alpha(alpha)?
@@ -168,19 +195,30 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// # Errors
 ///
-/// Returns an error if `p0` not in `[0, 1]`.
+/// Returns an error in any of these circumstances:
+/// - `n == 0` or `n < n_s`.
+/// - `p0` is not in `[0, 1]`.
 pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    if n == 0 {
+        return Err(StatsError("arg `n` must be positive."));
+    }
+    if n < n_s {
+        return Err(StatsError("arg `n` must not be less than arg `n_s`."));
+    }
+
     let binomial = Binomial::new(p0, n).stats_result("invalid arg `p0`")?;
     let prob_le = binomial.cdf(n_s);
     let _prob_lt = binomial.cdf(n_s - 1);
     let prob_ge = binomial.cdf(n) - _prob_lt;
 
-    let target_s_lo = (n as f64 * p0).floor() as u64;
-    let target_s_hi = (n as f64 * p0).ceil() as u64;
-    let abs = n_s.abs_diff(target_s_lo).min(n_s.abs_diff(target_s_hi));
+    let target_s_lo = (n as f64 * p0).floor() as i64;
+    let target_s_hi = (n as f64 * p0).ceil() as i64;
+    let delta = (n_s as i64 - target_s_lo)
+        .abs()
+        .min((n_s as i64 - target_s_hi).abs());
 
-    let extreme_lo = (target_s_lo - abs).max(0);
-    let extreme_hi = (target_s_hi + abs).min(n);
+    let extreme_lo = (target_s_lo - delta).max(0) as u64;
+    let extreme_hi = (target_s_hi + delta).min(n as i64) as u64;
     let prob_extreme = (binomial.cdf(extreme_lo) + (1. - binomial.cdf(extreme_hi - 1))).min(1.);
 
     let p_value = match alt_hyp {
@@ -203,7 +241,10 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
 ///
 /// # Errors
 ///
-/// Returns an error if `p0` not in `[0, 1]`.
+/// Returns an error in any of these circumstances:
+/// - `n == 0` or `n < n_s`.
+/// - `p0` is not in `[0, 1]`.
+/// - `alpha` is not in `[0, 1]`.
 pub fn exact_binomial_test(
     n: u64,
     n_s: u64,
@@ -211,6 +252,10 @@ pub fn exact_binomial_test(
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
+    if !(0.0..=1.0).contains(&alpha) {
+        return Err(StatsError("arg `alpha` not in interval `[0, 1]`"));
+    }
+
     let p_value = exact_binomial_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
     Ok(test_res)
