@@ -117,7 +117,7 @@ sample estimates:
 probability of success 
                    0.4 
 ##################
-# prop.test: used for Wilson score confidence intervals
+# prop.test: used for Wilson score confidence intervals and one-proportion z test
 
 > prop.test(40, 100, 0.5, alternative='less', correct='FALSE')
 

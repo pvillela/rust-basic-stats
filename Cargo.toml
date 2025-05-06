@@ -23,7 +23,7 @@ polars = { version = "0.43", optional = true } # required by hypors
 bernoulli = []
 binomial = ["bernoulli"]
 wilcoxon = []
-all = ["bernoulli", "wilcoxon"]
+all = ["binomial", "wilcoxon"]
 # Private:
 _hypors = [
     "dep:hypors",

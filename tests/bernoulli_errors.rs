@@ -13,33 +13,42 @@ fn test_bernoulli_p_hat() {
 }
 
 #[test]
-fn test_bernoulli_normal_approx_z() {
+fn test_binomial_normal_approx_z() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    assert!(bernoulli_normal_approx_z(0, 0, 0.).is_err(),);
-    assert!(bernoulli_normal_approx_z(0, 0, 0.5).is_err(),);
-    assert!(bernoulli_normal_approx_z(0, 0, 1.).is_err(),);
-    assert!(bernoulli_normal_approx_z(1, 0, 0.).is_err(),);
-    assert!(bernoulli_normal_approx_z(1, 0, 0.5).unwrap().is_finite(),);
-    assert!(bernoulli_normal_approx_z(1, 0, 1.).is_err(),);
+    assert!(binomial_normal_approx_z(0, 0, 0.5).is_err(),);
+    assert!(binomial_normal_approx_z(1, 0, 0.).is_err(),);
+    assert!(binomial_normal_approx_z(1, 0, 0.5).unwrap().is_finite(),);
+    assert!(binomial_normal_approx_z(1, 0, 1.).is_err(),);
 }
 
 #[test]
-fn test_bernoulli_normal_approx_p() {
+fn test_binomial_normal_approx_p() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    assert!(bernoulli_normal_approx_p(0, 0, 0., AltHyp::Ne).is_err(),);
-    assert!(bernoulli_normal_approx_p(0, 0, 0.5, AltHyp::Ne).is_err(),);
-    assert!(bernoulli_normal_approx_p(0, 0, 1., AltHyp::Ne).is_err(),);
-    assert!(bernoulli_normal_approx_p(1, 0, 0., AltHyp::Ne).is_err(),);
+    assert!(binomial_normal_approx_p(0, 0, 0.5, AltHyp::Ne).is_err(),);
+    assert!(binomial_normal_approx_p(1, 0, 0., AltHyp::Ne).is_err(),);
     assert!(
-        bernoulli_normal_approx_p(1, 0, 0.5, AltHyp::Ne)
+        binomial_normal_approx_p(1, 0, 0.5, AltHyp::Ne)
             .unwrap()
             .is_finite(),
     );
-    assert!(bernoulli_normal_approx_p(1, 0, 1., AltHyp::Ne).is_err(),);
+    assert!(binomial_normal_approx_p(1, 0, 1., AltHyp::Ne).is_err(),);
+}
+
+#[test]
+fn test_one_proportion_z_test() {
+    // Returns an error in any of these circumstances:
+    // - `n == 0`.
+    // - `p0` not in `(0, 1)`.
+    // - `alpha` not in `[0, 1]`.
+    assert!(one_proportion_z_test(0, 0, 0.5, AltHyp::Ne, 0.5).is_err(),);
+    assert!(one_proportion_z_test(1, 0, 0., AltHyp::Ne, 0.5).is_err(),);
+    assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 0.).is_ok());
+    assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 1.).is_ok());
+    assert!(one_proportion_z_test(1, 0, 1., AltHyp::Ne, 0.5).is_err(),);
 }
 
 #[test]

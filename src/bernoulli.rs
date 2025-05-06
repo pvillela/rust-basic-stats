@@ -7,7 +7,7 @@ use super::{
 use crate::error::{AsStatsResult, StatsError, StatsResult};
 use statrs::distribution::{Beta, Binomial, ContinuousCDF, DiscreteCDF};
 
-/// Estimator of mean of Bernoulli distribution.
+/// Estimator of success probability of Bernoulli distribution.
 ///
 /// Arguments:
 /// - `n`: number of trials.
@@ -18,7 +18,7 @@ use statrs::distribution::{Beta, Binomial, ContinuousCDF, DiscreteCDF};
 /// Returns an error if `n == 0`
 pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
     if n == 0 {
-        return Err(StatsError("arg `n` is invalid"));
+        return Err(StatsError("arg `n` must be positive"));
     }
     Ok(n_s as f64 / n as f64)
 }
@@ -36,9 +36,9 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
 /// Returns an error in any of these circumstances:
 /// - `n == 0`.
 /// - `p0` not in `(0, 1)`.
-pub fn bernoulli_normal_approx_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
+pub fn binomial_normal_approx_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
     if !(0.0..1.0).contains(&p0) || p0 == 0.0 {
-        return Err(StatsError("arg `p0` is invalid"));
+        return Err(StatsError("arg `p0` must be in interval `(0, 1)`"));
     }
     let p_hat = bernoulli_p_hat(n, n_s)?;
     let ret = (p_hat - p0) / (p0 * (1. - p0) / n as f64).sqrt();
@@ -59,9 +59,36 @@ pub fn bernoulli_normal_approx_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> 
 /// Returns an error in any of these circumstances:
 /// - `n == 0`.
 /// - `p0` not in `(0, 1)`.
-pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
-    let z = bernoulli_normal_approx_z(n, n_s, p0)?;
+pub fn binomial_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let z = binomial_normal_approx_z(n, n_s, p0)?;
     Ok(z_to_p(z, alt_hyp))
+}
+
+/// One-sample proportion test (Bernoulli distribution) using the Binomial Normal approximation.
+///
+/// Arguments:
+/// - `n`: number of trials.
+/// - `n_s`: number of successes (`1`s) observed.
+/// - `p0`: probability of success under null hypothesis.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
+///
+/// # Errors
+///
+/// Returns an error in any of these circumstances:
+/// - `n == 0` or `n < n_s`.
+/// - `p0` is not in `(0, 1)`.
+/// - `alpha` is not in `[0, 1]`.
+pub fn one_proportion_z_test(
+    n: u64,
+    n_s: u64,
+    p0: f64,
+    alt_hyp: AltHyp,
+    alpha: f64,
+) -> StatsResult<HypTestResult> {
+    let p_value = binomial_normal_approx_p(n, n_s, p0, alt_hyp)?;
+    let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
+    Ok(test_res)
 }
 
 /// Binomial proportion confidence interval (Wilson score without continuity correction).
@@ -310,18 +337,27 @@ mod test {
         p0: f64,
         alt_hyp: AltHyp,
         exp_p: f64,
+        exp_z_p: f64,
         exp_cp_ci: Ci,
         exp_ws_ci: Ci,
         exp_accept_hyp: Hyp,
+        exp_z_accept_hyp: Hyp,
     ) {
         let cp_ci = binomial_cp_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
         let ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
         let res = exact_binomial_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
+        let z_res = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
         let p = res.p();
+        let z_p = z_res.p();
 
         assert!(
             exp_p.approx_eq(p, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_p={exp_p}, p={p}"
+        );
+
+        assert!(
+            exp_z_p.approx_eq(z_p, EPSILON),
+            "alt_hyp={alt_hyp:?} -- exp_p={exp_z_p}, p={z_p}"
         );
 
         assert!(
@@ -354,12 +390,23 @@ mod test {
             ws_ci.1
         );
 
-        assert_eq!(p, res.p(), "alt_hyp={alt_hyp:?} -- res.p");
         assert_eq!(ALPHA, res.alpha(), "alt_hyp={alt_hyp:?} -- res.alpha");
         assert_eq!(alt_hyp, res.alt_hyp(), "alt_hyp={alt_hyp:?} -- res.alt_hyp");
         assert_eq!(
             exp_accept_hyp,
             res.accepted(),
+            "alt_hyp={alt_hyp:?} -- res.accepted"
+        );
+
+        assert_eq!(ALPHA, z_res.alpha(), "alt_hyp={alt_hyp:?} -- z_res.alpha");
+        assert_eq!(
+            alt_hyp,
+            z_res.alt_hyp(),
+            "alt_hyp={alt_hyp:?} -- z_res.alt_hyp"
+        );
+        assert_eq!(
+            exp_z_accept_hyp,
+            z_res.accepted(),
             "alt_hyp={alt_hyp:?} -- res.accepted"
         );
     }
@@ -370,9 +417,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Lt;
         let exp_p = 0.02844;
+        let exp_z_p = 0.02275;
         let exp_cp_ci = Ci(0.0000000, 0.4870242);
         let exp_ws_ci = Ci(0.0000000, 0.4821905);
         let exp_accept_hyp = Hyp::Alt(AltHyp::Lt);
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -380,9 +429,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -392,9 +443,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.05689;
+        let exp_z_p = 0.0455;
         let exp_cp_ci = Ci(0.3032948, 0.5027908);
         let exp_ws_ci = Ci(0.3094013, 0.4979974);
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -402,9 +455,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -414,9 +469,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Gt;
         let exp_p = 0.9824;
+        let exp_z_p = 0.9772;
         let exp_cp_ci = Ci(0.317526, 1.000000);
         let exp_ws_ci = Ci(0.3230781, 1.0000000);
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -424,9 +481,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -436,9 +495,11 @@ mod test {
         let p0 = 0.4;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
+        let exp_z_p = 1.;
         let exp_cp_ci = Ci(0.3032948, 0.5027908);
         let exp_ws_ci = Ci(0.3094013, 0.4979974);
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -446,9 +507,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -458,9 +521,11 @@ mod test {
         let p0 = 0.055;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.6626;
+        let exp_z_p = 0.5106;
         let exp_cp_ci = Ci(0.01100449, 0.09925716);
         let exp_ws_ci = Ci(0.01566330, 0.09837071);
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -468,9 +533,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -480,9 +547,11 @@ mod test {
         let p0 = 0.945;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.6626;
+        let exp_z_p = 0.5106;
         let exp_cp_ci = Ci(0.9007428, 0.9889955);
         let exp_ws_ci = Ci(0.9016293, 0.9843367);
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -490,9 +559,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -505,9 +576,11 @@ mod test {
         let p0 = 0.95;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.05;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000, 0.975);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -515,9 +588,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -527,9 +602,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000, 0.975);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -537,9 +614,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -549,9 +628,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.025, 1.000);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -559,9 +640,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -571,9 +654,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000000e+00, 3.688811e-05);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -581,9 +666,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -593,9 +680,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(2.531780e-07, 5.571516e-05);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -603,9 +692,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -615,9 +706,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.9999443, 0.9999997);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -625,9 +718,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 
@@ -637,9 +732,11 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
+        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.9999631, 1.0000000);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
+        let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
             n,
@@ -647,9 +744,11 @@ mod test {
             p0,
             alt_hyp,
             exp_p,
+            exp_z_p,
             exp_cp_ci,
             exp_ws_ci,
             exp_accept_hyp,
+            exp_z_accept_hyp,
         );
     }
 }
