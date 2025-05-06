@@ -79,16 +79,19 @@ pub fn bernoulli_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> 
 ///
 /// # Errors
 ///
-/// Returns an error if `alpha` not in `[0, 1]`.
+/// Returns an error in any of these circumstances:
+/// - `n == 0`.
+/// - `alpha` not in `(0, 1)`.
 pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     let p_hat = bernoulli_p_hat(n, n_s)?;
 
     let nr = n as f64;
 
+    // Need this guard because `alpha / 2.` below masks errors.
+    if !(0.0..1.0).contains(&alpha) || alpha == 0. {
+        return Err(StatsError("arg `alpha` must be in (0, 1)"));
+    }
     let z_alpha = if let AltHyp::Ne = alt_hyp {
-        if alpha == 1. {
-            return Err(StatsError("arg `alpha` must be in (0, 1)"));
-        }
         z_alpha(alpha / 2.)?
     } else {
         z_alpha(alpha)?
@@ -135,30 +138,62 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 /// # Errors
 ///
 /// Returns an error in any of these circumstances:
-/// - `n_s == 0` or `n <= n_s`.
+/// - `n == 0` or `n < n_s`.
 /// - `alpha` is not in `[0, 1]`.
 pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
+    if n == 0 {
+        return Err(StatsError("arg `n` must be positive"));
+    }
+    if n < n_s {
+        return Err(StatsError(
+            "arg `n` must be greater than or equal to arg `n_s`",
+        ));
+    }
     if !(0.0..=1.0).contains(&alpha) {
-        return Err(StatsError("arg `alpha` not in interval `[0, 1]`"));
+        return Err(StatsError("arg `alpha` must be in interval `[0, 1]`"));
     }
 
-    let lo_beta =
-        Beta::new(n_s as f64, (n - n_s + 1) as f64).stats_result("invalid arg `n` or `n_s`")?;
-    let hi_beta =
-        Beta::new((n_s + 1) as f64, (n - n_s) as f64).stats_result("invalid arg `n` or `n_s`")?;
+    // Include special cases not handled by Beta function.
+    // Below closures based on https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/binom.test.R
+    // code for lambdas p.L and p.U.
+
+    let lo_qbeta = |alpha| -> StatsResult<f64> {
+        if n_s == 0 {
+            Ok(0.)
+        } else {
+            let lo_beta = Beta::new(n_s as f64, (n - n_s + 1) as f64)
+                .stats_result("invalid arg `n` or `n_s`")?;
+            Ok(lo_beta.inverse_cdf(alpha))
+        }
+    };
+
+    let hi_qbeta = |alpha| -> StatsResult<f64> {
+        if n_s == n {
+            Ok(1.)
+        } else {
+            let hi_beta = Beta::new((n_s + 1) as f64, (n - n_s) as f64)
+                .stats_result("invalid arg `n` or `n_s`")?;
+            Ok(hi_beta.inverse_cdf(alpha))
+        }
+    };
+
     let (lo, hi) = match alt_hyp {
         AltHyp::Lt => {
             let lo = 0.;
-            let hi = hi_beta.inverse_cdf(1. - alpha);
+            // let hi = hi_beta.inverse_cdf(1. - alpha);
+            let hi = hi_qbeta(1. - alpha)?;
             (lo, hi)
         }
         AltHyp::Ne => {
-            let lo = lo_beta.inverse_cdf(alpha / 2.);
-            let hi = hi_beta.inverse_cdf(1. - alpha / 2.);
+            // let lo = lo_beta.inverse_cdf(alpha / 2.);
+            // let hi = hi_beta.inverse_cdf(1. - alpha / 2.);
+            let lo = lo_qbeta(alpha / 2.)?;
+            let hi = hi_qbeta(1. - alpha / 2.)?;
             (lo, hi)
         }
         AltHyp::Gt => {
-            let lo = lo_beta.inverse_cdf(alpha);
+            // let lo = lo_beta.inverse_cdf(alpha);
+            let lo = lo_qbeta(alpha)?;
             let hi = 1.;
             (lo, hi)
         }
@@ -176,12 +211,9 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// # Errors
 ///
 /// Returns an error in any of these circumstances:
-/// - `n_s == 0` or `n <= n_s`.
+/// - `n == 0` or `n < n_s`.
 /// - `alpha` is not in `[0, 1]`.
 pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
-    if !(0.0..=1.0).contains(&alpha) {
-        return Err(StatsError("arg `alpha` not in interval `[0, 1]`"));
-    }
     binomial_cp_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
 
@@ -208,7 +240,7 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
 
     let binomial = Binomial::new(p0, n).stats_result("invalid arg `p0`")?;
     let prob_le = binomial.cdf(n_s);
-    let _prob_lt = binomial.cdf(n_s - 1);
+    let _prob_lt = if n_s == 0 { 0. } else { binomial.cdf(n_s - 1) };
     let prob_ge = binomial.cdf(n) - _prob_lt;
 
     let target_s_lo = (n as f64 * p0).floor() as i64;
@@ -218,8 +250,10 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
         .min((n_s as i64 - target_s_hi).abs());
 
     let extreme_lo = (target_s_lo - delta).max(0) as u64;
-    let extreme_hi = (target_s_hi + delta).min(n as i64) as u64;
-    let prob_extreme = (binomial.cdf(extreme_lo) + (1. - binomial.cdf(extreme_hi - 1))).min(1.);
+    let _extreme_hi = (target_s_hi + delta).min(n as i64) as u64;
+    let extreme_hi_1 = if _extreme_hi == 0 { 0 } else { _extreme_hi - 1 };
+
+    let prob_extreme = (binomial.cdf(extreme_lo) + (1. - binomial.cdf(extreme_hi_1))).min(1.);
 
     let p_value = match alt_hyp {
         AltHyp::Lt => prob_le,
@@ -268,7 +302,7 @@ mod test {
     use super::*;
 
     const ALPHA: f64 = 0.05;
-    const EPSILON: f64 = 0.00005;
+    const EPSILON: f64 = 0.000005;
 
     fn check_bernoulli(
         n: u64,
@@ -448,6 +482,163 @@ mod test {
         let exp_p = 0.6626;
         let exp_cp_ci = Ci(0.9007428, 0.9889955);
         let exp_ws_ci = Ci(0.9016293, 0.9843367);
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    //==================
+    // Beta function corner cases.
+
+    #[test]
+    fn test_bern_eq_1_0_095() {
+        let (n, n_s) = (1, 0);
+        let p0 = 0.95;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 0.05;
+        let exp_cp_ci = Ci(0.000, 0.975);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_1_0_05() {
+        let (n, n_s) = (1, 0);
+        let p0 = 0.5;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 1.;
+        let exp_cp_ci = Ci(0.000, 0.975);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_1_1_05() {
+        let (n, n_s) = (1, 1);
+        let p0 = 0.5;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 1.;
+        let exp_cp_ci = Ci(0.025, 1.000);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_100000_0_05() {
+        let (n, n_s) = (100000, 0);
+        let p0 = 0.5;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 2.2e-16;
+        let exp_cp_ci = Ci(0.000000e+00, 3.688811e-05);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_100000_1_05() {
+        let (n, n_s) = (100, 96);
+        let p0 = 0.5;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 2.2e-16;
+        let exp_cp_ci = Ci(2.531780e-07, 5.571516e-05);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_100000_99999_05() {
+        let (n, n_s) = (100000, 99999);
+        let p0 = 0.5;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 2.2e-16;
+        let exp_cp_ci = Ci(0.9999443, 0.9999997);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
+        let exp_accept_hyp = Hyp::Null;
+
+        check_bernoulli(
+            n,
+            n_s,
+            p0,
+            alt_hyp,
+            exp_p,
+            exp_cp_ci,
+            exp_ws_ci,
+            exp_accept_hyp,
+        );
+    }
+
+    #[test]
+    fn test_bern_eq_100000_100000_05() {
+        let (n, n_s) = (100, 96);
+        let p0 = 0.5;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 2.2e-16;
+        let exp_cp_ci = Ci(0.9999631, 1.0000000);
+        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
 
         check_bernoulli(
