@@ -1,11 +1,13 @@
 //! Statistics related to the Bernoulli distribution. Gated by feature **bernoulli**.
 
+use std::cmp::Ordering;
+
 use super::{
     core::{AltHyp, Ci, HypTestResult},
     normal::{z_alpha, z_to_p},
 };
 use crate::error::{AsStatsResult, StatsError, StatsResult};
-use statrs::distribution::{Beta, Binomial, ContinuousCDF, DiscreteCDF};
+use statrs::distribution::{Beta, Binomial, ContinuousCDF, Discrete, DiscreteCDF};
 
 /// Estimator of success probability of Bernoulli distribution.
 ///
@@ -207,19 +209,15 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
     let (lo, hi) = match alt_hyp {
         AltHyp::Lt => {
             let lo = 0.;
-            // let hi = hi_beta.inverse_cdf(1. - alpha);
             let hi = hi_qbeta(1. - alpha)?;
             (lo, hi)
         }
         AltHyp::Ne => {
-            // let lo = lo_beta.inverse_cdf(alpha / 2.);
-            // let hi = hi_beta.inverse_cdf(1. - alpha / 2.);
             let lo = lo_qbeta(alpha / 2.)?;
             let hi = hi_qbeta(1. - alpha / 2.)?;
             (lo, hi)
         }
         AltHyp::Gt => {
-            // let lo = lo_beta.inverse_cdf(alpha);
             let lo = lo_qbeta(alpha)?;
             let hi = 1.;
             (lo, hi)
@@ -266,26 +264,68 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
     }
 
     let binomial = Binomial::new(p0, n).stats_result("invalid arg `p0`")?;
+
     let prob_le = binomial.cdf(n_s);
-    let _prob_lt = if n_s == 0 { 0. } else { binomial.cdf(n_s - 1) };
-    let prob_ge = binomial.cdf(n) - _prob_lt;
 
-    let target_s_lo = (n as f64 * p0).floor() as i64;
-    let target_s_hi = (n as f64 * p0).ceil() as i64;
-    let delta = (n_s as i64 - target_s_lo)
-        .abs()
-        .min((n_s as i64 - target_s_hi).abs());
+    let prob_ge = {
+        let prob_lt = if n_s == 0 { 0. } else { binomial.cdf(n_s - 1) };
+        1. - prob_lt
+    };
 
-    let extreme_lo = (target_s_lo - delta).max(0) as u64;
-    let _extreme_hi = (target_s_hi + delta).min(n as i64) as u64;
-    let extreme_hi_1 = if _extreme_hi == 0 { 0 } else { _extreme_hi - 1 };
+    // Sum the probabilities of all values with probability lower or equal to `n_s`'s.
+    // Based on https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/binom.test.R
+    // code for PVAL.
+    let prob_ne = {
+        if p0 == 0. {
+            (n_s == 0) as u64 as f64
+        } else if p0 == 1. {
+            (n_s == n) as u64 as f64
+        } else {
+            let rel_err = 1. + 1e-7;
+            let prob_n_s = binomial.pmf(n_s);
+            let mode = n as f64 * p0;
 
-    let prob_extreme = (binomial.cdf(extreme_lo) + (1. - binomial.cdf(extreme_hi_1))).min(1.);
+            match (n_s as f64).total_cmp(&mode) {
+                Ordering::Equal => {
+                    // By definition of mode, all other values have prob less than `n_s`'s.
+                    1.
+                }
+
+                Ordering::Less => {
+                    let mut sum_prob = 0.;
+                    let imode = mode.ceil() as u64;
+                    for i in (imode..=n).rev() {
+                        let prob_i = binomial.pmf(i);
+                        if prob_i <= prob_n_s * rel_err {
+                            sum_prob += prob_i;
+                        } else {
+                            break;
+                        }
+                    }
+                    prob_le + sum_prob
+                }
+
+                Ordering::Greater => {
+                    let mut sum_prob = 0.;
+                    let imode = mode.floor() as u64;
+                    for i in 0..=imode {
+                        let prob_i = binomial.pmf(i);
+                        if prob_i <= prob_n_s * rel_err {
+                            sum_prob += prob_i;
+                        } else {
+                            break;
+                        }
+                    }
+                    prob_ge + sum_prob
+                }
+            }
+        }
+    };
 
     let p_value = match alt_hyp {
         AltHyp::Lt => prob_le,
         AltHyp::Gt => prob_ge,
-        AltHyp::Ne => prob_extreme,
+        AltHyp::Ne => prob_ne,
     };
 
     Ok(p_value)
@@ -329,7 +369,7 @@ mod test {
     use super::*;
 
     const ALPHA: f64 = 0.05;
-    const EPSILON: f64 = 0.000005;
+    const EPSILON: f64 = 0.00005;
 
     fn check_bernoulli(
         n: u64,
@@ -363,14 +403,14 @@ mod test {
         assert!(
             exp_cp_ci.0.approx_eq(cp_ci.0, EPSILON)
                 || exp_cp_ci.0.is_infinite() && cp_ci.0.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_ci.0={}, ci.0={}",
+            "alt_hyp={alt_hyp:?} -- exp_cp_ci.0={}, cp_ci.0={}",
             exp_cp_ci.0,
             cp_ci.0
         );
         assert!(
             exp_cp_ci.1.approx_eq(cp_ci.1, EPSILON)
                 || exp_cp_ci.1.is_infinite() && cp_ci.1.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_ci.1={}, ci.1={}",
+            "alt_hyp={alt_hyp:?} -- exp_cp_ci.1={}, cp_ci.1={}",
             exp_cp_ci.1,
             cp_ci.1
         );
@@ -378,14 +418,14 @@ mod test {
         assert!(
             exp_ws_ci.0.approx_eq(ws_ci.0, EPSILON)
                 || exp_ws_ci.0.is_infinite() && ws_ci.0.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_ci.0={}, ci.0={}",
+            "alt_hyp={alt_hyp:?} -- exp_ws_ci.0={}, ws_ci.0={}",
             exp_ws_ci.0,
             ws_ci.0
         );
         assert!(
             exp_ws_ci.1.approx_eq(ws_ci.1, EPSILON)
                 || exp_ws_ci.1.is_infinite() && ws_ci.1.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_ci.1={}, ci.1={}",
+            "alt_hyp={alt_hyp:?} -- exp_ws_ci.1={}, ws_ci.1={}",
             exp_ws_ci.1,
             ws_ci.1
         );
@@ -657,7 +697,7 @@ mod test {
         let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000000e+00, 3.688811e-05);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
@@ -683,7 +723,7 @@ mod test {
         let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(2.531780e-07, 5.571516e-05);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
@@ -709,7 +749,7 @@ mod test {
         let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.9999443, 0.9999997);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
@@ -735,7 +775,7 @@ mod test {
         let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.9999631, 1.0000000);
         let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_bernoulli(
