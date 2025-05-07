@@ -371,6 +371,56 @@ mod test {
     const ALPHA: f64 = 0.05;
     const EPSILON: f64 = 0.00005;
 
+    fn check_binomial_no_z(
+        n: u64,
+        n_s: u64,
+        p0: f64,
+        alt_hyp: AltHyp,
+        exp_p: f64,
+        exp_cp_ci: Ci,
+        exp_accept_hyp: Hyp,
+    ) {
+        let cp_ci = binomial_cp_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
+        let res = exact_binomial_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
+        let p = res.p();
+
+        assert!(
+            exp_p.approx_eq(p, EPSILON),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_p={exp_p}, p={p}"
+        );
+
+        assert!(
+            exp_cp_ci.0.approx_eq(cp_ci.0, EPSILON)
+                || exp_cp_ci.0.is_infinite() && cp_ci.0.is_infinite(),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_cp_ci.0={}, cp_ci.0={}",
+            exp_cp_ci.0,
+            cp_ci.0
+        );
+        assert!(
+            exp_cp_ci.1.approx_eq(cp_ci.1, EPSILON)
+                || exp_cp_ci.1.is_infinite() && cp_ci.1.is_infinite(),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_cp_ci.1={}, cp_ci.1={}",
+            exp_cp_ci.1,
+            cp_ci.1
+        );
+
+        assert_eq!(
+            ALPHA,
+            res.alpha(),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> res.alpha"
+        );
+        assert_eq!(
+            alt_hyp,
+            res.alt_hyp(),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> res.alt_hyp"
+        );
+        assert_eq!(
+            exp_accept_hyp,
+            res.accepted(),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> res.accepted"
+        );
+    }
+
     fn check_binomial(
         n: u64,
         n_s: u64,
@@ -383,71 +433,48 @@ mod test {
         exp_accept_hyp: Hyp,
         exp_z_accept_hyp: Hyp,
     ) {
-        let cp_ci = binomial_cp_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
+
+        // check z
+
         let ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
-        let res = exact_binomial_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
         let z_res = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
-        let p = res.p();
         let z_p = z_res.p();
 
         assert!(
-            exp_p.approx_eq(p, EPSILON),
-            "alt_hyp={alt_hyp:?} -- exp_p={exp_p}, p={p}"
-        );
-
-        assert!(
             exp_z_p.approx_eq(z_p, EPSILON),
-            "alt_hyp={alt_hyp:?} -- exp_p={exp_z_p}, p={z_p}"
-        );
-
-        assert!(
-            exp_cp_ci.0.approx_eq(cp_ci.0, EPSILON)
-                || exp_cp_ci.0.is_infinite() && cp_ci.0.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_cp_ci.0={}, cp_ci.0={}",
-            exp_cp_ci.0,
-            cp_ci.0
-        );
-        assert!(
-            exp_cp_ci.1.approx_eq(cp_ci.1, EPSILON)
-                || exp_cp_ci.1.is_infinite() && cp_ci.1.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_cp_ci.1={}, cp_ci.1={}",
-            exp_cp_ci.1,
-            cp_ci.1
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_z_p={exp_z_p}, z_p={z_p}"
         );
 
         assert!(
             exp_ws_ci.0.approx_eq(ws_ci.0, EPSILON)
                 || exp_ws_ci.0.is_infinite() && ws_ci.0.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_ws_ci.0={}, ws_ci.0={}",
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_ws_ci.0={}, ws_ci.0={}",
             exp_ws_ci.0,
             ws_ci.0
         );
         assert!(
             exp_ws_ci.1.approx_eq(ws_ci.1, EPSILON)
                 || exp_ws_ci.1.is_infinite() && ws_ci.1.is_infinite(),
-            "alt_hyp={alt_hyp:?} -- exp_ws_ci.1={}, ws_ci.1={}",
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_ws_ci.1={}, ws_ci.1={}",
             exp_ws_ci.1,
             ws_ci.1
         );
 
-        assert_eq!(ALPHA, res.alpha(), "alt_hyp={alt_hyp:?} -- res.alpha");
-        assert_eq!(alt_hyp, res.alt_hyp(), "alt_hyp={alt_hyp:?} -- res.alt_hyp");
         assert_eq!(
-            exp_accept_hyp,
-            res.accepted(),
-            "alt_hyp={alt_hyp:?} -- res.accepted"
+            ALPHA,
+            z_res.alpha(),
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> z_res.alpha"
         );
-
-        assert_eq!(ALPHA, z_res.alpha(), "alt_hyp={alt_hyp:?} -- z_res.alpha");
         assert_eq!(
             alt_hyp,
             z_res.alt_hyp(),
-            "alt_hyp={alt_hyp:?} -- z_res.alt_hyp"
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> z_res.alt_hyp"
         );
         assert_eq!(
             exp_z_accept_hyp,
             z_res.accepted(),
-            "alt_hyp={alt_hyp:?} -- res.accepted"
+            "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> z_res.accepted"
         );
     }
 
@@ -616,26 +643,10 @@ mod test {
         let p0 = 0.95;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.05;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000, 0.975);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 
     #[test]
@@ -644,26 +655,10 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000, 0.975);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 
     #[test]
@@ -672,26 +667,10 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.025, 1.000);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Null;
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 
     #[test]
@@ -700,26 +679,10 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.000000e+00, 3.688811e-05);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 
     #[test]
@@ -728,26 +691,10 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(2.531780e-07, 5.571516e-05);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 
     #[test]
@@ -756,26 +703,10 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.9999443, 0.9999997);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 
     #[test]
@@ -784,25 +715,9 @@ mod test {
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
-        let exp_z_p = binomial_normal_approx_p(n, n_s, p0, alt_hyp).unwrap(); // not being tested
         let exp_cp_ci = Ci(0.9999631, 1.0000000);
-        let exp_ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap(); // not being tested
         let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
-        let exp_z_accept_hyp = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA)
-            .unwrap()
-            .accepted(); // not being tested
 
-        check_binomial(
-            n,
-            n_s,
-            p0,
-            alt_hyp,
-            exp_p,
-            exp_z_p,
-            exp_cp_ci,
-            exp_ws_ci,
-            exp_accept_hyp,
-            exp_z_accept_hyp,
-        );
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
 }
