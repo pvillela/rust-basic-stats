@@ -116,7 +116,8 @@ alternative hypothesis: true probability of success is not equal to 0.4
 sample estimates:
 probability of success 
                    0.4 
-##################
+
+##########################
 # prop.test: used for Wilson score confidence intervals and one-proportion z test
 
 > prop.test(40, 100, 0.5, alternative='less', correct='FALSE')

@@ -34,6 +34,27 @@ fn main() {
 
     {
         let n = 100_000;
+        let n_s = 10;
+        let ci = binomial_cp_alt_hyp_ci(n, n_s, ALT_HYP, ALPHA);
+        println!("n={n}, n_s={n_s}, ci={ci:?}");
+    }
+
+    {
+        let n = 100_000;
+        let n_s = 100;
+        let ci = binomial_cp_alt_hyp_ci(n, n_s, ALT_HYP, ALPHA);
+        println!("n={n}, n_s={n_s}, ci={ci:?}");
+    }
+
+    {
+        let n = 100_000;
+        let n_s = 1000;
+        let ci = binomial_cp_alt_hyp_ci(n, n_s, ALT_HYP, ALPHA);
+        println!("n={n}, n_s={n_s}, ci={ci:?}");
+    }
+
+    {
+        let n = 100_000;
         let n_s = 99_999;
         let ci = binomial_cp_alt_hyp_ci(n, n_s, ALT_HYP, ALPHA);
         println!("n={n}, n_s={n_s}, ci={ci:?}");

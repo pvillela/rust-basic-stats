@@ -202,19 +202,19 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
         } else {
             let hi_beta = Beta::new((n_s + 1) as f64, (n - n_s) as f64)
                 .stats_result("invalid arg `n` or `n_s`")?;
-            Ok(hi_beta.inverse_cdf(alpha))
+            Ok(hi_beta.inverse_cdf(1. - alpha))
         }
     };
 
     let (lo, hi) = match alt_hyp {
         AltHyp::Lt => {
             let lo = 0.;
-            let hi = hi_qbeta(1. - alpha)?;
+            let hi = hi_qbeta(alpha)?;
             (lo, hi)
         }
         AltHyp::Ne => {
             let lo = lo_qbeta(alpha / 2.)?;
-            let hi = hi_qbeta(1. - alpha / 2.)?;
+            let hi = hi_qbeta(alpha / 2.)?;
             (lo, hi)
         }
         AltHyp::Gt => {
@@ -724,7 +724,7 @@ mod test {
 
     #[test]
     fn test_bern_eq_100000_1_05() {
-        let (n, n_s) = (100, 96);
+        let (n, n_s) = (100000, 1);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
@@ -780,7 +780,7 @@ mod test {
 
     #[test]
     fn test_bern_eq_100000_100000_05() {
-        let (n, n_s) = (100, 96);
+        let (n, n_s) = (100000, 100000);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
