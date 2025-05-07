@@ -1,4 +1,4 @@
-use basic_stats::error::StatsError;
+use basic_stats::core::StatsError;
 
 /// Simplistic function that adds the products of ranks and values for a data set represented as
 /// an iterator sorted in ascending order.

@@ -20,10 +20,10 @@ hypors = { version = "0.2", optional = true }
 polars = { version = "0.43", optional = true } # required by hypors
 
 [features]
-bernoulli = []
-binomial = ["bernoulli"]
-wilcoxon = []
-all = ["binomial", "wilcoxon"]
+default = ["binomial", "normal", "wilcoxon"]
+binomial = ["normal"]
+normal = []
+wilcoxon = ["normal"]
 # Private:
 _hypors = [
     "dep:hypors",

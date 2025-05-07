@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cargo nextest run --lib --bins --examples --tests --features all --target-dir target/test-target
-cargo test --doc --features all
+cargo nextest run --lib --bins --examples --tests --target-dir target/test-target
+cargo test --doc

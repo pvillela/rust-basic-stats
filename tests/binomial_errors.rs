@@ -1,7 +1,7 @@
-#![cfg(feature = "bernoulli")]
+#![cfg(feature = "binomial")]
 
 use basic_stats::{
-    bernoulli::*,
+    binomial::*,
     core::{AltHyp, Ci},
 };
 

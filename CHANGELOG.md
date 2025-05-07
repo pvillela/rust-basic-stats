@@ -7,19 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2025-05-XX
 
-Includes breaking changes impacting all modules -- see below.
+Includes extensive breaking changes impacting all modules -- see below.
 
 ### Added
 
-- Examples and tests for all modules.
-- `binomial` module, which is an alias for the `bernoulli` module.
+- Extensive tests, both positive and negative.
+- Examples for all modules.
 
 ### Changed
 
 #### Breaking
 
-- Enhanced `error` module and implemented more appropriate error handling throughout the library.
-- Thoroughly reimplemented `bernoulli` module.
+- Modules `iter` and `error` are now subsumed under module `core`.
+- Module `bernoulli` was renamed `binomial` and thoroughly reimplemented.
+- Each module other than `core` is gated by a feature with the same name as the module.
+- Introduced `default` feature which includes features `normal`, `binomial`, and `wilcoxon`.
+- Enhanced error handling throughout the library.
 
 #### Non-breaking
 

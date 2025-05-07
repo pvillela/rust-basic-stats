@@ -1,7 +1,5 @@
 //! Core sample statistics and common types.
 
-use core::f64;
-
 /// Sample mean.
 ///
 /// Returns `NaN` if  `n == 0`.

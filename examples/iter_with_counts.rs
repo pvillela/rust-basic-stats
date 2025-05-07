@@ -1,4 +1,4 @@
-use basic_stats::iter::iter_with_counts;
+use basic_stats::core::iter_with_counts;
 
 fn main() {
     let dat = [1., 3., 9., 9., 10., 10., 10., 10., 20.];

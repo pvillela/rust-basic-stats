@@ -6,7 +6,7 @@ use super::{
     core::{AltHyp, Ci, HypTestResult},
     normal::{z_alpha, z_to_p},
 };
-use crate::error::{AsStatsResult, StatsError, StatsResult};
+use crate::core::{AsStatsResult, StatsError, StatsResult};
 use statrs::distribution::{Beta, Binomial, ContinuousCDF, Discrete, DiscreteCDF};
 
 /// Estimator of success probability of Bernoulli distribution.
@@ -371,7 +371,7 @@ mod test {
     const ALPHA: f64 = 0.05;
     const EPSILON: f64 = 0.00005;
 
-    fn check_bernoulli(
+    fn check_binomial(
         n: u64,
         n_s: u64,
         p0: f64,
@@ -452,7 +452,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_lt_100_40_05() {
+    fn test_binom_lt_100_40_05() {
         let (n, n_s) = (100, 40);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Lt;
@@ -463,7 +463,7 @@ mod test {
         let exp_accept_hyp = Hyp::Alt(AltHyp::Lt);
         let exp_z_accept_hyp = exp_accept_hyp;
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -478,7 +478,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100_40_05() {
+    fn test_binom_eq_100_40_05() {
         let (n, n_s) = (100, 40);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -489,7 +489,7 @@ mod test {
         let exp_accept_hyp = Hyp::Null;
         let exp_z_accept_hyp = Hyp::Alt(AltHyp::Ne);
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -504,7 +504,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_gt_100_40_05() {
+    fn test_binom_gt_100_40_05() {
         let (n, n_s) = (100, 40);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Gt;
@@ -515,7 +515,7 @@ mod test {
         let exp_accept_hyp = Hyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -530,7 +530,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100_40_04() {
+    fn test_binom_eq_100_40_04() {
         let (n, n_s) = (100, 40);
         let p0 = 0.4;
         let alt_hyp = AltHyp::Ne;
@@ -541,7 +541,7 @@ mod test {
         let exp_accept_hyp = Hyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -556,7 +556,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100_4_0055() {
+    fn test_binom_eq_100_4_0055() {
         let (n, n_s) = (100, 4);
         let p0 = 0.055;
         let alt_hyp = AltHyp::Ne;
@@ -567,7 +567,7 @@ mod test {
         let exp_accept_hyp = Hyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -582,7 +582,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100_96_0945() {
+    fn test_binom_eq_100_96_0945() {
         let (n, n_s) = (100, 96);
         let p0 = 0.945;
         let alt_hyp = AltHyp::Ne;
@@ -593,7 +593,7 @@ mod test {
         let exp_accept_hyp = Hyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -611,7 +611,7 @@ mod test {
     // Beta function corner cases.
 
     #[test]
-    fn test_bern_eq_1_0_095() {
+    fn test_binom_eq_1_0_095() {
         let (n, n_s) = (1, 0);
         let p0 = 0.95;
         let alt_hyp = AltHyp::Ne;
@@ -624,7 +624,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -639,7 +639,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_1_0_05() {
+    fn test_binom_eq_1_0_05() {
         let (n, n_s) = (1, 0);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -652,7 +652,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -667,7 +667,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_1_1_05() {
+    fn test_binom_eq_1_1_05() {
         let (n, n_s) = (1, 1);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -680,7 +680,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -695,7 +695,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100000_0_05() {
+    fn test_binom_eq_100000_0_05() {
         let (n, n_s) = (100000, 0);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -708,7 +708,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -723,7 +723,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100000_1_05() {
+    fn test_binom_eq_100000_1_05() {
         let (n, n_s) = (100000, 1);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -736,7 +736,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -751,7 +751,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100000_99999_05() {
+    fn test_binom_eq_100000_99999_05() {
         let (n, n_s) = (100000, 99999);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -764,7 +764,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,
@@ -779,7 +779,7 @@ mod test {
     }
 
     #[test]
-    fn test_bern_eq_100000_100000_05() {
+    fn test_binom_eq_100000_100000_05() {
         let (n, n_s) = (100000, 100000);
         let p0 = 0.5;
         let alt_hyp = AltHyp::Ne;
@@ -792,7 +792,7 @@ mod test {
             .unwrap()
             .accepted(); // not being tested
 
-        check_bernoulli(
+        check_binomial(
             n,
             n_s,
             p0,

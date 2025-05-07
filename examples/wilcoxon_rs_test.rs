@@ -1,6 +1,5 @@
 use basic_stats::{
-    core::{AltHyp, Hyp},
-    error::StatsError,
+    core::{AltHyp, Hyp, StatsError},
     wilcoxon::RankSum,
 };
 

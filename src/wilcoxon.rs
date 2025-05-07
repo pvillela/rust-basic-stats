@@ -2,9 +2,7 @@
 //! Gated by feature **wilcoxon**.
 
 use crate::{
-    core::{AltHyp, HypTestResult},
-    error::StatsError,
-    iter::iter_with_counts,
+    core::{AltHyp, HypTestResult, StatsError, iter_with_counts},
     normal::z_to_p,
 };
 

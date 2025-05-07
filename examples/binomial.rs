@@ -1,5 +1,5 @@
 use basic_stats::{
-    bernoulli::exact_binomial_test,
+    binomial::exact_binomial_test,
     core::{AltHyp, Hyp},
 };
 

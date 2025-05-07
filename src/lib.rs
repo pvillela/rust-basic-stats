@@ -4,12 +4,12 @@
 //! The feature **"all"** includes all features.
 
 pub mod core;
-pub mod error;
-pub mod iter;
+
+#[cfg(feature = "normal")]
 pub mod normal;
 
-#[cfg(feature = "bernoulli")]
-pub mod bernoulli;
+#[cfg(feature = "binomial")]
+pub mod binomial;
 
 #[cfg(feature = "wilcoxon")]
 pub mod wilcoxon;
@@ -17,8 +17,8 @@ pub mod wilcoxon;
 #[cfg(test)]
 pub(crate) mod dev_utils;
 
-#[cfg(feature = "binomial")]
-pub mod binomial {
-    //! Alias for module [`crate::bernoulli`]. Gated by feature **binomial**, which includes feature **bernoulli**.
-    pub use super::bernoulli::*;
-}
+// #[cfg(feature = "binomial")]
+// pub mod bernoulli {
+//     //! Alias for module [`crate::binomial`]. Gated by feature **bernoulli**, which includes feature **binomial**.
+//     pub use super::binomial::*;
+// }

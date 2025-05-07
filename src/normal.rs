@@ -2,8 +2,9 @@
 //! including the Student one-sample t-test and the
 //! Welch two-sample t-test (for samples from distributions that may have different variances).
 
-use super::core::{AltHyp, Ci, HypTestResult, SampleMoments};
-use crate::error::{AsStatsResult, StatsError, StatsResult};
+use crate::core::{
+    AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,
+};
 use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
 
 /// Returns the the probability that the standard normal distribution will produce a more extreme value
