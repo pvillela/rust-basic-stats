@@ -4,7 +4,7 @@ use basic_stats::core::StatsError;
 /// an iterator sorted in ascending order.
 ///
 /// # Errors:
-/// - Returns [`OrderingError`] if `data_set` is not in ascending order.
+/// - Returns an error if `data_set` is not in ascending order.
 fn rank_value_sum_prod(data_set: impl Iterator<Item = f64>) -> Result<f64, StatsError> {
     let mut sum_prod = 0.;
     let mut last_value = f64::MIN;
@@ -28,12 +28,15 @@ fn main() {
         let good = rank_value_sum_prod(data_set);
         println!("good={good:?}");
         // good=Ok(32.5)
+        assert!(good.is_ok());
+        assert_eq!(good.unwrap(), 32.5);
     }
 
     {
         let data_set = [-1.5, 3.0, 2.0, 5.25].into_iter();
         let bad = rank_value_sum_prod(data_set);
         println!("bad={bad:?}");
-        // bad=Err(OrderingError)
+        // bad=Err(StatsError("invalid iterator argument: items not properly ordered"))
+        assert!(bad.is_err());
     }
 }
