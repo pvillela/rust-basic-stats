@@ -1,4 +1,8 @@
-//! Statistics related to the Bernoulli distribution. Gated by feature **bernoulli**.
+//! Statistics related to samples of the Bernoulli distribution. The Binomial distribution with parameters `n` and `p`
+//! is the distribution of the sum of `n` independent Bernoulli random variables with probability of success `p`.
+//!
+//! This module is included by default. However, if `default-features = false` is specified in the dependency
+//! declaration for this library, then inclusion of this module is gated by feature "**binomial**".
 
 use std::cmp::Ordering;
 
@@ -38,7 +42,7 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
 /// Returns an error in any of these circumstances:
 /// - `n == 0`.
 /// - `p0` not in `(0, 1)`.
-pub fn binomial_normal_approx_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
+pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
     if !(0.0..1.0).contains(&p0) || p0 == 0.0 {
         return Err(StatsError("arg `p0` must be in interval `(0, 1)`"));
     }
@@ -61,8 +65,8 @@ pub fn binomial_normal_approx_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
 /// Returns an error in any of these circumstances:
 /// - `n == 0`.
 /// - `p0` not in `(0, 1)`.
-pub fn binomial_normal_approx_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
-    let z = binomial_normal_approx_z(n, n_s, p0)?;
+pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let z = binomial_z(n, n_s, p0)?;
     Ok(z_to_p(z, alt_hyp))
 }
 
@@ -88,7 +92,7 @@ pub fn one_proportion_z_test(
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    let p_value = binomial_normal_approx_p(n, n_s, p0, alt_hyp)?;
+    let p_value = binomial_z_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
     Ok(test_res)
 }

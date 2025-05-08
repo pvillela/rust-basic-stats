@@ -20,8 +20,8 @@ fn book_data() -> (Vec<f64>, Vec<f64>) {
 
 fn check_wilcoxon(rank_sum: &RankSum, alt_hyp: AltHyp, exp_accept_hyp: Hyp) {
     let w = rank_sum.w();
-    let p = rank_sum.p(alt_hyp);
-    let res = rank_sum.test(alt_hyp, ALPHA);
+    let p = rank_sum.z_p(alt_hyp);
+    let res = rank_sum.z_test(alt_hyp, ALPHA);
 
     println!("alt_hyp={alt_hyp:?} -- w={w}");
 

@@ -1,4 +1,4 @@
-//! Core sample statistics and common types.
+//! Basic sample statistics and common types supporting inferential statistics.
 
 /// Sample mean.
 ///
@@ -60,9 +60,9 @@ pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> f64 {
     sample_var(n, sum, sum2).sqrt()
 }
 
-/// Holds summary information for a sample, sufficient to compute a sample's first and second moments.
+/// Holds summary information for a sample, enabling computation of a sample's mean and variance.
 ///
-/// Includes sample size and, optionally, sample min and max values.
+/// Includes sample size, sum, sum of squares, and, optionally, sample min and max values.
 ///
 /// Used by several by functions in this library.
 pub struct SampleMoments {

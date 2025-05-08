@@ -1,3 +1,7 @@
+//! Core sample statistics and common types.
+//!
+//! This module is always included.
+
 mod base;
 mod error;
 mod iter;

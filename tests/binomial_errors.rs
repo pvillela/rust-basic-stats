@@ -13,29 +13,25 @@ fn test_bernoulli_p_hat() {
 }
 
 #[test]
-fn test_binomial_normal_approx_z() {
+fn test_binomial_z() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    assert!(binomial_normal_approx_z(0, 0, 0.5).is_err(),);
-    assert!(binomial_normal_approx_z(1, 0, 0.).is_err(),);
-    assert!(binomial_normal_approx_z(1, 0, 0.5).unwrap().is_finite(),);
-    assert!(binomial_normal_approx_z(1, 0, 1.).is_err(),);
+    assert!(binomial_z(0, 0, 0.5).is_err(),);
+    assert!(binomial_z(1, 0, 0.).is_err(),);
+    assert!(binomial_z(1, 0, 0.5).unwrap().is_finite(),);
+    assert!(binomial_z(1, 0, 1.).is_err(),);
 }
 
 #[test]
-fn test_binomial_normal_approx_p() {
+fn test_binomial_z_p() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    assert!(binomial_normal_approx_p(0, 0, 0.5, AltHyp::Ne).is_err(),);
-    assert!(binomial_normal_approx_p(1, 0, 0., AltHyp::Ne).is_err(),);
-    assert!(
-        binomial_normal_approx_p(1, 0, 0.5, AltHyp::Ne)
-            .unwrap()
-            .is_finite(),
-    );
-    assert!(binomial_normal_approx_p(1, 0, 1., AltHyp::Ne).is_err(),);
+    assert!(binomial_z_p(0, 0, 0.5, AltHyp::Ne).is_err(),);
+    assert!(binomial_z_p(1, 0, 0., AltHyp::Ne).is_err(),);
+    assert!(binomial_z_p(1, 0, 0.5, AltHyp::Ne).unwrap().is_finite(),);
+    assert!(binomial_z_p(1, 0, 1., AltHyp::Ne).is_err(),);
 }
 
 #[test]

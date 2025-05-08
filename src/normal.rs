@@ -1,6 +1,9 @@
 //! Statistics related to the Normal distribution and Student's t distribution,
 //! including the Student one-sample t-test and the
 //! Welch two-sample t-test (for samples from distributions that may have different variances).
+//!
+//! This module is included by default. However, if `default-features = false` is specified in the dependency
+//! declaration for this library, then inclusion of this module is gated by feature "**normal**".
 
 use crate::core::{
     AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,

@@ -1,5 +1,7 @@
 //! Statistics related to the Wilcoxon rank sum two-sample test, also known as the Mann-Whitney U test.
-//! Gated by feature **wilcoxon**.
+//!
+//! This module is included by default. However, if `default-features = false` is specified in the dependency
+//! declaration for this library, then inclusion of this module is gated by feature "**wilcoxon**".
 
 use crate::{
     core::{AltHyp, HypTestResult, StatsError, iter_with_counts},
@@ -291,30 +293,30 @@ impl RankSum {
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
-    pub fn p(&self, alt_hyp: AltHyp) -> f64 {
+    pub fn z_p(&self, alt_hyp: AltHyp) -> f64 {
         let z = self.z();
         z_to_p(z, alt_hyp)
     }
 
     #[cfg(test)]
-    fn p_no_ties_adjust(&self, alt_hyp: AltHyp) -> f64 {
+    fn z_p_no_ties_adjust(&self, alt_hyp: AltHyp) -> f64 {
         let z = self.z_no_ties_adjust();
         z_to_p(z, alt_hyp)
     }
 
-    /// Wilcoxon rank sum test.
+    /// Wilcoxon rank sum test using large sample normal approximation.
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
     /// - `alpha`: confidence level = `1 - alpha`.
-    pub fn test(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
-        let p = self.p(alt_hyp);
+    pub fn z_test(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
+        let p = self.z_p(alt_hyp);
         HypTestResult::new(p, alpha, alt_hyp)
     }
 
     #[cfg(test)]
-    pub fn test_no_ties_adjust(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
-        let p = self.p_no_ties_adjust(alt_hyp);
+    pub fn z_test_no_ties_adjust(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
+        let p = self.z_p_no_ties_adjust(alt_hyp);
         HypTestResult::new(p, alpha, alt_hyp)
     }
 }
@@ -396,7 +398,7 @@ mod base_test {
 
         let expected_p_correct = 0.2544; // R: // R: wilcox.test(a, b)
         let expected_p = 0.2207; // R: wilcox.test(a, b, exact=FALSE, correct=FALSE)
-        let actual_p = rank_sum.p(AltHyp::Ne);
+        let actual_p = rank_sum.z_p(AltHyp::Ne);
         println!(
             "expected_p_correct={expected_p_correct}, expected_p={expected_p}, actual_p={actual_p}"
         );
@@ -413,8 +415,8 @@ mod base_test {
     ) {
         let w = rank_sum.w();
         let r_w = rank_sum.r_w();
-        let p = rank_sum.p(alt_hyp);
-        let res = rank_sum.test(alt_hyp, ALPHA);
+        let p = rank_sum.z_p(alt_hyp);
+        let res = rank_sum.z_test(alt_hyp, ALPHA);
 
         println!("alt_hyp={alt_hyp:?} -- w={w}");
         assert!(
@@ -564,17 +566,19 @@ mod test_with_hypors {
         let rank_sum_x = (1. + n_x + n_y) * (n_x + n_y) / 2. - rank_sum_y;
         println!("rank_sum_x={rank_sum_x}");
 
-        let wilcoxon_rank_sum_x_lt_y_p = rank_sum.p(AltHyp::Lt);
+        let wilcoxon_rank_sum_x_lt_y_p = rank_sum.z_p(AltHyp::Lt);
         println!("wilcoxon_rank_sum_x_lt_y_p={wilcoxon_rank_sum_x_lt_y_p}");
-        let wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Lt);
+        let wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust: f64 =
+            rank_sum.z_p_no_ties_adjust(AltHyp::Lt);
         println!(
             "wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust={wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust}"
         );
-        let wilcoxon_rank_sum_x_gt_y_p = rank_sum.p(AltHyp::Gt);
+        let wilcoxon_rank_sum_x_gt_y_p = rank_sum.z_p(AltHyp::Gt);
         println!("wilcoxon_rank_sum_x_gt_y_p={wilcoxon_rank_sum_x_gt_y_p}");
-        let wilcoxon_rank_sum_x_ne_y_p: f64 = rank_sum.p(AltHyp::Ne);
+        let wilcoxon_rank_sum_x_ne_y_p: f64 = rank_sum.z_p(AltHyp::Ne);
         println!("wilcoxon_rank_sum_x_ne_y_p={wilcoxon_rank_sum_x_ne_y_p}");
-        let wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Ne);
+        let wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust: f64 =
+            rank_sum.z_p_no_ties_adjust(AltHyp::Ne);
         println!(
             "wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust={wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust}"
         );
