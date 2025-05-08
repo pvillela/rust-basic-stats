@@ -388,6 +388,10 @@ mod test {
         let res = exact_binomial_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
         let p = res.p();
 
+        if alt_hyp == AltHyp::Ne {
+            assert_eq!(cp_ci, binomial_cp_ci(n, n_s, ALPHA).unwrap());
+        }
+
         assert!(
             exp_p.approx_eq(p, EPSILON),
             "n={n}, n_s={n_s}, alt_hyp={alt_hyp:?} -> exp_p={exp_p}, p={p}"
@@ -444,6 +448,10 @@ mod test {
         let ws_ci = binomial_ws_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
         let z_res = one_proportion_z_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
         let z_p = z_res.p();
+
+        if alt_hyp == AltHyp::Ne {
+            assert_eq!(ws_ci, binomial_ws_ci(n, n_s, ALPHA).unwrap());
+        }
 
         assert!(
             exp_z_p.approx_eq(z_p, EPSILON),
