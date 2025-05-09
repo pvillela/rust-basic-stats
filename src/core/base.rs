@@ -1,63 +1,73 @@
 //! Basic sample statistics and common types supporting inferential statistics.
 
+use super::{StatsError, StatsResult};
+
 /// Sample mean.
-///
-/// Returns `NaN` if  `n == 0`.
 ///
 /// Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
+///
+/// # Errors
+///
+/// Returns an error if `n == 0`.
 #[inline(always)]
-pub fn sample_mean(n: u64, sum: f64) -> f64 {
+pub fn sample_mean(n: u64, sum: f64) -> StatsResult<f64> {
     if n == 0 {
-        return f64::NAN;
+        return Err(StatsError("arg `n` must be positive"));
     }
-    sum / n as f64
+    Ok(sum / n as f64)
 }
 
 /// Sample's sum of squares of deviations from sample mean.
 ///
-/// Returns `NaN` if  `n == 0`.
-///
 /// Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 /// - `sum2` - sample sum of squares.
+///
+/// # Errors
+///
+/// Returns an error if `n == 0`.
 #[inline(always)]
-pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> f64 {
+pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
     if n == 0 {
-        return f64::NAN;
+        return Err(StatsError("arg `n` must be positive"));
     }
-    sum2 - sum.powi(2) / n as f64
+    Ok(sum2 - sum.powi(2) / n as f64)
 }
 
 /// Sample variance.
 ///
-/// Returns `NaN` if  `n ≤ 1`.
-///
 /// Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 /// - `sum2` - sample sum of squares.
+///
+/// # Errors
+///
+/// Returns an error if `n <= 1`.
 #[inline(always)]
-pub fn sample_var(n: u64, sum: f64, sum2: f64) -> f64 {
+pub fn sample_var(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
     if n <= 1 {
-        return f64::NAN;
+        return Err(StatsError("arg `n` must be greater than `1`"));
     }
-    sample_sum2_deviations(n, sum, sum2) / (n as f64 - 1.)
+    Ok(sample_sum2_deviations(n, sum, sum2)? / (n as f64 - 1.))
 }
 
 /// Sample standard deviation.
 ///
-/// Returns `NaN` if  `n ≤ 1`.
-///
 /// Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 /// - `sum2` - sample sum of squares.
+///
+/// # Errors
+///
+/// Returns an error if `n <= 1`.
 #[inline(always)]
-pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> f64 {
-    sample_var(n, sum, sum2).sqrt()
+pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
+    Ok(sample_var(n, sum, sum2)?.sqrt())
 }
 
 /// Holds summary information for a sample, enabling computation of a sample's mean and variance.
@@ -65,8 +75,9 @@ pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> f64 {
 /// Includes sample size, sum, sum of squares, and, optionally, sample min and max values.
 ///
 /// Used by several by functions in this library.
+#[derive(Debug, PartialEq)]
 pub struct SampleMoments {
-    count: u64,
+    n: u64,
     sum: f64,
     sum2: f64,
     min: f64,
@@ -84,14 +95,14 @@ impl SampleMoments {
     /// Instantiates `Self` with given values for sample size, sample sum, and sample sum of squares.
     ///
     /// Minimum and maximum sample values are defaulted to `NaN`.
-    pub fn new(count: u64, sum: f64, sum2: f64) -> Self {
-        Self::new_with_min_max(count, sum, sum2, f64::NAN, f64::NAN)
+    pub fn new(n: u64, sum: f64, sum2: f64) -> Self {
+        Self::new_with_min_max(n, sum, sum2, f64::NAN, f64::NAN)
     }
 
     /// Instantiates `Self`, with given values for sample size, sample sum, sample sum of squares, min, and max.
-    pub fn new_with_min_max(count: u64, sum: f64, sum2: f64, min: f64, max: f64) -> Self {
+    pub fn new_with_min_max(n: u64, sum: f64, sum2: f64, min: f64, max: f64) -> Self {
         Self {
-            count,
+            n,
             sum,
             sum2,
             min,
@@ -101,7 +112,7 @@ impl SampleMoments {
 
     /// Updates `self` by accumulating an additional value.
     pub fn collect_value(&mut self, value: f64) {
-        self.count += 1;
+        self.n += 1;
         self.sum += value;
         self.sum2 += value * value;
         self.min = value.min(self.min);
@@ -125,12 +136,12 @@ impl SampleMoments {
 
     /// Sample size as integer.
     pub fn n(&self) -> u64 {
-        self.count
+        self.n
     }
 
     /// Sample size as floating point.
     pub fn nf(&self) -> f64 {
-        self.count as f64
+        self.n as f64
     }
 
     /// Sample sum.
@@ -140,9 +151,11 @@ impl SampleMoments {
 
     /// Sample mean.
     ///
-    /// Returns `NaN` if  `self.n() == 0`.
-    pub fn mean(&self) -> f64 {
-        self.sum / self.nf()
+    /// # Errors
+    ///
+    /// Returns an error if `n == 0`.
+    pub fn mean(&self) -> StatsResult<f64> {
+        sample_mean(self.n, self.sum)
     }
 
     /// Sample sum of squares.
@@ -152,23 +165,29 @@ impl SampleMoments {
 
     /// Sample's sum of squares of deviations from sample mean.
     ///
-    /// Returns `NaN` if  `self.n() == 0`.
-    pub fn sum2_deviations(&self) -> f64 {
-        sample_sum2_deviations(self.n(), self.sum, self.sum2)
+    /// # Errors
+    ///
+    /// Returns an error if `n == 0`.
+    pub fn sum2_deviations(&self) -> StatsResult<f64> {
+        sample_sum2_deviations(self.n, self.sum, self.sum2)
     }
 
     /// Sample variance.
     ///
-    /// Returns `NaN` if  `self.n() ≤ 1`.
-    pub fn var(&self) -> f64 {
-        sample_var(self.n(), self.sum, self.sum2)
+    /// # Errors
+    ///
+    /// Returns an error if `n <= 1`.
+    pub fn var(&self) -> StatsResult<f64> {
+        sample_var(self.n, self.sum, self.sum2)
     }
 
     /// Sample standard deviation.
     ///
-    /// Returns `NaN` if  `self.n() ≤ 1`.
-    pub fn stdev(&self) -> f64 {
-        sample_stdev(self.n(), self.sum, self.sum2)
+    /// # Errors
+    ///
+    /// Returns an error if `n <= 1`.
+    pub fn stdev(&self) -> StatsResult<f64> {
+        sample_stdev(self.n, self.sum, self.sum2)
     }
 
     /// Sample's minimum value.
@@ -296,5 +315,41 @@ impl Ci {
             _ if self.0 < value && value < self.1 => PositionWrtCi::In,
             _ => PositionWrtCi::Above,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::SampleMoments;
+    use crate::dev_utils::ApproxEq;
+
+    const EPSILON: f64 = 0.000005;
+
+    #[test]
+    fn test_moments() {
+        let x = [14., 15., 15., 15., 16., 18., 22., 23., 24., 25., 25.];
+        let n = 11;
+        let nf = 11.;
+        let sum = 212.;
+        let sum2 = 4290.;
+        let var = 20.41818;
+        let sum2_dev = var * ((n - 1) as f64);
+        let stdev = 4.518648;
+        let min = 14.;
+        let max = 25.;
+
+        let moments = SampleMoments::new_with_min_max(n, sum, sum2, min, max);
+        let moments_s = SampleMoments::from_slice(&x);
+
+        assert_eq!(moments, moments_s);
+        assert_eq!(n, moments.n());
+        assert_eq!(nf, moments.nf());
+        assert_eq!(sum, moments.sum());
+        assert_eq!(sum2, moments.sum2());
+        assert!(var.approx_eq(moments.var().unwrap(), EPSILON));
+        assert!(sum2_dev.approx_eq(moments.sum2_deviations().unwrap(), EPSILON * 10.));
+        assert!(stdev.approx_eq(moments.stdev().unwrap(), EPSILON));
+        assert_eq!(min, moments.min());
+        assert_eq!(max, moments.max());
     }
 }

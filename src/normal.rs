@@ -86,16 +86,16 @@ pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
-pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
+pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
-    let d_means = moments_x.mean() - moments_y.mean();
-    let s2_x = moments_x.stdev().powi(2);
-    let s2_y = moments_y.stdev().powi(2);
+    let d_means = moments_x.mean()? - moments_y.mean()?;
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
     let s_d_means = (s2_mean_x + s2_mean_y).sqrt();
-    d_means / s_d_means
+    Ok(d_means / s_d_means)
 }
 
 /// Degrees of freedom for Welch's two-sample t-test.
@@ -103,16 +103,16 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
-pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
+pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
-    let s2_x = moments_x.stdev().powi(2);
-    let s2_y = moments_y.stdev().powi(2);
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
     let numerator = (s2_mean_x + s2_mean_y).powi(2);
     let denominator = s2_mean_x.powi(2) / (n_x - 1.) + s2_mean_y.powi(2) / (n_y - 1.);
-    numerator / denominator
+    Ok(numerator / denominator)
 }
 
 /// p-value of Welch's two-sample t-test for equality.
@@ -131,8 +131,8 @@ pub fn welch_p(
     moments_y: &SampleMoments,
     alt_hyp: AltHyp,
 ) -> StatsResult<f64> {
-    let t = welch_t(moments_x, moments_y);
-    let df = welch_df(moments_x, moments_y);
+    let t = welch_t(moments_x, moments_y)?;
+    let df = welch_df(moments_x, moments_y)?;
     t_to_p(t, df, alt_hyp)
 }
 
@@ -157,12 +157,12 @@ pub fn welch_alt_hyp_ci(
 ) -> StatsResult<Ci> {
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
-    let d_means = moments_x.mean() - moments_y.mean();
-    let s2_x = moments_x.stdev().powi(2);
-    let s2_y = moments_y.stdev().powi(2);
+    let d_means = moments_x.mean()? - moments_y.mean()?;
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
-    let df = welch_df(moments_x, moments_y);
+    let df = welch_df(moments_x, moments_y)?;
 
     let stud = StudentsT::new(0., 1., df).stats_result("Welch degrees of freedom must be > 0")?;
     let t0 = match alt_hyp {
@@ -230,11 +230,11 @@ pub fn welch_test(
 /// Arguments:
 /// - `moments`: sample moments struct.
 /// - `mu0`: hypothesized distribution mean.
-pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> f64 {
+pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
     let n = moments.nf();
-    let mean = moments.mean();
-    let s = moments.stdev();
-    (mean - mu0) / s * n.sqrt()
+    let mean = moments.mean()?;
+    let s = moments.stdev()?;
+    Ok((mean - mu0) / s * n.sqrt())
 }
 
 /// Degrees of freedom for Student's one-sample t-test.
@@ -260,7 +260,7 @@ pub fn student_one_sample_p(
     mu0: f64,
     alt_hyp: AltHyp,
 ) -> StatsResult<f64> {
-    let t = student_one_sample_t(moments, mu0);
+    let t = student_one_sample_t(moments, mu0)?;
     let df = student_one_sample_df(moments);
     t_to_p(t, df, alt_hyp)
 }
@@ -271,7 +271,11 @@ pub fn student_one_sample_p(
 /// - `moments`: sample moments struct.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, alpha: f64) -> Ci {
+pub fn student_one_sample_alt_hyp_ci(
+    moments: &SampleMoments,
+    alt_hyp: AltHyp,
+    alpha: f64,
+) -> StatsResult<Ci> {
     let df = student_one_sample_df(moments);
 
     let stud = StudentsT::new(0., 1., df)
@@ -281,14 +285,16 @@ pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, a
         _ => -stud.inverse_cdf(alpha),
     };
 
-    let mid = moments.mean();
-    let delta = (moments.stdev() / moments.nf().sqrt()) * t0;
+    let mid = moments.mean()?;
+    let delta = (moments.stdev()? / moments.nf().sqrt()) * t0;
 
-    match alt_hyp {
+    let ci = match alt_hyp {
         AltHyp::Lt => Ci(-f64::INFINITY, mid + delta),
         AltHyp::Ne => Ci(mid - delta, mid + delta),
         AltHyp::Gt => Ci(mid - delta, f64::INFINITY),
-    }
+    };
+
+    Ok(ci)
 }
 
 /// Student's one-sample confidence interval for the distribution mean,
@@ -297,7 +303,7 @@ pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, a
 /// Arguments:
 /// - `moments`: sample moments struct.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> Ci {
+pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> {
     student_one_sample_alt_hyp_ci(moments, AltHyp::Ne, alpha)
 }
 
@@ -352,8 +358,8 @@ mod test {
         let moments_x = SampleMoments::from_slice(dataset_x);
         let moments_y = SampleMoments::from_slice(dataset_y);
 
-        let t = welch_t(&moments_x, &moments_y);
-        let df = welch_df(&moments_x, &moments_y);
+        let t = welch_t(&moments_x, &moments_y)?;
+        let df = welch_df(&moments_x, &moments_y)?;
         let p = t_to_p(t, df, alt_hyp)?;
         let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA)?;
         let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA)?;
@@ -407,10 +413,10 @@ mod test {
     ) -> StatsResult<()> {
         let moments = SampleMoments::from_slice(dataset);
 
-        let t = student_one_sample_t(&moments, mu0);
+        let t = student_one_sample_t(&moments, mu0)?;
         let df = student_one_sample_df(&moments);
         let p = t_to_p(t, df, alt_hyp)?;
-        let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA);
+        let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA)?;
         let res = student_one_sample_test(&moments, mu0, alt_hyp, ALPHA)?;
 
         assert!(
