@@ -10,7 +10,10 @@ use super::{
     core::{AltHyp, Ci, HypTestResult},
     normal::{z_alpha, z_to_p},
 };
-use crate::core::{AsStatsResult, StatsError, StatsResult};
+use crate::core::{
+    AsStatsResult, StatsError, StatsResult, check_alpha_in_closed_0_1, check_alpha_in_open_0_1,
+    check_p0_in_open_0_1,
+};
 use statrs::distribution::{Beta, Binomial, ContinuousCDF, Discrete, DiscreteCDF};
 
 /// Estimator of success probability of Bernoulli distribution.
@@ -21,16 +24,20 @@ use statrs::distribution::{Beta, Binomial, ContinuousCDF, Discrete, DiscreteCDF}
 ///
 /// # Errors
 ///
-/// Returns an error if `n == 0`
+/// Returns an error if `n == 0` or `n < n_s`.
 pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
     if n == 0 {
         return Err(StatsError("arg `n` must be positive"));
+    }
+    if n < n_s {
+        return Err(StatsError("arg `n` must be greater than or equal to n_s"));
     }
     Ok(n_s as f64 / n as f64)
 }
 
 /// Normal approximation z-value for the standardized sample mean of a Bernoulli distribution
 /// under the hypothesis that the probability of success is `p0`.
+/// Without continuity correction.
 ///
 /// Arguments:
 /// - `n`: number of trials.
@@ -40,12 +47,10 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
 /// # Errors
 ///
 /// Returns an error in any of these circumstances:
-/// - `n == 0`.
+/// Returns an error if `n == 0` or `n < n_s`.
 /// - `p0` not in `(0, 1)`.
 pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
-    if !(0.0..1.0).contains(&p0) || p0 == 0.0 {
-        return Err(StatsError("arg `p0` must be in interval `(0, 1)`"));
-    }
+    check_p0_in_open_0_1(p0)?;
     let p_hat = bernoulli_p_hat(n, n_s)?;
     let ret = (p_hat - p0) / (p0 * (1. - p0) / n as f64).sqrt();
     Ok(ret)
@@ -53,6 +58,7 @@ pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
 
 /// Normal approximation p-value for the standardized sample mean of Bernoulli distribution
 /// under the hypothesis that the probability of success is `p0`.
+/// Without continuity correction.
 ///
 /// Arguments:
 /// - `n`: number of trials.
@@ -63,7 +69,7 @@ pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
 /// # Errors
 ///
 /// Returns an error in any of these circumstances:
-/// - `n == 0`.
+/// - `n == 0` or `n < n_s`.
 /// - `p0` not in `(0, 1)`.
 pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
     let z = binomial_z(n, n_s, p0)?;
@@ -71,6 +77,7 @@ pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f
 }
 
 /// One-sample proportion test (Bernoulli distribution) using the Binomial Normal approximation.
+/// Without continuity correction.
 ///
 /// Arguments:
 /// - `n`: number of trials.
@@ -92,6 +99,7 @@ pub fn one_proportion_z_test(
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
+    check_alpha_in_closed_0_1(alpha)?;
     let p_value = binomial_z_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
     Ok(test_res)
@@ -113,17 +121,14 @@ pub fn one_proportion_z_test(
 /// # Errors
 ///
 /// Returns an error in any of these circumstances:
-/// - `n == 0`.
+/// - `n == 0` or `n < n_s`.
 /// - `alpha` not in `(0, 1)`.
 pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     let p_hat = bernoulli_p_hat(n, n_s)?;
 
     let nr = n as f64;
 
-    // Need this guard because `alpha / 2.` below masks errors.
-    if !(0.0..1.0).contains(&alpha) || alpha == 0. {
-        return Err(StatsError("arg `alpha` must be in (0, 1)"));
-    }
+    check_alpha_in_open_0_1(alpha)?; // need this guard because `alpha / 2.` below masks errors
     let z_alpha = if let AltHyp::Ne = alt_hyp {
         z_alpha(alpha / 2.)?
     } else {
@@ -158,7 +163,9 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 ///
 /// # Errors
 ///
-/// Returns an error if `alpha` not in `[0, 1]`.
+/// Returns an error in any of these circumstances:
+/// - `n == 0` or `n < n_s`.
+/// - `alpha` not in `(0, 1)`.
 pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
     binomial_ws_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
@@ -182,9 +189,7 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
             "arg `n` must be greater than or equal to arg `n_s`",
         ));
     }
-    if !(0.0..=1.0).contains(&alpha) {
-        return Err(StatsError("arg `alpha` must be in interval `[0, 1]`"));
-    }
+    check_alpha_in_closed_0_1(alpha)?;
 
     // Include special cases not handled by Beta function.
     // Below closures based on https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/binom.test.R
@@ -267,7 +272,7 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
         return Err(StatsError("arg `n` must not be less than arg `n_s`."));
     }
 
-    let binomial = Binomial::new(p0, n).stats_result("invalid arg `p0`")?;
+    let binomial = Binomial::new(p0, n).stats_result("arg `p0` must be in interval [0, 1]")?;
 
     let prob_le = binomial.cdf(n_s);
 
@@ -357,9 +362,7 @@ pub fn exact_binomial_test(
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    if !(0.0..=1.0).contains(&alpha) {
-        return Err(StatsError("arg `alpha` not in interval `[0, 1]`"));
-    }
+    check_alpha_in_closed_0_1(alpha)?;
 
     let p_value = exact_binomial_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
