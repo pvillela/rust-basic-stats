@@ -378,14 +378,14 @@ pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> StatsResult
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `moments.stdev() == 0`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in `[0, 1]`.
 pub fn student_one_sample_test(
     moments: &SampleMoments,
     mu0: f64,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    check_alpha_in_open_0_1(alpha)?;
+    check_alpha_in_closed_0_1(alpha)?;
     let p = student_one_sample_p(moments, mu0, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
