@@ -48,13 +48,14 @@ fn test_one_proportion_z_test() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    // - `alpha` not in `[0, 1]`.
+    // - `alpha` not in `(0, 1)`.
     assert!(one_proportion_z_test(0, 0, 0.5, AltHyp::Ne, 0.5).is_err());
     assert!(one_proportion_z_test(1, 0, 0., AltHyp::Ne, 0.5).is_err());
     assert!(one_proportion_z_test(1, 0, 1., AltHyp::Ne, 0.5).is_err());
+    assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 0.).is_err());
+    assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 1.).is_err());
     if nocover() {
-        assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 0.).is_ok());
-        assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 1.).is_ok());
+        assert!(one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 0.5).is_ok());
     }
 }
 
@@ -77,7 +78,7 @@ fn test_binomial_ws_ci() {
     assert!(binomial_ws_ci(2, 1, f64::INFINITY).is_err());
 
     if nocover() {
-        let Ci(lo, hi) = binomial_ws_ci(2, 1, 0.5).unwrap();
+        let Ci(lo, hi) = binomial_ws_ci(1, 1, 0.5).unwrap();
         assert!(lo.is_finite());
         assert!(hi.is_finite());
     }
@@ -92,40 +93,12 @@ fn test_binomial_cp_alt_hyp_ci() {
 fn test_binomial_cp_ci() {
     // Returns an error in any of these circumstances:
     // - `n == 0` or `n < n_s`.
-    // - `alpha` is not in `[0, 1]`.
+    // - `alpha` is not in `(0, 1)`.
 
-    {
-        assert!(binomial_cp_ci(0, 0, 0.5).is_err());
-        assert!(binomial_cp_ci(2, 3, 0.5).is_err());
-        assert!(binomial_cp_ci(2, 1, -1.).is_err());
-        assert!(binomial_cp_ci(2, 1, 2.).is_err());
-    }
-
-    if nocover() {
-        {
-            let Ci(lo, hi) = binomial_cp_ci(1, 0, 0.).unwrap();
-            assert!(lo.is_finite());
-            assert!(hi.is_finite());
-        }
-
-        {
-            let Ci(lo, hi) = binomial_cp_ci(1, 0, 1.).unwrap();
-            assert!(lo.is_finite());
-            assert!(hi.is_finite());
-        }
-
-        {
-            let Ci(lo, hi) = binomial_cp_ci(1, 1, 0.).unwrap();
-            assert!(lo.is_finite());
-            assert!(hi.is_finite());
-        }
-
-        {
-            let Ci(lo, hi) = binomial_cp_ci(1, 1, 1.).unwrap();
-            assert!(lo.is_finite());
-            assert!(hi.is_finite());
-        }
-    }
+    assert!(binomial_cp_ci(0, 0, 0.5).is_err());
+    assert!(binomial_cp_ci(2, 3, 0.5).is_err());
+    assert!(binomial_cp_ci(2, 1, 0.).is_err());
+    assert!(binomial_cp_ci(2, 1, 1.).is_err());
 }
 
 #[test]
@@ -152,24 +125,20 @@ fn test_exact_binomial_test() {
     // Returns an error in any of these circumstances:
     // - `n == 0` or `n < n_s`.
     // - `p0` is not in `[0, 1]`.
-    // - `alpha` is not in `[0, 1]`.
+    // - `alpha` is not in `(0, 1)`.
 
     assert!(exact_binomial_test(0, 0, 0.5, AltHyp::Ne, 0.5).is_err());
     assert!(exact_binomial_test(2, 3, 0.5, AltHyp::Ne, 0.5).is_err());
     assert!(exact_binomial_test(2, 1, -1., AltHyp::Ne, 0.5).is_err());
     assert!(exact_binomial_test(2, 1, 2., AltHyp::Ne, 0.5).is_err());
-    assert!(exact_binomial_test(2, 1, 0.5, AltHyp::Ne, -1.).is_err());
-    assert!(exact_binomial_test(2, 1, 0.5, AltHyp::Ne, 2.).is_err());
+    assert!(exact_binomial_test(2, 1, 0.5, AltHyp::Ne, 0.).is_err());
+    assert!(exact_binomial_test(2, 1, 0.5, AltHyp::Ne, 1.).is_err());
 
     if nocover() {
-        assert!(exact_binomial_test(1, 0, 0., AltHyp::Ne, 0.).is_ok());
-        assert!(exact_binomial_test(1, 0, 1., AltHyp::Ne, 0.).is_ok());
-        assert!(exact_binomial_test(1, 0, 0., AltHyp::Ne, 1.).is_ok());
-        assert!(exact_binomial_test(1, 0, 1., AltHyp::Ne, 1.).is_ok());
+        assert!(exact_binomial_test(1, 0, 0., AltHyp::Ne, 0.5).is_ok());
+        assert!(exact_binomial_test(1, 0, 1., AltHyp::Ne, 0.5).is_ok());
 
-        assert!(exact_binomial_test(1, 1, 0., AltHyp::Ne, 0.).is_ok());
-        assert!(exact_binomial_test(1, 1, 1., AltHyp::Ne, 0.).is_ok());
-        assert!(exact_binomial_test(1, 1, 0., AltHyp::Ne, 1.).is_ok());
-        assert!(exact_binomial_test(1, 1, 1., AltHyp::Ne, 1.).is_ok());
+        assert!(exact_binomial_test(1, 1, 0., AltHyp::Ne, 0.5).is_ok());
+        assert!(exact_binomial_test(1, 1, 1., AltHyp::Ne, 0.5).is_ok());
     }
 }

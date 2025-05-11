@@ -7,7 +7,7 @@
 
 use crate::core::{
     AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,
-    check_alpha_in_closed_0_1, check_alpha_in_open_0_1,
+    check_alpha_in_open_0_1,
 };
 use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
 
@@ -240,14 +240,14 @@ pub fn welch_ci(
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
-/// - `alpha` not in `[0, 1]`.
+/// - `alpha` not in `(0, 1)`.
 pub fn welch_test(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    check_alpha_in_closed_0_1(alpha)?;
+    check_alpha_in_open_0_1(alpha)?;
     let p = welch_p(moments_x, moments_y, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
@@ -378,14 +378,14 @@ pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> StatsResult
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `moments.stdev() == 0`.
-/// - `alpha` not in `[0, 1]`.
+/// - `alpha` not in `(0, 1)`.
 pub fn student_one_sample_test(
     moments: &SampleMoments,
     mu0: f64,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    check_alpha_in_closed_0_1(alpha)?;
+    check_alpha_in_open_0_1(alpha)?;
     let p = student_one_sample_p(moments, mu0, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }

@@ -11,8 +11,7 @@ use super::{
     normal::{z_alpha, z_to_p},
 };
 use crate::core::{
-    AsStatsResult, StatsError, StatsResult, check_alpha_in_closed_0_1, check_alpha_in_open_0_1,
-    check_p0_in_open_0_1,
+    AsStatsResult, StatsError, StatsResult, check_alpha_in_open_0_1, check_p0_in_open_0_1,
 };
 use statrs::distribution::{Beta, Binomial, ContinuousCDF, Discrete, DiscreteCDF};
 
@@ -91,7 +90,7 @@ pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f
 /// Returns an error in any of these circumstances:
 /// - `n == 0` or `n < n_s`.
 /// - `p0` is not in `(0, 1)`.
-/// - `alpha` is not in `[0, 1]`.
+/// - `alpha` is not in `(0, 1)`.
 pub fn one_proportion_z_test(
     n: u64,
     n_s: u64,
@@ -99,7 +98,7 @@ pub fn one_proportion_z_test(
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    check_alpha_in_closed_0_1(alpha)?;
+    check_alpha_in_open_0_1(alpha)?;
     let p_value = binomial_z_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
     Ok(test_res)
@@ -179,7 +178,7 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// Returns an error in any of these circumstances:
 /// - `n == 0` or `n < n_s`.
-/// - `alpha` is not in `[0, 1]`.
+/// - `alpha` is not in `(0, 1)`.
 pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     if n == 0 {
         return Err(StatsError("arg `n` must be positive"));
@@ -189,7 +188,7 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
             "arg `n` must be greater than or equal to arg `n_s`",
         ));
     }
-    check_alpha_in_closed_0_1(alpha)?;
+    check_alpha_in_open_0_1(alpha)?;
 
     // Include special cases not handled by Beta function.
     // Below closures based on https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/binom.test.R
@@ -354,7 +353,7 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
 /// Returns an error in any of these circumstances:
 /// - `n == 0` or `n < n_s`.
 /// - `p0` is not in `[0, 1]`.
-/// - `alpha` is not in `[0, 1]`.
+/// - `alpha` is not in `(0, 1)`.
 pub fn exact_binomial_test(
     n: u64,
     n_s: u64,
@@ -362,7 +361,7 @@ pub fn exact_binomial_test(
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
-    check_alpha_in_closed_0_1(alpha)?;
+    check_alpha_in_open_0_1(alpha)?;
 
     let p_value = exact_binomial_p(n, n_s, p0, alt_hyp)?;
     let test_res = HypTestResult::new(p_value, alpha, alt_hyp);
