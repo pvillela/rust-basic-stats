@@ -258,10 +258,10 @@ impl HypTestResult {
             p,
             alpha,
             alt_hyp,
-            accepted: if p >= alpha {
-                Hyp::Null
-            } else {
+            accepted: if p < alpha {
                 Hyp::Alt(alt_hyp)
+            } else {
+                Hyp::Null
             },
         }
     }

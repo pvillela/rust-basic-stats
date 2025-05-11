@@ -169,13 +169,14 @@ pub fn welch_p(
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
-/// - `alpha` not in `[0, 1]`.
+/// - `alpha` not in `(0, 1)`.
 pub fn welch_alt_hyp_ci(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<Ci> {
+    check_alpha_in_open_0_1(alpha)?;
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
     let d_means = moments_x.mean()? - moments_y.mean()?;
@@ -217,7 +218,7 @@ pub fn welch_alt_hyp_ci(
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
-/// - `alpha` not in `[0, 1]`.
+/// - `alpha` not in `(0, 1)`.
 pub fn welch_ci(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
