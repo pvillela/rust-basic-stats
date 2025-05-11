@@ -11,5 +11,5 @@ pub mod binomial;
 #[cfg(feature = "wilcoxon")]
 pub mod wilcoxon;
 
-#[cfg(test)]
-pub(crate) mod dev_utils;
+#[doc(hidden)]
+pub mod dev_utils;
