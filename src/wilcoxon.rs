@@ -4,7 +4,9 @@
 //! declaration for this library, then inclusion of this module is gated by feature "**wilcoxon**".
 
 use crate::{
-    core::{AltHyp, HypTestResult, StatsError, iter_with_counts},
+    core::{
+        AltHyp, HypTestResult, StatsError, StatsResult, check_alpha_in_open_0_1, iter_with_counts,
+    },
     normal::z_to_p,
 };
 
@@ -261,22 +263,39 @@ impl RankSum {
     }
 
     /// z-value from the large sample normal approximation.
-    pub fn z(&self) -> f64 {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+    pub fn z(&self) -> StatsResult<f64> {
+        // Guard against division by 0 in `var0_w_ties_adjust` and `var0_w == 0.`.
+        if self.n_x == 0 || self.n_y == 0 {
+            return Err(StatsError(
+                "`self.n_x` and `self.n_y` must both be positive",
+            ));
+        }
+
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
         let w = self.w;
         let ties_sum_prod = self.ties_sum_prod as f64;
         let e0_w = n_y * (n_x + n_y + 1.) / 2.;
         let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
-        let var0_w_ties_adjust = n_x * n_y / (12. * (n_x + n_y) * (n_x + n_y - 1.)) * ties_sum_prod;
+        let var0_w_ties_adjust = n_x * n_y * ties_sum_prod / (12. * (n_x + n_y) * (n_x + n_y - 1.));
         let var0_w = var0_w_base - var0_w_ties_adjust;
         let w_star = (w - e0_w) / var0_w.sqrt();
 
-        -w_star
+        Ok(-w_star)
     }
 
     #[cfg(test)]
-    fn z_no_ties_adjust(&self) -> f64 {
+    fn z_no_ties_adjust(&self) -> StatsResult<f64> {
+        if self.n_x == 0 || self.n_y == 0 {
+            return Err(StatsError(
+                "`self.n_x` and `self.n_y` must both be positive",
+            ));
+        }
+
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
         let w = self.w;
@@ -286,22 +305,26 @@ impl RankSum {
         let var0_w = var0_w_base - var0_w_ties_adjust;
         let w_star = (w - e0_w) / var0_w.sqrt();
 
-        -w_star
+        Ok(-w_star)
     }
 
     /// p-value from the large sample normal approximation.
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
-    pub fn z_p(&self, alt_hyp: AltHyp) -> f64 {
-        let z = self.z();
-        z_to_p(z, alt_hyp)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+    pub fn z_p(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
+        let z = self.z()?;
+        Ok(z_to_p(z, alt_hyp))
     }
 
     #[cfg(test)]
-    fn z_p_no_ties_adjust(&self, alt_hyp: AltHyp) -> f64 {
-        let z = self.z_no_ties_adjust();
-        z_to_p(z, alt_hyp)
+    fn z_p_no_ties_adjust(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
+        let z = self.z_no_ties_adjust()?;
+        Ok(z_to_p(z, alt_hyp))
     }
 
     /// Wilcoxon rank sum test using large sample normal approximation.
@@ -309,15 +332,22 @@ impl RankSum {
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
     /// - `alpha`: confidence level = `1 - alpha`.
-    pub fn z_test(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
-        let p = self.z_p(alt_hyp);
-        HypTestResult::new(p, alpha, alt_hyp)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in any of these circumstances:
+    /// - `self.n_x == 0` or `self.n_y == 0`.
+    /// - `alpha` not in `(0, 1)`.
+    pub fn z_test(&self, alt_hyp: AltHyp, alpha: f64) -> StatsResult<HypTestResult> {
+        check_alpha_in_open_0_1(alpha)?;
+        let p = self.z_p(alt_hyp)?;
+        Ok(HypTestResult::new(p, alpha, alt_hyp))
     }
 
     #[cfg(test)]
-    pub fn z_test_no_ties_adjust(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
-        let p = self.z_p_no_ties_adjust(alt_hyp);
-        HypTestResult::new(p, alpha, alt_hyp)
+    pub fn z_test_no_ties_adjust(&self, alt_hyp: AltHyp, alpha: f64) -> StatsResult<HypTestResult> {
+        let p = self.z_p_no_ties_adjust(alt_hyp)?;
+        Ok(HypTestResult::new(p, alpha, alt_hyp))
     }
 }
 
@@ -398,7 +428,7 @@ mod base_test {
 
         let expected_p_correct = 0.2544; // R: // R: wilcox.test(a, b)
         let expected_p = 0.2207; // R: wilcox.test(a, b, exact=FALSE, correct=FALSE)
-        let actual_p = rank_sum.z_p(AltHyp::Ne);
+        let actual_p = rank_sum.z_p(AltHyp::Ne).unwrap();
         println!(
             "expected_p_correct={expected_p_correct}, expected_p={expected_p}, actual_p={actual_p}"
         );
@@ -415,8 +445,8 @@ mod base_test {
     ) {
         let w = rank_sum.w();
         let r_w = rank_sum.r_w();
-        let p = rank_sum.z_p(alt_hyp);
-        let res = rank_sum.z_test(alt_hyp, ALPHA);
+        let p = rank_sum.z_p(alt_hyp).unwrap();
+        let res = rank_sum.z_test(alt_hyp, ALPHA).unwrap();
 
         println!("alt_hyp={alt_hyp:?} -- w={w}");
         assert!(
@@ -566,19 +596,19 @@ mod test_with_hypors {
         let rank_sum_x = (1. + n_x + n_y) * (n_x + n_y) / 2. - rank_sum_y;
         println!("rank_sum_x={rank_sum_x}");
 
-        let wilcoxon_rank_sum_x_lt_y_p = rank_sum.z_p(AltHyp::Lt);
+        let wilcoxon_rank_sum_x_lt_y_p = rank_sum.z_p(AltHyp::Lt).unwrap();
         println!("wilcoxon_rank_sum_x_lt_y_p={wilcoxon_rank_sum_x_lt_y_p}");
         let wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust: f64 =
-            rank_sum.z_p_no_ties_adjust(AltHyp::Lt);
+            rank_sum.z_p_no_ties_adjust(AltHyp::Lt).unwrap();
         println!(
             "wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust={wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust}"
         );
-        let wilcoxon_rank_sum_x_gt_y_p = rank_sum.z_p(AltHyp::Gt);
+        let wilcoxon_rank_sum_x_gt_y_p = rank_sum.z_p(AltHyp::Gt).unwrap();
         println!("wilcoxon_rank_sum_x_gt_y_p={wilcoxon_rank_sum_x_gt_y_p}");
-        let wilcoxon_rank_sum_x_ne_y_p: f64 = rank_sum.z_p(AltHyp::Ne);
+        let wilcoxon_rank_sum_x_ne_y_p = rank_sum.z_p(AltHyp::Ne).unwrap();
         println!("wilcoxon_rank_sum_x_ne_y_p={wilcoxon_rank_sum_x_ne_y_p}");
         let wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust: f64 =
-            rank_sum.z_p_no_ties_adjust(AltHyp::Ne);
+            rank_sum.z_p_no_ties_adjust(AltHyp::Ne).unwrap();
         println!(
             "wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust={wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust}"
         );
