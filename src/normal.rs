@@ -437,13 +437,13 @@ mod test {
             "alt_hyp={alt_hyp:?} -- exp_p={exp_p}, p={p}"
         );
         assert!(
-            exp_ci.0.approx_eq(ci.0, EPSILON) || exp_ci.0.is_infinite() && ci.0.is_infinite(),
+            exp_ci.0.approx_eq(ci.0, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.0={}, ci.0={}",
             exp_ci.0,
             ci.0
         );
         assert!(
-            exp_ci.1.approx_eq(ci.1, EPSILON) || exp_ci.1.is_infinite() && ci.1.is_infinite(),
+            exp_ci.1.approx_eq(ci.1, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.1={}, ci.1={}",
             exp_ci.1,
             ci.1
@@ -492,13 +492,13 @@ mod test {
             "alt_hyp={alt_hyp:?} -- exp_p={exp_p}, p={p}"
         );
         assert!(
-            exp_ci.0.approx_eq(ci.0, EPSILON) || exp_ci.0.is_infinite() && ci.0.is_infinite(),
+            exp_ci.0.approx_eq(ci.0, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.0={}, ci.0={}",
             exp_ci.0,
             ci.0
         );
         assert!(
-            exp_ci.1.approx_eq(ci.1, EPSILON) || exp_ci.1.is_infinite() && ci.1.is_infinite(),
+            exp_ci.1.approx_eq(ci.1, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.1={}, ci.1={}",
             exp_ci.1,
             ci.1
