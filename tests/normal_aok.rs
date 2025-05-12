@@ -2,7 +2,7 @@
 //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test
 
 use basic_stats::{
-    core::{AltHyp, Ci, Hyp, Noerr, SampleMoments},
+    core::{AltHyp, AokBasicStats, AokFloat, Ci, Hyp, SampleMoments},
     dev_utils::ApproxEq,
     normal::*,
 };
@@ -23,11 +23,11 @@ fn check_welch(
     let moments_x = SampleMoments::from_slice(dataset_x);
     let moments_y = SampleMoments::from_slice(dataset_y);
 
-    let t = welch_t(&moments_x, &moments_y).noerr();
-    let df = welch_df(&moments_x, &moments_y).noerr();
-    let p = t_to_p(t, df, alt_hyp).noerr();
-    let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA).noerr();
-    let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA).noerr();
+    let t = welch_t(&moments_x, &moments_y).aok();
+    let df = welch_df(&moments_x, &moments_y).aok();
+    let p = t_to_p(t, df, alt_hyp).aok();
+    let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA).aok();
+    let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA).aok();
 
     assert!(
         exp_t.approx_eq(t, EPSILON),
@@ -76,11 +76,11 @@ fn check_student(
 ) {
     let moments = SampleMoments::from_slice(dataset);
 
-    let t = student_one_sample_t(&moments, mu0).noerr();
-    let df = student_one_sample_df(&moments).noerr();
-    let p = t_to_p(t, df, alt_hyp).noerr();
-    let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA).noerr();
-    let res = student_one_sample_test(&moments, mu0, alt_hyp, ALPHA).noerr();
+    let t = student_one_sample_t(&moments, mu0).aok();
+    let df = student_one_sample_df(&moments).aok();
+    let p = t_to_p(t, df, alt_hyp).aok();
+    let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA).aok();
+    let res = student_one_sample_test(&moments, mu0, alt_hyp, ALPHA).aok();
 
     assert!(
         exp_t.approx_eq(t, EPSILON),
