@@ -5,33 +5,42 @@ use super::{AltHyp, Ci, HypTestResult};
 ///
 /// Intended to be implemented for floating point numbers.
 pub trait AokFloat {
-    type Output: AokFloatFallback;
+    type Value: AokFloatValue;
 
-    fn aok(self) -> Self::Output;
+    fn aok(self) -> Self::Value;
 }
 
-/// Constructs a suitable fallback instance for an Output type of [`Noerr`].
+/// Constructs a suitable fallback instance for the `Value` type of [`AokFloat`].
 ///
 /// For floating point numbers, the fallback value will typically be `NaN`.
-pub trait AokFloatFallback {
+pub trait AokFloatValue {
     fn aok_fallback() -> Self;
+    fn is_tainted(&self) -> bool;
+
+    fn is_pure(&self) -> bool {
+        !self.is_tainted()
+    }
 }
 
 impl<T, E> AokFloat for Result<T, E>
 where
-    T: AokFloatFallback,
+    T: AokFloatValue,
 {
-    type Output = T;
+    type Value = T;
 
-    fn aok(self) -> Self::Output {
+    fn aok(self) -> Self::Value {
         self.unwrap_or_else(|_| T::aok_fallback())
     }
 }
 
-impl AokFloatFallback for f64 {
+impl AokFloatValue for f64 {
     // Returns `NaN` as a fallback value.
     fn aok_fallback() -> f64 {
         f64::NAN
+    }
+
+    fn is_tainted(&self) -> bool {
+        self.is_nan()
     }
 }
 
@@ -40,41 +49,54 @@ impl AokFloatFallback for f64 {
 ///
 /// Intended to be used for types constructed from floating point numbers.
 pub trait AokBasicStats {
-    type Output: AokBasicStatsFallback;
+    type Value: AokBasicStatsValue;
 
-    fn aok(self) -> Self::Output;
+    fn aok(self) -> Self::Value;
 }
 
-/// Constructs a suitable fallback instance for an Output type of [`Noerr`].
+/// Constructs a suitable fallback instance for the `Value` type of [`Noerr`].
 ///
 /// For types constructed from floating point numbers, the fallback value will typically be a
 /// value constructed with `NaN` fields.
-pub trait AokBasicStatsFallback {
+pub trait AokBasicStatsValue {
     fn aok_fallback() -> Self;
+    fn is_tainted(&self) -> bool;
+
+    fn is_pure(&self) -> bool {
+        !self.is_tainted()
+    }
 }
 
 impl<T, E> AokBasicStats for Result<T, E>
 where
-    T: AokBasicStatsFallback,
+    T: AokBasicStatsValue,
 {
-    type Output = T;
+    type Value = T;
 
-    fn aok(self) -> Self::Output {
+    fn aok(self) -> Self::Value {
         self.unwrap_or_else(|_| T::aok_fallback())
     }
 }
 
-impl AokBasicStatsFallback for HypTestResult {
+impl AokBasicStatsValue for HypTestResult {
     // Returns an instance constructed with `NaN`s as a fallback value.
     fn aok_fallback() -> Self {
         HypTestResult::new(f64::NAN, f64::NAN, AltHyp::Ne)
     }
+
+    fn is_tainted(&self) -> bool {
+        self.p().is_nan() || self.alpha().is_nan()
+    }
 }
 
-impl AokBasicStatsFallback for Ci {
+impl AokBasicStatsValue for Ci {
     // Returns an instance constructed with `NaN`s as a fallback value.
     fn aok_fallback() -> Self {
         Ci(f64::NAN, f64::NAN)
+    }
+
+    fn is_tainted(&self) -> bool {
+        self.0.is_nan() || self.1.is_nan()
     }
 }
 
