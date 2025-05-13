@@ -13,7 +13,7 @@ fn test_bernoulli_p_hat() {
     // Returns an error if `n == 0`
     assert!(bernoulli_p_hat(0, 0).aok().is_tainted());
     if nocover() {
-        assert!(bernoulli_p_hat(1, 0).aok().is_pure());
+        assert!(bernoulli_p_hat(1, 0).aok().is_untainted());
     }
 }
 
@@ -26,7 +26,7 @@ fn test_binomial_z() {
     assert!(binomial_z(1, 0, 0.).aok().is_tainted());
     assert!(binomial_z(1, 0, 1.).aok().is_tainted());
     if nocover() {
-        assert!(binomial_z(1, 0, 0.5).aok().is_pure());
+        assert!(binomial_z(1, 0, 0.5).aok().is_untainted());
     }
 }
 
@@ -39,7 +39,7 @@ fn test_binomial_z_p() {
     assert!(binomial_z_p(1, 0, 0., AltHyp::Ne).aok().is_tainted());
     assert!(binomial_z_p(1, 0, 1., AltHyp::Ne).aok().is_tainted());
     if nocover() {
-        assert!(binomial_z_p(1, 0, 0.5, AltHyp::Ne).aok().is_pure());
+        assert!(binomial_z_p(1, 0, 0.5, AltHyp::Ne).aok().is_untainted());
     }
 }
 
@@ -78,7 +78,7 @@ fn test_one_proportion_z_test() {
         assert!(
             one_proportion_z_test(1, 0, 0.5, AltHyp::Ne, 0.5)
                 .aok()
-                .is_pure()
+                .is_untainted()
         );
     }
 }
@@ -102,7 +102,7 @@ fn test_binomial_ws_ci() {
     assert!(binomial_ws_ci(2, 1, f64::INFINITY).aok().is_tainted());
 
     if nocover() {
-        assert!(binomial_ws_ci(1, 1, 0.5).aok().is_pure());
+        assert!(binomial_ws_ci(1, 1, 0.5).aok().is_untainted());
     }
 }
 
@@ -135,10 +135,10 @@ fn test_exact_binomial_p() {
     assert!(exact_binomial_p(2, 1, 2., AltHyp::Ne).aok().is_tainted());
 
     if nocover() {
-        assert!(exact_binomial_p(1, 0, 0., AltHyp::Ne).aok().is_pure());
-        assert!(exact_binomial_p(1, 0, 1., AltHyp::Ne).aok().is_pure());
-        assert!(exact_binomial_p(1, 1, 0., AltHyp::Ne).aok().is_pure());
-        assert!(exact_binomial_p(1, 1, 1., AltHyp::Ne).aok().is_pure());
+        assert!(exact_binomial_p(1, 0, 0., AltHyp::Ne).aok().is_untainted());
+        assert!(exact_binomial_p(1, 0, 1., AltHyp::Ne).aok().is_untainted());
+        assert!(exact_binomial_p(1, 1, 0., AltHyp::Ne).aok().is_untainted());
+        assert!(exact_binomial_p(1, 1, 1., AltHyp::Ne).aok().is_untainted());
     }
 }
 
@@ -184,23 +184,23 @@ fn test_exact_binomial_test() {
         assert!(
             exact_binomial_test(1, 0, 0., AltHyp::Ne, 0.5)
                 .aok()
-                .is_pure()
+                .is_untainted()
         );
         assert!(
             exact_binomial_test(1, 0, 1., AltHyp::Ne, 0.5)
                 .aok()
-                .is_pure()
+                .is_untainted()
         );
 
         assert!(
             exact_binomial_test(1, 1, 0., AltHyp::Ne, 0.5)
                 .aok()
-                .is_pure()
+                .is_untainted()
         );
         assert!(
             exact_binomial_test(1, 1, 1., AltHyp::Ne, 0.5)
                 .aok()
-                .is_pure()
+                .is_untainted()
         );
     }
 }

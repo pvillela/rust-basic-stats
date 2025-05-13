@@ -17,7 +17,7 @@ pub trait AokFloatValue {
     fn aok_fallback() -> Self;
     fn is_tainted(&self) -> bool;
 
-    fn is_pure(&self) -> bool {
+    fn is_untainted(&self) -> bool {
         !self.is_tainted()
     }
 }
@@ -62,7 +62,7 @@ pub trait AokBasicStatsValue {
     fn aok_fallback() -> Self;
     fn is_tainted(&self) -> bool;
 
-    fn is_pure(&self) -> bool {
+    fn is_untainted(&self) -> bool {
         !self.is_tainted()
     }
 }
