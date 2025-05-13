@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# NOCOVER environment variable enables tests that are disabled for test coverage measurement.
-
+# NOCOVER environment variable enables tests that are excluded from test coverage measurement.
 export NOCOVER="1" 
 
 echo "***** --all-targets (default feature)"
