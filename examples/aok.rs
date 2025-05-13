@@ -1,4 +1,4 @@
-//! Example of use of [`Noerr`] trait.
+//! Example of use of [`Aok`] trait.
 
 use basic_stats::{
     core::{AltHyp, AokBasicStats, AokFloat, SampleMoments},
@@ -20,7 +20,7 @@ fn main() {
 
         let alpha = 0.05;
 
-        // Welch functions calls below return Ok prior to invocation of noerr().
+        // Welch function calls below return Ok prior to invocation of noerr().
 
         let p = welch_p(&moments_x, &moments_y, alt_hyp).aok();
         println!("p={p}");
@@ -35,7 +35,7 @@ fn main() {
 
         let alpha = 1.0;
 
-        // Welch functions calls below return Err prior to invocation of noerr().
+        // Welch function calls below return Err prior to invocation of noerr().
 
         let p = welch_p(&moments_x, &SampleMoments::default(), alt_hyp).aok();
         println!("p={p}");

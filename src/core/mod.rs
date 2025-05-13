@@ -4,6 +4,7 @@
 
 mod aok;
 mod base;
+#[cfg(feature = "normal")]
 mod check_interval;
 mod error;
 mod iter;
@@ -13,4 +14,5 @@ pub use base::*;
 pub use error::*;
 pub use iter::*;
 
+#[cfg(feature = "normal")]
 pub(crate) use check_interval::*;

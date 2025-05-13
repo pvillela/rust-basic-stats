@@ -23,6 +23,7 @@ impl Display for StatsError {
 
 impl Error for StatsError {}
 
+#[allow(unused)]
 pub(crate) trait AsStatsResult<V> {
     fn stats_result(self, msg: &'static str) -> StatsResult<V>;
 }

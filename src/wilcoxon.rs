@@ -228,7 +228,6 @@ impl RankSum {
     ///
     /// As defined in the book Nonparametric Statistical Methods, 3rd Edition,
     /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
-
     pub fn w(&self) -> f64 {
         self.w
     }
@@ -361,13 +360,12 @@ mod base_test {
     //! Tests other than `test_w` used R's wilcox.test function to generate expected results.
     //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/wilcox.test
 
-    use std::error::Error;
-
     use super::*;
     use crate::{
         core::{AltHyp, Hyp},
         dev_utils::ApproxEq,
     };
+    use std::error::Error;
 
     const ALPHA: f64 = 0.05;
     const EPSILON: f64 = 0.0005;

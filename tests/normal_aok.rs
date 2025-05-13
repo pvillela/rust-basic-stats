@@ -1,6 +1,8 @@
 //! Used R's t.test function to generate expected values.
 //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test
 
+#![cfg(feature = "normal")]
+
 use basic_stats::{
     core::{AltHyp, AokBasicStats, AokFloat, Ci, Hyp, SampleMoments},
     dev_utils::ApproxEq,
@@ -10,6 +12,7 @@ use basic_stats::{
 const ALPHA: f64 = 0.05;
 const EPSILON: f64 = 0.0005;
 
+#[allow(clippy::too_many_arguments)]
 fn check_welch(
     dataset_x: &[f64],
     dataset_y: &[f64],
@@ -64,6 +67,7 @@ fn check_welch(
     );
 }
 
+#[allow(clippy::too_many_arguments)]
 fn check_student(
     dataset: &[f64],
     mu0: f64,

@@ -10,10 +10,15 @@ use super::{
     core::{AltHyp, Ci, HypTestResult},
     normal::{z_alpha, z_to_p},
 };
-use crate::core::{
-    AsStatsResult, StatsError, StatsResult, check_alpha_in_open_0_1, check_p0_in_open_0_1,
-};
+use crate::core::{AsStatsResult, StatsError, StatsResult, check_alpha_in_open_0_1};
 use statrs::distribution::{Beta, Binomial, ContinuousCDF, Discrete, DiscreteCDF};
+
+fn check_p0_in_open_0_1(p0: f64) -> StatsResult<()> {
+    if 0.0 < p0 && p0 < 1.0 {
+        return Ok(());
+    }
+    Err(StatsError("arg `p0` must be in interval (0, 1)"))
+}
 
 /// Estimator of success probability of Bernoulli distribution.
 ///
@@ -431,6 +436,7 @@ mod test {
         );
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn check_binomial(
         n: u64,
         n_s: u64,

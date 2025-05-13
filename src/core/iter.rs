@@ -41,7 +41,7 @@ where
                     self.prev_value = Some(v);
                 }
                 (None, Some(_)) => {
-                    let ret_v = replace(&mut self.prev_value, None);
+                    let ret_v = self.prev_value.take();
                     return Some((ret_v.unwrap_or_else(|| panic!("can't fail")), count));
                 }
                 (None, None) => return None,
@@ -54,7 +54,7 @@ where
 ///
 /// The pairs of type `(V, u64)` are such that:
 /// - Each pair corresponds to a grouping of the contiguous items from `source` that have the
-/// same value.
+///   same value.
 /// - The pair's first component is the value from `source`.
 /// - The pair's second component is the count of items from `source` in the grouping.
 pub fn iter_with_counts<V: PartialEq>(
