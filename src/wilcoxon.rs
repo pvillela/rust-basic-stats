@@ -261,7 +261,7 @@ impl RankSum {
         self.mann_whitney_u_y().min(self.mann_whitney_u_x())
     }
 
-    /// z-value from the large sample normal approximation.
+    /// z-value for the large sample normal approximation, without continuity correction.
     ///
     /// # Errors
     ///
@@ -307,7 +307,7 @@ impl RankSum {
         Ok(-w_star)
     }
 
-    /// p-value from the large sample normal approximation.
+    /// p-value for the large sample normal approximation, without continuity correction.
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
@@ -326,7 +326,7 @@ impl RankSum {
         Ok(z_to_p(z, alt_hyp))
     }
 
-    /// Wilcoxon rank sum test using large sample normal approximation.
+    /// Wilcoxon rank sum test using large sample normal approximation, without continuity correction.
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
