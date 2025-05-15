@@ -191,7 +191,7 @@ pub fn welch_alt_hyp_ci(
     let df = welch_df(moments_x, moments_y)?;
 
     let stud = StudentsT::new(0., 1., df)
-        .expect("StudentsT::new arg `freedom` should be guaranteed to be positive");
+        .expect("`StudentsT::new` arg `freedom` should be guaranteed to be positive");
     let t0 = match alt_hyp {
         AltHyp::Ne => -stud.inverse_cdf(alpha / 2.),
         _ => -stud.inverse_cdf(alpha),
@@ -333,7 +333,7 @@ pub fn student_1samp_alt_hyp_ci(
     let df = student_1samp_df(moments)?;
 
     let stud = StudentsT::new(0., 1., df)
-        .expect("can't happen: degrees of freedom is always >= 3 by construction");
+        .expect("`StudentsT::new` arg `freedom` should be guaranteed to be positive");
     let t0 = match alt_hyp {
         AltHyp::Ne => -stud.inverse_cdf(alpha / 2.),
         _ => -stud.inverse_cdf(alpha),
