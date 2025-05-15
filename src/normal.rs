@@ -268,7 +268,7 @@ pub fn welch_test(
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `moments.stdev() == 0`.
-pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
+pub fn student_1samp_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
     let n = moments.nf();
     let mean = moments.mean()?;
     let s = moments.stdev()?;
@@ -286,7 +286,7 @@ pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f6
 /// # Errors
 ///
 /// Returns an error if `moments.n() <= 1`.
-pub fn student_one_sample_df(moments: &SampleMoments) -> StatsResult<f64> {
+pub fn student_1samp_df(moments: &SampleMoments) -> StatsResult<f64> {
     if moments.n() <= 1 {
         return Err(StatsError("sample size must be greater than 1"));
     }
@@ -305,13 +305,9 @@ pub fn student_one_sample_df(moments: &SampleMoments) -> StatsResult<f64> {
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `moments.stdev() == 0`.
-pub fn student_one_sample_p(
-    moments: &SampleMoments,
-    mu0: f64,
-    alt_hyp: AltHyp,
-) -> StatsResult<f64> {
-    let t = student_one_sample_t(moments, mu0)?;
-    let df = student_one_sample_df(moments)?;
+pub fn student_1samp_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let t = student_1samp_t(moments, mu0)?;
+    let df = student_1samp_df(moments)?;
     t_to_p(t, df, alt_hyp)
 }
 
@@ -327,14 +323,14 @@ pub fn student_one_sample_p(
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `alpha` not in `(0, 1)`.
-pub fn student_one_sample_alt_hyp_ci(
+pub fn student_1samp_alt_hyp_ci(
     moments: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<Ci> {
     check_alpha_in_open_0_1(alpha)?;
 
-    let df = student_one_sample_df(moments)?;
+    let df = student_1samp_df(moments)?;
 
     let stud = StudentsT::new(0., 1., df)
         .expect("can't happen: degrees of freedom is always >= 3 by construction");
@@ -367,8 +363,8 @@ pub fn student_one_sample_alt_hyp_ci(
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `alpha` not in `(0, 1)`.
-pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> {
-    student_one_sample_alt_hyp_ci(moments, AltHyp::Ne, alpha)
+pub fn student_1samp_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> {
+    student_1samp_alt_hyp_ci(moments, AltHyp::Ne, alpha)
 }
 
 /// Student's one-sample t-test for equality.
@@ -385,14 +381,14 @@ pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> StatsResult
 /// - `moments.n() <= 1`.
 /// - `moments.stdev() == 0`.
 /// - `alpha` not in `(0, 1)`.
-pub fn student_one_sample_test(
+pub fn student_1samp_test(
     moments: &SampleMoments,
     mu0: f64,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
     check_alpha_in_open_0_1(alpha)?;
-    let p = student_one_sample_p(moments, mu0, alt_hyp)?;
+    let p = student_1samp_p(moments, mu0, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
@@ -479,11 +475,11 @@ mod test {
     ) -> StatsResult<()> {
         let moments = SampleMoments::from_slice(dataset);
 
-        let t = student_one_sample_t(&moments, mu0)?;
-        let df = student_one_sample_df(&moments)?;
+        let t = student_1samp_t(&moments, mu0)?;
+        let df = student_1samp_df(&moments)?;
         let p = t_to_p(t, df, alt_hyp)?;
-        let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA)?;
-        let res = student_one_sample_test(&moments, mu0, alt_hyp, ALPHA)?;
+        let ci = student_1samp_alt_hyp_ci(&moments, alt_hyp, ALPHA)?;
+        let res = student_1samp_test(&moments, mu0, alt_hyp, ALPHA)?;
 
         assert!(
             exp_t.approx_eq(t, EPSILON),

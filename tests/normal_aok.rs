@@ -80,11 +80,11 @@ fn check_student(
 ) {
     let moments = SampleMoments::from_slice(dataset);
 
-    let t = student_one_sample_t(&moments, mu0).aok();
-    let df = student_one_sample_df(&moments).aok();
+    let t = student_1samp_t(&moments, mu0).aok();
+    let df = student_1samp_df(&moments).aok();
     let p = t_to_p(t, df, alt_hyp).aok();
-    let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA).aok();
-    let res = student_one_sample_test(&moments, mu0, alt_hyp, ALPHA).aok();
+    let ci = student_1samp_alt_hyp_ci(&moments, alt_hyp, ALPHA).aok();
+    let res = student_1samp_test(&moments, mu0, alt_hyp, ALPHA).aok();
 
     assert!(
         exp_t.approx_eq(t, EPSILON),

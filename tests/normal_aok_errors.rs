@@ -3,9 +3,8 @@ mod nocover;
 use basic_stats::{
     core::{AltHyp, AokBasicStats, AokBasicStatsValue, AokFloat, AokFloatValue, SampleMoments},
     normal::{
-        student_one_sample_ci, student_one_sample_df, student_one_sample_p, student_one_sample_t,
-        student_one_sample_test, t_alpha, t_to_p, welch_ci, welch_df, welch_p, welch_t, welch_test,
-        z_alpha,
+        student_1samp_ci, student_1samp_df, student_1samp_p, student_1samp_t, student_1samp_test,
+        t_alpha, t_to_p, welch_ci, welch_df, welch_p, welch_t, welch_test, z_alpha,
     },
 };
 use nocover::nocover;
@@ -186,7 +185,7 @@ fn test_welch_test() {
 }
 
 #[test]
-fn test_student_one_sample_t() {
+fn test_student_1samp_t() {
     // Returns an error in any of the following conditions:
     // - `moments.n() <= 1`.
     // - `moments.stdev() == 0`.
@@ -196,31 +195,31 @@ fn test_student_one_sample_t() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(student_one_sample_t(&m0_0, 0.).aok().is_tainted());
-    assert!(student_one_sample_t(&m1_1, 0.).aok().is_tainted());
-    assert!(student_one_sample_t(&m2_0, 0.).aok().is_tainted());
+    assert!(student_1samp_t(&m0_0, 0.).aok().is_tainted());
+    assert!(student_1samp_t(&m1_1, 0.).aok().is_tainted());
+    assert!(student_1samp_t(&m2_0, 0.).aok().is_tainted());
     if nocover() {
-        assert!(student_one_sample_t(&m2_1, 0.).aok().is_untainted());
+        assert!(student_1samp_t(&m2_1, 0.).aok().is_untainted());
     }
 }
 
 #[test]
-fn test_student_one_sample_df() {
+fn test_student_1samp_df() {
     // Returns an error if `moments.n() <= 1`.
 
     let m0_0 = SampleMoments::default();
     let m1_0 = SampleMoments::new(1, 0., 0.);
     let m2_0 = SampleMoments::new(2, 0., 0.);
 
-    assert!(student_one_sample_df(&m0_0).aok().is_tainted());
-    assert!(student_one_sample_df(&m1_0).aok().is_tainted());
+    assert!(student_1samp_df(&m0_0).aok().is_tainted());
+    assert!(student_1samp_df(&m1_0).aok().is_tainted());
     if nocover() {
-        assert!(student_one_sample_df(&m2_0).aok().is_untainted());
+        assert!(student_1samp_df(&m2_0).aok().is_untainted());
     }
 }
 
 #[test]
-fn test_student_one_sample_p() {
+fn test_student_1samp_p() {
     // Returns an error in any of the following conditions:
     // - `moments.n() <= 1`.
     // - `moments.stdev() == 0`.
@@ -232,25 +231,21 @@ fn test_student_one_sample_p() {
 
     let alt_hyp = AltHyp::Ne;
 
-    assert!(student_one_sample_p(&m0_0, 0., alt_hyp).aok().is_tainted());
-    assert!(student_one_sample_p(&m1_1, 0., alt_hyp).aok().is_tainted());
-    assert!(student_one_sample_p(&m2_0, 0., alt_hyp).aok().is_tainted());
+    assert!(student_1samp_p(&m0_0, 0., alt_hyp).aok().is_tainted());
+    assert!(student_1samp_p(&m1_1, 0., alt_hyp).aok().is_tainted());
+    assert!(student_1samp_p(&m2_0, 0., alt_hyp).aok().is_tainted());
     if nocover() {
-        assert!(
-            student_one_sample_p(&m2_1, 0., alt_hyp)
-                .aok()
-                .is_untainted()
-        );
+        assert!(student_1samp_p(&m2_1, 0., alt_hyp).aok().is_untainted());
     }
 }
 
 #[test]
-fn test_student_one_sample_alt_hyp_ci() {
-    // Covered by `test_student_one_sample_ci`.
+fn test_student_1samp_alt_hyp_ci() {
+    // Covered by `test_student_1samp_ci`.
 }
 
 #[test]
-fn test_student_one_sample_ci() {
+fn test_student_1samp_ci() {
     // Returns an error in any of the following conditions:
     // - `moments.n() <= 1`.
     // - `alpha` not in `(0, 1)`.
@@ -259,21 +254,21 @@ fn test_student_one_sample_ci() {
     let m1_1 = SampleMoments::new(1, 0., 1.);
     let m2_0 = SampleMoments::new(2, 0., 0.);
 
-    assert!(student_one_sample_ci(&m0_0, 0.5).aok().is_tainted());
-    assert!(student_one_sample_ci(&m1_1, 0.5).aok().is_tainted());
+    assert!(student_1samp_ci(&m0_0, 0.5).aok().is_tainted());
+    assert!(student_1samp_ci(&m1_1, 0.5).aok().is_tainted());
 
-    assert!(student_one_sample_ci(&m2_0, -1.).aok().is_tainted());
-    assert!(student_one_sample_ci(&m2_0, 0.).aok().is_tainted());
-    assert!(student_one_sample_ci(&m2_0, 1.).aok().is_tainted());
-    assert!(student_one_sample_ci(&m2_0, 2.).aok().is_tainted());
+    assert!(student_1samp_ci(&m2_0, -1.).aok().is_tainted());
+    assert!(student_1samp_ci(&m2_0, 0.).aok().is_tainted());
+    assert!(student_1samp_ci(&m2_0, 1.).aok().is_tainted());
+    assert!(student_1samp_ci(&m2_0, 2.).aok().is_tainted());
 
     if nocover() {
-        assert!(student_one_sample_ci(&m2_0, 0.5).aok().is_untainted());
+        assert!(student_1samp_ci(&m2_0, 0.5).aok().is_untainted());
     }
 }
 
 #[test]
-fn test_student_one_sample_test() {
+fn test_student_1samp_test() {
     // Returns an error in any of the following conditions:
     // - `moments.n() <= 1`.
     // - `moments.stdev() == 0`.
@@ -287,45 +282,45 @@ fn test_student_one_sample_test() {
     let alt_hyp = AltHyp::Ne;
 
     assert!(
-        student_one_sample_test(&m0_0, 0., alt_hyp, 0.5)
+        student_1samp_test(&m0_0, 0., alt_hyp, 0.5)
             .aok()
             .is_tainted()
     );
     assert!(
-        student_one_sample_test(&m1_1, 0., alt_hyp, 0.5)
+        student_1samp_test(&m1_1, 0., alt_hyp, 0.5)
             .aok()
             .is_tainted()
     );
     assert!(
-        student_one_sample_test(&m2_0, 0., alt_hyp, 0.5)
+        student_1samp_test(&m2_0, 0., alt_hyp, 0.5)
             .aok()
             .is_tainted()
     );
 
     assert!(
-        student_one_sample_test(&m2_1, 0., alt_hyp, -1.)
+        student_1samp_test(&m2_1, 0., alt_hyp, -1.)
             .aok()
             .is_tainted()
     );
     assert!(
-        student_one_sample_test(&m2_1, 0., alt_hyp, 0.)
+        student_1samp_test(&m2_1, 0., alt_hyp, 0.)
             .aok()
             .is_tainted()
     );
     assert!(
-        student_one_sample_test(&m2_1, 0., alt_hyp, 1.)
+        student_1samp_test(&m2_1, 0., alt_hyp, 1.)
             .aok()
             .is_tainted()
     );
     assert!(
-        student_one_sample_test(&m2_1, 0., alt_hyp, 2.)
+        student_1samp_test(&m2_1, 0., alt_hyp, 2.)
             .aok()
             .is_tainted()
     );
 
     if nocover() {
         assert!(
-            student_one_sample_test(&m2_1, 0., alt_hyp, 0.5)
+            student_1samp_test(&m2_1, 0., alt_hyp, 0.5)
                 .aok()
                 .is_untainted()
         );
