@@ -15,20 +15,12 @@ exclude = ["CHANGELOG.md", "*.sh", ".gitignore"]
 
 [dependencies]
 statrs = "0.18"
-# Optional:
-hypors = { version = "0.2", optional = true }
-polars = { version = "0.43", optional = true } # required by hypors
 
 [features]
 default = ["binomial", "normal", "wilcoxon"]
 binomial = ["normal"]
 normal = []
 wilcoxon = ["normal"]
-# Private:
-_hypors = [
-    "dep:hypors",
-    "dep:polars",
-] # to enable testing Wilcoxon rank sum test functionality
 
 [package.metadata.docs.rs]
 all-features = true

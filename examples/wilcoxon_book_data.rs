@@ -34,9 +34,9 @@ fn check_wilcoxon(rank_sum: &RankSum, alt_hyp: AltHyp, exp_accept_hyp: Hyp) {
         "alt_hyp={alt_hyp:?} -- res.accepted"
     );
 
-    let mann_whitney_u_x = rank_sum.mann_whitney_u_x();
+    let mann_whitney_u_x = rank_sum.mann_whitney_u_y();
     println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_x={mann_whitney_u_x}");
-    let mann_whitney_u_y = rank_sum.mann_whitney_u_y();
+    let mann_whitney_u_y = rank_sum.mann_whitney_u_x();
     println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_y={mann_whitney_u_y}");
     let mann_whitney_u = rank_sum.mann_whitney_u();
     println!("alt_hyp={alt_hyp:?} -- mann_whitney_u={mann_whitney_u}");
