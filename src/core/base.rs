@@ -332,6 +332,7 @@ mod test {
         let nf = 11.;
         let sum = 212.;
         let sum2 = 4290.;
+        let mean = 212. / 11.;
         let var = 20.41818;
         let sum2_dev = var * ((n - 1) as f64);
         let stdev = 4.518648;
@@ -346,10 +347,27 @@ mod test {
         assert_eq!(nf, moments.nf());
         assert_eq!(sum, moments.sum());
         assert_eq!(sum2, moments.sum2());
+        assert_eq!(mean, moments.mean().unwrap());
         assert!(var.approx_eq(moments.var().unwrap(), EPSILON));
         assert!(sum2_dev.approx_eq(moments.sum2_deviations().unwrap(), EPSILON * 10.));
         assert!(stdev.approx_eq(moments.stdev().unwrap(), EPSILON));
         assert_eq!(min, moments.min());
         assert_eq!(max, moments.max());
+    }
+
+    #[test]
+    fn test_moments_default() {
+        let moments = SampleMoments::default();
+
+        assert_eq!(0, moments.n());
+        assert_eq!(0., moments.nf());
+        assert_eq!(0., moments.sum());
+        assert_eq!(0., moments.sum2());
+        assert!(moments.mean().is_err());
+        assert!(moments.var().is_err());
+        assert!(moments.sum2_deviations().is_err());
+        assert!(moments.stdev().is_err());
+        assert!(moments.min().is_nan());
+        assert!(moments.max().is_nan());
     }
 }
