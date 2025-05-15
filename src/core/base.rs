@@ -14,7 +14,7 @@ use super::{StatsError, StatsResult};
 #[inline(always)]
 pub fn sample_mean(n: u64, sum: f64) -> StatsResult<f64> {
     if n == 0 {
-        return Err(StatsError("arg `n` must be positive"));
+        return Err(StatsError("sample size must be positive"));
     }
     Ok(sum / n as f64)
 }
@@ -32,7 +32,7 @@ pub fn sample_mean(n: u64, sum: f64) -> StatsResult<f64> {
 #[inline(always)]
 pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
     if n == 0 {
-        return Err(StatsError("arg `n` must be positive"));
+        return Err(StatsError("sample size must be positive"));
     }
     Ok(sum2 - sum.powi(2) / n as f64)
 }
@@ -50,7 +50,7 @@ pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
 #[inline(always)]
 pub fn sample_var(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
     if n <= 1 {
-        return Err(StatsError("arg `n` must be greater than `1`"));
+        return Err(StatsError("sample size must be greater than `1`"));
     }
     Ok(sample_sum2_deviations(n, sum, sum2)? / (n as f64 - 1.))
 }

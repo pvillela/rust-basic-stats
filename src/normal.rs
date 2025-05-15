@@ -89,7 +89,11 @@ pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
 /// Returns an error in any of the following conditions:
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
+    if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
+        return Err(StatsError("sample standard deviations are both zero"));
+    }
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
     let d_means = moments_x.mean()? - moments_y.mean()?;
@@ -112,10 +116,10 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsRes
 /// Returns an error in any of the following conditions:
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
-/// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
     if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
-        return Err(StatsError("sample standard deviations are zero"));
+        return Err(StatsError("sample standard deviations are both zero"));
     }
     // At this point, df is guaranteed to be > 0.
 
@@ -144,7 +148,7 @@ pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsRe
 /// Returns an error in any of the following conditions:
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
-/// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 pub fn welch_p(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
@@ -168,7 +172,7 @@ pub fn welch_p(
 /// Returns an error in any of the following conditions:
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
-/// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 /// - `alpha` not in `(0, 1)`.
 pub fn welch_alt_hyp_ci(
     moments_x: &SampleMoments,
@@ -217,7 +221,7 @@ pub fn welch_alt_hyp_ci(
 /// Returns an error in any of the following conditions:
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
-/// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 /// - `alpha` not in `(0, 1)`.
 pub fn welch_ci(
     moments_x: &SampleMoments,
@@ -240,7 +244,7 @@ pub fn welch_ci(
 /// Returns an error in any of the following conditions:
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
-/// - `moments_x.stdev() == 0` and `moments_y.stdev() == 0`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 /// - `alpha` not in `(0, 1)`.
 pub fn welch_test(
     moments_x: &SampleMoments,
@@ -268,6 +272,9 @@ pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f6
     let n = moments.nf();
     let mean = moments.mean()?;
     let s = moments.stdev()?;
+    if s == 0. {
+        return Err(StatsError("sample standard deviation must be positive"));
+    }
     Ok((mean - mu0) / s * n.sqrt())
 }
 
@@ -281,7 +288,7 @@ pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f6
 /// Returns an error if `moments.n() <= 1`.
 pub fn student_one_sample_df(moments: &SampleMoments) -> StatsResult<f64> {
     if moments.n() <= 1 {
-        return Err(StatsError("`moments.n()` must be greater than 1"));
+        return Err(StatsError("sample size must be greater than 1"));
     }
     Ok(moments.nf() - 1.)
 }
@@ -319,7 +326,6 @@ pub fn student_one_sample_p(
 ///
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
-/// - `moments.stdev() == 0`.
 /// - `alpha` not in `(0, 1)`.
 pub fn student_one_sample_alt_hyp_ci(
     moments: &SampleMoments,
@@ -360,7 +366,6 @@ pub fn student_one_sample_alt_hyp_ci(
 ///
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
-/// - `moments.stdev() == 0`.
 /// - `alpha` not in `(0, 1)`.
 pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> {
     student_one_sample_alt_hyp_ci(moments, AltHyp::Ne, alpha)
