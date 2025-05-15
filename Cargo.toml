@@ -19,6 +19,10 @@ statrs = "0.18"
 hypors = { version = "0.2", optional = true }
 polars = { version = "0.43", optional = true } # required by hypors
 
+[dev-dependencies]
+scirs2-stats = "0.1.0-alpha.2"
+ndarray = "0.16.1"
+
 [features]
 default = ["binomial", "normal", "wilcoxon"]
 binomial = ["normal"]

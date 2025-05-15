@@ -737,3 +737,24 @@ mod test_with_hypors {
         }
     }
 }
+
+#[cfg(test)]
+mod test_with_scirs2_stats {
+    use ndarray::array;
+    use scirs2_stats::mannwhitneyu;
+
+    #[test]
+    fn test() {
+        // Two independent samples that may not be normally distributed
+        let group1 = array![2.5, 3.1, 4.8, 2.2, 5.1, 3.7, 2.9];
+        let group2 = array![4.5, 5.3, 6.1, 5.8, 4.9, 6.2];
+
+        // Test if one group tends to have higher values than the other
+        let (u_stat, p_value) = mannwhitneyu(&group1.view(), &group2.view()).unwrap();
+
+        println!(
+            "Mann-Whitney U test: U statistic: {}, p-value: {}",
+            u_stat, p_value
+        );
+    }
+}
