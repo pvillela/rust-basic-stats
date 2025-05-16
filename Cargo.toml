@@ -14,12 +14,12 @@ exclude = ["CHANGELOG.md", "*.sh", ".gitignore"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-statrs = "0.18"
+statrs = { version = "0.18", optional = true }
 
 [features]
 default = ["binomial", "normal", "wilcoxon"]
 binomial = ["normal"]
-normal = []
+normal = ["dep:statrs"]
 wilcoxon = ["normal"]
 
 [package.metadata.docs.rs]

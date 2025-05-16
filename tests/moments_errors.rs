@@ -50,3 +50,21 @@ pub fn test_stdev() {
         assert!(m2.stdev().unwrap().is_finite());
     }
 }
+
+#[test]
+pub fn test_from_paired_slices() {
+    let s0 = [];
+    let s1 = [0.];
+
+    let m00 = SampleMoments::from_paired_slices(&s0, &s0);
+    let m01 = SampleMoments::from_paired_slices(&s0, &s1);
+    let m10 = SampleMoments::from_paired_slices(&s1, &s0);
+    let m11 = SampleMoments::from_paired_slices(&s1, &s1);
+
+    assert!(m01.is_err());
+    assert!(m10.is_err());
+    if nocover() {
+        assert!(m00.is_ok());
+        assert!(m11.is_ok());
+    }
+}

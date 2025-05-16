@@ -404,4 +404,21 @@ mod test {
         assert!(moments.min().is_nan());
         assert!(moments.max().is_nan());
     }
+
+    #[test]
+    fn test_moments_paired_slices() {
+        let x = [14., 15., 15., 15., 16., 18., 22., 23., 24., 25., 25.];
+        let y = [12., 10., 19., 15., 10., 28., 26., 13., 15., 45., 11.];
+
+        let moments_i =
+            SampleMoments::from_paired_iterators(x.iter().cloned(), y.iter().cloned()).unwrap();
+        let moments_s = SampleMoments::from_paired_slices(&x, &y).unwrap();
+
+        let diffs = x.into_iter().zip(y.into_iter()).map(|(vx, vy)| vx - vy);
+
+        let moments_d = SampleMoments::from_iterator(diffs);
+
+        assert_eq!(moments_i, moments_s);
+        assert_eq!(moments_i, moments_d);
+    }
 }

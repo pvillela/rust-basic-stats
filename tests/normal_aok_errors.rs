@@ -1,3 +1,5 @@
+#![cfg(feature = "normal")]
+
 mod nocover;
 
 use basic_stats::{
