@@ -119,7 +119,7 @@ impl SampleMoments {
         self.max = value.max(self.max);
     }
 
-    /// Instatiates `Self` from an iterator.
+    /// Instantiates `Self` from a sample provided by an iterator.
     pub fn from_iterator(dataset: impl Iterator<Item = f64>) -> Self {
         let mut moments = SampleMoments::new_empty();
         for v in dataset {
@@ -128,10 +128,44 @@ impl SampleMoments {
         moments
     }
 
-    /// Instatiates `Self` from a slice.
+    /// Instantiates `Self` from a pair of samples provided by iterators,
+    /// by collecting the differences between the items in the first sample and the corresponding items
+    /// in the second sample.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the iterators do not have the same number of items.
+    pub fn from_paired_iterators(
+        mut dataset1: impl Iterator<Item = f64>,
+        mut dataset2: impl Iterator<Item = f64>,
+    ) -> StatsResult<Self> {
+        let mut moments = SampleMoments::new_empty();
+        loop {
+            match (dataset1.next(), dataset2.next()) {
+                (Some(v1), Some(v2)) => moments.collect_value(v1 - v2),
+                (None, None) => break,
+                _ => return Err(StatsError("paired samples must have the same size")),
+            }
+        }
+
+        Ok(moments)
+    }
+
+    /// Instantiates `Self` from a sample provided by a slice.
     pub fn from_slice(dataset: &[f64]) -> Self {
         let iter = dataset.iter().cloned();
         Self::from_iterator(iter)
+    }
+
+    /// Instantiates `Self` from a pair of samples provided by slices,
+    /// by collecting the differences between the items in the first sample and the corresponding items
+    /// in the second sample.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the slices do not have the same number of items.
+    pub fn from_paired_slices(dataset1: &[f64], dataset2: &[f64]) -> StatsResult<Self> {
+        Self::from_paired_iterators(dataset1.iter().cloned(), dataset2.iter().cloned())
     }
 
     /// Sample size as integer.

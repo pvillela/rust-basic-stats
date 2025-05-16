@@ -25,7 +25,8 @@ impl RankSum {
     /// number of occurrences of the value in the sample.
     ///
     /// # Errors
-    /// - Returns an error if an iterator does not yield data values in strictly increasing order.
+    ///
+    /// Returns an error if an iterator does not yield data values in strictly increasing order.
     pub fn from_iter_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,

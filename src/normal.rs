@@ -1,6 +1,11 @@
-//! Statistics related to the Normal distribution and Student's t distribution,
-//! including the Student one-sample t-test and the
-//! Welch two-sample t-test (for samples from distributions that may have different variances).
+//! Statistics related to the Normal distribution and Student's t distribution, including t-tests.
+//!
+//! - For the one-sample t-test and related statistics, use `student_1samp._*` functions.
+//! - For the two-sample t-test and related statistics, use `welch_*` functions, which allows for samples
+//!   from distributions that may have different variances.
+//! - For the paired-sample t-test and related statistics, first construct the [`SampleMoments`] for
+//!   the paired samples (using, e.g., [`SampleMoments::from_paired_iterators`] or [`SampleMoments::from_paired_slices`])
+//!   and then use `student_1samp_*` functions.
 //!
 //! This module is included by default. However, if `default-features = false` is specified in the dependency
 //! declaration for this library, then inclusion of this module is gated by feature "**normal**".
