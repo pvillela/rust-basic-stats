@@ -12,6 +12,7 @@ use crate::{
 
 /// Encapsulates the Wilcoxon rank sum computations on two data samples.
 /// This struct's methods implement the Wilcoxon rank sum test and related statistics.
+#[derive(Debug)]
 pub struct RankSum {
     n_x: u64,
     n_y: u64,
@@ -282,9 +283,14 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+    /// Returns an error in any of the following conditions:
+    /// - `self.n_x == 0` or `self.n_y == 0`.
+    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    ///   This is hard to quantify a priori. For example,
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
     pub fn z(&self) -> StatsResult<f64> {
-        // Guard against division by 0 in `var0_w_ties_adjust` and `var0_w == 0.`.
+        // Guard against division by 0 in `var0_w_ties_adjust`.
         if self.n_x == 0 || self.n_y == 0 {
             return Err(StatsError(
                 "`self.n_x` and `self.n_y` must both be positive",
@@ -299,6 +305,9 @@ impl RankSum {
         let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
         let var0_w_ties_adjust = n_x * n_y * ties_sum_prod / (12. * (n_x + n_y) * (n_x + n_y - 1.));
         let var0_w = var0_w_base - var0_w_ties_adjust;
+        if var0_w <= 0. {
+            return Err(StatsError("too many rank ties"));
+        }
         let w_star = (w - e0_w) / var0_w.sqrt();
 
         Ok(-w_star)
@@ -331,7 +340,12 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+    /// Returns an error in any of the following conditions:
+    /// - `self.n_x == 0` or `self.n_y == 0`.
+    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    ///   This is hard to quantify a priori. For example,
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
     pub fn z_p(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
         let z = self.z()?;
         Ok(z_to_p(z, alt_hyp))
@@ -354,6 +368,10 @@ impl RankSum {
     /// Returns an error in any of these circumstances:
     /// - `self.n_x == 0` or `self.n_y == 0`.
     /// - `alpha` not in `(0, 1)`.
+    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    ///   This is hard to quantify a priori. For example,
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
     pub fn z_test(&self, alt_hyp: AltHyp, alpha: f64) -> StatsResult<HypTestResult> {
         check_alpha_in_open_0_1(alpha)?;
         let p = self.z_p(alt_hyp)?;
