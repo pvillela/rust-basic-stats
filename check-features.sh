@@ -3,8 +3,8 @@
 echo "***** --all-targets --all-features"
 cargo check --all-targets --all-features
 
-echo "***** --all-targets (default feature)"
-cargo check --all-targets
+echo "***** --lib --bins --tests (default feature)"
+cargo check --lib --bins --tests
 
 echo "***** --no-default-features"
 cargo check --lib --bins --tests --no-default-features

@@ -1,9 +1,10 @@
 #![cfg(feature = "normal")]
+#![cfg(feature = "aok")]
 
 mod nocover;
 
-use basic_stats::aok::{AokBasicStats, AokBasicStatsValue, AokFloat};
 use basic_stats::{
+    aok::{AokBasicStats, AokBasicStatsValue, AokFloat},
     core::{AltHyp, SampleMoments},
     normal::{
         student_1samp_ci, student_1samp_df, student_1samp_p, student_1samp_t, student_1samp_test,

@@ -2,9 +2,10 @@
 //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test
 
 #![cfg(feature = "normal")]
+#![cfg(feature = "aok")]
 
-use basic_stats::aok::{AokBasicStats, AokFloat};
 use basic_stats::{
+    aok::{AokBasicStats, AokFloat},
     core::{AltHyp, Ci, Hyp, SampleMoments},
     dev_utils::ApproxEq,
     normal::*,

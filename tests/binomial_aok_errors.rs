@@ -1,9 +1,13 @@
 #![cfg(feature = "binomial")]
+#![cfg(feature = "aok")]
 
 mod nocover;
 
-use basic_stats::aok::{AokBasicStats, AokBasicStatsValue, AokFloat};
-use basic_stats::{binomial::*, core::AltHyp};
+use basic_stats::{
+    aok::{AokBasicStats, AokBasicStatsValue, AokFloat},
+    binomial::*,
+    core::AltHyp,
+};
 use nocover::nocover;
 
 #[test]

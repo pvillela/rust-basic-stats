@@ -1,3 +1,12 @@
+//! Supports the coercion of `Result<Value, E>` to the underlying type `Value`,
+//! producing a suitable fallback output value instead of panicking in case of error.
+//!
+//! Traits [`AokFloat`] and [`AokBasicStats`] are separate to enable them to be selectively
+//! imported. [`AokBasicStats`] provides a blanket implementation and we want to avoid namespace pollution
+//! with blanket implementations for built-in types like `f64`.
+//!
+//! This module is NOT included by default. Inclusion of this module is gated by feature "**aok**".
+
 use crate::core::{AltHyp, Ci, HypTestResult};
 
 /// Enables coercion of `Result<Value, E>` to the underlying type `Value`,

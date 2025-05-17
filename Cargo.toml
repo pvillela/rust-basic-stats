@@ -18,6 +18,7 @@ statrs = { version = "0.18", optional = true }
 
 [features]
 default = ["binomial", "normal", "wilcoxon"]
+aok = []
 binomial = ["normal"]
 normal = ["dep:statrs"]
 wilcoxon = ["normal"]

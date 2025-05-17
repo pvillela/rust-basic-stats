@@ -3,8 +3,11 @@
 # NOCOVER environment variable enables tests that are excluded from test coverage measurement.
 export NOCOVER="1" 
 
-echo "***** --all-targets (default feature)"
-cargo nextest run --all-targets --target-dir target/test-target
+echo "***** --examples --all-features"
+cargo nextest run --examples  --all-features --target-dir target/test-target
+
+echo "*****  --lib --bins --tests (default feature)"
+cargo nextest run --lib --bins --tests --target-dir target/test-target
 
 echo "***** --no-default-features"
 cargo nextest run --lib --bins --tests --no-default-features --target-dir target/test-target
