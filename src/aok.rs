@@ -37,7 +37,7 @@ pub trait AokBasicStats {
     fn aok(self) -> Self::Value;
 }
 
-/// Constructs a suitable fallback instance for the `Value` type of [`Noerr`].
+/// Constructs a suitable fallback instance for the `Value` type of [`AokBasicStats`].
 ///
 /// For types constructed from floating point numbers, the fallback value will typically be a
 /// value constructed with `NaN` fields.
