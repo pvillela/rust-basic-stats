@@ -1,46 +1,20 @@
 use super::{AltHyp, Ci, HypTestResult};
 
-/// Enables coercion of `Result<T, E>` to the underlying type `T`,
+/// Enables coercion of `Result<Value, E>` to the underlying type `Value`,
 /// producing a suitable fallback output value instead of panicking in case of error.
 ///
 /// Intended to be implemented for floating point numbers.
 pub trait AokFloat {
-    type Value: AokFloatValue;
+    type Value;
 
     fn aok(self) -> Self::Value;
 }
 
-/// Constructs a suitable fallback instance for the `Value` type of [`AokFloat`].
-///
-/// For floating point numbers, the fallback value will typically be `NaN`.
-pub trait AokFloatValue {
-    fn aok_fallback() -> Self;
-    fn is_tainted(&self) -> bool;
-
-    fn is_untainted(&self) -> bool {
-        !self.is_tainted()
-    }
-}
-
-impl<T, E> AokFloat for Result<T, E>
-where
-    T: AokFloatValue,
-{
-    type Value = T;
+impl<E> AokFloat for Result<f64, E> {
+    type Value = f64;
 
     fn aok(self) -> Self::Value {
-        self.unwrap_or_else(|_| T::aok_fallback())
-    }
-}
-
-impl AokFloatValue for f64 {
-    // Returns `NaN` as a fallback value.
-    fn aok_fallback() -> f64 {
-        f64::NAN
-    }
-
-    fn is_tainted(&self) -> bool {
-        self.is_nan()
+        self.unwrap_or_else(|_| f64::NAN)
     }
 }
 
@@ -141,29 +115,16 @@ mod test {
         }
 
         pub trait AokFloat {
-            type Output: AokFloatFallback;
+            type Output;
 
             fn aok(self) -> Self::Output;
         }
-        pub trait AokFloatFallback {
-            fn aok_fallback() -> Self;
-        }
 
-        impl<T, E> AokFloat for Result<T, E>
-        where
-            T: AokFloatFallback,
-        {
-            type Output = T;
+        impl<E> AokFloat for Result<f64, E> {
+            type Output = f64;
 
             fn aok(self) -> Self::Output {
-                self.unwrap_or_else(|_| T::aok_fallback())
-            }
-        }
-
-        impl AokFloatFallback for f64 {
-            // Returns `NaN` as a fallback value.
-            fn aok_fallback() -> f64 {
-                f64::NAN
+                self.unwrap_or_else(|_| f64::NAN)
             }
         }
 

@@ -4,16 +4,16 @@ mod nocover;
 
 use basic_stats::{
     binomial::*,
-    core::{AltHyp, AokBasicStats, AokBasicStatsValue, AokFloat, AokFloatValue},
+    core::{AltHyp, AokBasicStats, AokBasicStatsValue, AokFloat},
 };
 use nocover::nocover;
 
 #[test]
 fn test_bernoulli_p_hat() {
     // Returns an error if `n == 0`
-    assert!(bernoulli_p_hat(0, 0).aok().is_tainted());
+    assert!(bernoulli_p_hat(0, 0).aok().is_nan());
     if nocover() {
-        assert!(bernoulli_p_hat(1, 0).aok().is_untainted());
+        assert!(bernoulli_p_hat(1, 0).aok().is_finite());
     }
 }
 
@@ -22,11 +22,11 @@ fn test_binomial_z() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    assert!(binomial_z(0, 0, 0.5).aok().is_tainted());
-    assert!(binomial_z(1, 0, 0.).aok().is_tainted());
-    assert!(binomial_z(1, 0, 1.).aok().is_tainted());
+    assert!(binomial_z(0, 0, 0.5).aok().is_nan());
+    assert!(binomial_z(1, 0, 0.).aok().is_nan());
+    assert!(binomial_z(1, 0, 1.).aok().is_nan());
     if nocover() {
-        assert!(binomial_z(1, 0, 0.5).aok().is_untainted());
+        assert!(binomial_z(1, 0, 0.5).aok().is_finite());
     }
 }
 
@@ -35,11 +35,11 @@ fn test_binomial_z_p() {
     // Returns an error in any of these circumstances:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
-    assert!(binomial_z_p(0, 0, 0.5, AltHyp::Ne).aok().is_tainted());
-    assert!(binomial_z_p(1, 0, 0., AltHyp::Ne).aok().is_tainted());
-    assert!(binomial_z_p(1, 0, 1., AltHyp::Ne).aok().is_tainted());
+    assert!(binomial_z_p(0, 0, 0.5, AltHyp::Ne).aok().is_nan());
+    assert!(binomial_z_p(1, 0, 0., AltHyp::Ne).aok().is_nan());
+    assert!(binomial_z_p(1, 0, 1., AltHyp::Ne).aok().is_nan());
     if nocover() {
-        assert!(binomial_z_p(1, 0, 0.5, AltHyp::Ne).aok().is_untainted());
+        assert!(binomial_z_p(1, 0, 0.5, AltHyp::Ne).aok().is_finite());
     }
 }
 
@@ -129,16 +129,16 @@ fn test_exact_binomial_p() {
     // - `n == 0` or `n < n_s`.
     // - `p0` is not in `[0, 1]`.
 
-    assert!(exact_binomial_p(0, 0, 0.5, AltHyp::Ne).aok().is_tainted());
-    assert!(exact_binomial_p(2, 3, 0.5, AltHyp::Ne).aok().is_tainted());
-    assert!(exact_binomial_p(2, 1, -1., AltHyp::Ne).aok().is_tainted());
-    assert!(exact_binomial_p(2, 1, 2., AltHyp::Ne).aok().is_tainted());
+    assert!(exact_binomial_p(0, 0, 0.5, AltHyp::Ne).aok().is_nan());
+    assert!(exact_binomial_p(2, 3, 0.5, AltHyp::Ne).aok().is_nan());
+    assert!(exact_binomial_p(2, 1, -1., AltHyp::Ne).aok().is_nan());
+    assert!(exact_binomial_p(2, 1, 2., AltHyp::Ne).aok().is_nan());
 
     if nocover() {
-        assert!(exact_binomial_p(1, 0, 0., AltHyp::Ne).aok().is_untainted());
-        assert!(exact_binomial_p(1, 0, 1., AltHyp::Ne).aok().is_untainted());
-        assert!(exact_binomial_p(1, 1, 0., AltHyp::Ne).aok().is_untainted());
-        assert!(exact_binomial_p(1, 1, 1., AltHyp::Ne).aok().is_untainted());
+        assert!(exact_binomial_p(1, 0, 0., AltHyp::Ne).aok().is_finite());
+        assert!(exact_binomial_p(1, 0, 1., AltHyp::Ne).aok().is_finite());
+        assert!(exact_binomial_p(1, 1, 0., AltHyp::Ne).aok().is_finite());
+        assert!(exact_binomial_p(1, 1, 1., AltHyp::Ne).aok().is_finite());
     }
 }
 
