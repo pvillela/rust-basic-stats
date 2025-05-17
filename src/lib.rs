@@ -1,5 +1,6 @@
 #![doc = include_str!("lib.md")]
 
+pub mod aok;
 pub mod core;
 
 #[cfg(feature = "normal")]

@@ -3,8 +3,9 @@
 
 #![cfg(feature = "normal")]
 
+use basic_stats::aok::{AokBasicStats, AokFloat};
 use basic_stats::{
-    core::{AltHyp, AokBasicStats, AokFloat, Ci, Hyp, SampleMoments},
+    core::{AltHyp, Ci, Hyp, SampleMoments},
     dev_utils::ApproxEq,
     normal::*,
 };

@@ -1,4 +1,4 @@
-use super::{AltHyp, Ci, HypTestResult};
+use crate::core::{AltHyp, Ci, HypTestResult};
 
 /// Enables coercion of `Result<Value, E>` to the underlying type `Value`,
 /// producing a suitable fallback output value instead of panicking in case of error.
@@ -78,6 +78,9 @@ impl AokBasicStatsValue for Ci {
 #[cfg(feature = "normal")]
 mod test {
     //! To simulate another package that also implements `AokFloat`.
+
+    use crate::aok::AokBasicStats;
+
     mod another {
         use std::{
             error::Error,
@@ -160,7 +163,7 @@ mod test {
     #[test]
     fn test_aok() {
         use crate::{
-            core::{AltHyp, AokBasicStats, SampleMoments},
+            core::{AltHyp, SampleMoments},
             normal::{welch_alt_hyp_ci, welch_p},
         };
 
@@ -174,7 +177,7 @@ mod test {
         let alt_hyp = AltHyp::Gt;
 
         {
-            use crate::core::AokFloat;
+            use crate::aok::AokFloat;
 
             {
                 println!("*** Ok scenario:");

@@ -1,7 +1,8 @@
 //! Example of use of [`Aok`] trait.
 
+use basic_stats::aok::{AokBasicStats, AokFloat};
 use basic_stats::{
-    core::{AltHyp, AokBasicStats, AokFloat, SampleMoments},
+    core::{AltHyp, SampleMoments},
     normal::{welch_alt_hyp_ci, welch_p, welch_test},
 };
 

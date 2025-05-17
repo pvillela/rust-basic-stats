@@ -2,8 +2,9 @@
 
 mod nocover;
 
+use basic_stats::aok::{AokBasicStats, AokBasicStatsValue, AokFloat};
 use basic_stats::{
-    core::{AltHyp, AokBasicStats, AokBasicStatsValue, AokFloat, SampleMoments},
+    core::{AltHyp, SampleMoments},
     normal::{
         student_1samp_ci, student_1samp_df, student_1samp_p, student_1samp_t, student_1samp_test,
         t_alpha, t_to_p, welch_ci, welch_df, welch_p, welch_t, welch_test, z_alpha,
