@@ -27,7 +27,7 @@ impl RankSum {
     /// # Errors
     ///
     /// Returns an error if an iterator does not yield data values in strictly increasing order.
-    pub fn from_iter_with_counts(
+    pub fn from_iters_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,
     ) -> Result<RankSum, StatsError> {
@@ -205,14 +205,26 @@ impl RankSum {
     /// by the iterators is a data value.
     ///
     /// # Errors
-    /// - Returns an error if an iterator does not yield data values in non-decreasing order.
-    pub fn from_iter(
+    ///
+    /// Returns an error if an iterator does not yield data values in non-decreasing order.
+    pub fn from_iters(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
     ) -> Result<RankSum, StatsError> {
         let itc_x = iter_with_counts(it_x);
         let itc_y = iter_with_counts(it_y);
-        Self::from_iter_with_counts(itc_x, itc_y)
+        Self::from_iters_with_counts(itc_x, itc_y)
+    }
+
+    /// Instantiates `Self` from two samples in the form of two slices.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a slice is not sorted in non-decreasing order.
+    pub fn from_slices(x: &[f64], y: &[f64]) -> Result<RankSum, StatsError> {
+        let itc_x = x.iter().cloned();
+        let itc_y = y.iter().cloned();
+        Self::from_iters(itc_x, itc_y)
     }
 
     /// Size of first sample (X).
@@ -416,10 +428,7 @@ mod base_test {
     /// Example 4.1.
     fn test_w() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = book_data();
-
-        // The iterator must yield f64 values, so use either `.iter().cloned()` or `.into_iter()`.
-        // The latter is more efficient if the data set can be consumed.
-        let rank_sum = RankSum::from_iter(dat_x.iter().cloned(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
 
         let expected_w = 30.;
         let actual_w = rank_sum.w();
@@ -484,7 +493,7 @@ mod base_test {
     /// Example 4.1.
     fn test_book_data() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = book_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
 
         let exp_r_w = 35.;
 
@@ -515,7 +524,7 @@ mod base_test {
     #[test]
     fn test_contrived_data() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = contrived_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 1442.5;
 
@@ -546,7 +555,7 @@ mod base_test {
     #[test]
     fn test_contrived_data_u() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = contrived_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
 
         // From https://www.statskingdom.com/170median_mann_whitney.html:
         let exp_u_x = 1307.5;
@@ -571,7 +580,7 @@ mod base_test {
     #[test]
     fn test_shifted_contrived_data() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = shifted_contrived_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 840.;
 

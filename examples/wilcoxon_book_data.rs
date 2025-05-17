@@ -44,7 +44,7 @@ fn check_wilcoxon(rank_sum: &RankSum, alt_hyp: AltHyp, exp_accept_hyp: Hyp) {
 
 fn test_book_data() -> Result<(), Box<dyn Error>> {
     let (dat_x, dat_y) = book_data();
-    let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+    let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
 
     {
         let alt_hyp = AltHyp::Lt;

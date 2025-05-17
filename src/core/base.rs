@@ -120,7 +120,7 @@ impl SampleMoments {
     }
 
     /// Instantiates `Self` from a sample provided by an iterator.
-    pub fn from_iterator(dataset: impl Iterator<Item = f64>) -> Self {
+    pub fn from_iter(dataset: impl Iterator<Item = f64>) -> Self {
         let mut moments = SampleMoments::new_empty();
         for v in dataset {
             moments.collect_value(v);
@@ -135,7 +135,7 @@ impl SampleMoments {
     /// # Errors
     ///
     /// Returns an error if the iterators do not have the same number of items.
-    pub fn from_paired_iterators(
+    pub fn from_paired_iters(
         mut dataset1: impl Iterator<Item = f64>,
         mut dataset2: impl Iterator<Item = f64>,
     ) -> StatsResult<Self> {
@@ -154,7 +154,7 @@ impl SampleMoments {
     /// Instantiates `Self` from a sample provided by a slice.
     pub fn from_slice(dataset: &[f64]) -> Self {
         let iter = dataset.iter().cloned();
-        Self::from_iterator(iter)
+        Self::from_iter(iter)
     }
 
     /// Instantiates `Self` from a pair of samples provided by slices,
@@ -165,7 +165,7 @@ impl SampleMoments {
     ///
     /// Returns an error if the slices do not have the same number of items.
     pub fn from_paired_slices(dataset1: &[f64], dataset2: &[f64]) -> StatsResult<Self> {
-        Self::from_paired_iterators(dataset1.iter().cloned(), dataset2.iter().cloned())
+        Self::from_paired_iters(dataset1.iter().cloned(), dataset2.iter().cloned())
     }
 
     /// Sample size as integer.
@@ -411,12 +411,12 @@ mod test {
         let y = [12., 10., 19., 15., 10., 28., 26., 13., 15., 45., 11.];
 
         let moments_i =
-            SampleMoments::from_paired_iterators(x.iter().cloned(), y.iter().cloned()).unwrap();
+            SampleMoments::from_paired_iters(x.iter().cloned(), y.iter().cloned()).unwrap();
         let moments_s = SampleMoments::from_paired_slices(&x, &y).unwrap();
 
         let diffs = x.into_iter().zip(y.into_iter()).map(|(vx, vy)| vx - vy);
 
-        let moments_d = SampleMoments::from_iterator(diffs);
+        let moments_d = SampleMoments::from_iter(diffs);
 
         assert_eq!(moments_i, moments_s);
         assert_eq!(moments_i, moments_d);
