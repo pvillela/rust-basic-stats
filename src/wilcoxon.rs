@@ -313,26 +313,6 @@ impl RankSum {
         Ok(-w_star)
     }
 
-    #[cfg(test)]
-    fn z_no_ties_adjust(&self) -> StatsResult<f64> {
-        if self.n_x == 0 || self.n_y == 0 {
-            return Err(StatsError(
-                "`self.n_x` and `self.n_y` must both be positive",
-            ));
-        }
-
-        let n_x = self.n_x as f64;
-        let n_y = self.n_y as f64;
-        let w = self.w;
-        let e0_w = n_y * (n_x + n_y + 1.) / 2.;
-        let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
-        let var0_w_ties_adjust = 0.;
-        let var0_w = var0_w_base - var0_w_ties_adjust;
-        let w_star = (w - e0_w) / var0_w.sqrt();
-
-        Ok(-w_star)
-    }
-
     /// p-value for the large sample normal approximation, without continuity correction.
     ///
     /// Arguments:
@@ -348,12 +328,6 @@ impl RankSum {
     ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
     pub fn z_p(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
         let z = self.z()?;
-        Ok(z_to_p(z, alt_hyp))
-    }
-
-    #[cfg(test)]
-    fn z_p_no_ties_adjust(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
-        let z = self.z_no_ties_adjust()?;
         Ok(z_to_p(z, alt_hyp))
     }
 
@@ -377,17 +351,6 @@ impl RankSum {
         let p = self.z_p(alt_hyp)?;
         Ok(HypTestResult::new(p, alpha, alt_hyp))
     }
-
-    #[cfg(test)]
-    pub fn z_test_no_ties_adjust(&self, alt_hyp: AltHyp, alpha: f64) -> StatsResult<HypTestResult> {
-        let p = self.z_p_no_ties_adjust(alt_hyp)?;
-        Ok(HypTestResult::new(p, alpha, alt_hyp))
-    }
-}
-
-#[cfg(test)]
-fn sort_array(arr: &mut [f64]) {
-    arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
 }
 
 #[cfg(test)]
@@ -404,6 +367,10 @@ mod base_test {
 
     const ALPHA: f64 = 0.05;
     const EPSILON: f64 = 0.0005;
+
+    fn sort_array(arr: &mut [f64]) {
+        arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    }
 
     fn book_data() -> (Vec<f64>, Vec<f64>) {
         let sample_x = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
