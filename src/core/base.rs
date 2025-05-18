@@ -261,15 +261,6 @@ pub enum Hyp {
     Alt(AltHyp),
 }
 
-impl Hyp {
-    pub fn alt_hyp(&self) -> AltHyp {
-        match self {
-            Self::Null => AltHyp::Ne,
-            Self::Alt(h) => *h,
-        }
-    }
-}
-
 /// Result of a statistical hypothesis test with a null hypothesis of equality.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct HypTestResult {
@@ -333,7 +324,7 @@ pub enum PositionWrtCi {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-/// Confidence interval.
+/// Confidence interval. It is a closed interval of real numbers.
 pub struct Ci(
     /// Low end of interval.
     pub f64,
@@ -345,8 +336,8 @@ impl Ci {
     /// Returns the position of `value` with respect to `self`.
     pub fn position_of(&self, value: f64) -> PositionWrtCi {
         match value {
-            _ if value <= self.0 => PositionWrtCi::Below,
-            _ if self.0 < value && value < self.1 => PositionWrtCi::In,
+            _ if value < self.0 => PositionWrtCi::Below,
+            _ if self.0 <= value && value <= self.1 => PositionWrtCi::In,
             _ => PositionWrtCi::Above,
         }
     }
@@ -354,7 +345,7 @@ impl Ci {
 
 #[cfg(test)]
 mod test {
-    use super::SampleMoments;
+    use super::*;
     use crate::dev_utils::ApproxEq;
 
     const EPSILON: f64 = 0.000005;
@@ -420,5 +411,15 @@ mod test {
 
         assert_eq!(moments_i, moments_s);
         assert_eq!(moments_i, moments_d);
+    }
+
+    #[test]
+    fn test_ci() {
+        let ci = Ci(0., 1.);
+
+        assert_eq!(ci.position_of(-1.), PositionWrtCi::Below);
+        assert_eq!(ci.position_of(0.), PositionWrtCi::In);
+        assert_eq!(ci.position_of(1.), PositionWrtCi::In);
+        assert_eq!(ci.position_of(2.), PositionWrtCi::Above);
     }
 }

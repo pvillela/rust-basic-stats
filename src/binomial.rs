@@ -250,7 +250,7 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `alpha` is not in `[0, 1]`.
+/// - `alpha` is not in `(0, 1)`.
 pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
     binomial_cp_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }

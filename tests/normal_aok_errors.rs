@@ -21,8 +21,8 @@ fn test_z_to_p() {
 #[test]
 fn test_t_to_p() {
     // Returns an error if `df` is not `> 0`.
-    assert!(t_to_p(0., 0., AltHyp::Ne).aok().is_nan());
-    assert!(t_to_p(0., -1., AltHyp::Ne).aok().is_nan());
+    assert!(t_to_p(0., 0., AltHyp::Ne).is_err());
+    assert!(t_to_p(0., -1., AltHyp::Ne).is_err());
     if nocover() {
         assert!(t_to_p(f64::MIN, 0.1, AltHyp::Ne).aok().is_finite());
     }
@@ -31,8 +31,8 @@ fn test_t_to_p() {
 #[test]
 fn test_z_alpha() {
     // Returns an error if `alpha` not in `(0, 1)`.
-    assert!(z_alpha(0.).aok().is_nan());
-    assert!(z_alpha(1.).aok().is_nan());
+    assert!(z_alpha(0.).is_err());
+    assert!(z_alpha(1.).is_err());
     if nocover() {
         assert!(z_alpha(0.5).aok().is_finite());
     }
@@ -43,10 +43,10 @@ fn test_t_alpha() {
     // Returns an error in any of the following conditions:
     // - `df` is not `> 0`.
     // - `alpha` not in `(0, 1)`.
-    assert!(t_alpha(0., 0.5).aok().is_nan());
-    assert!(t_alpha(-1., 0.5).aok().is_nan());
-    assert!(t_alpha(2., 0.).aok().is_nan());
-    assert!(t_alpha(2., 1.).aok().is_nan());
+    assert!(t_alpha(0., 0.5).is_err());
+    assert!(t_alpha(-1., 0.5).is_err());
+    assert!(t_alpha(2., 0.).is_err());
+    assert!(t_alpha(2., 1.).is_err());
     if nocover() {
         assert!(t_alpha(0.1, 0.5).aok().is_finite());
     }
@@ -64,11 +64,11 @@ fn test_welch_t() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(welch_t(&m0_0, &m2_1).aok().is_nan());
-    assert!(welch_t(&m2_1, &m0_0).aok().is_nan());
-    assert!(welch_t(&m1_1, &m2_1).aok().is_nan());
-    assert!(welch_t(&m2_1, &m1_1).aok().is_nan());
-    assert!(welch_t(&m2_0, &m2_0).aok().is_nan());
+    assert!(welch_t(&m0_0, &m2_1).is_err());
+    assert!(welch_t(&m2_1, &m0_0).is_err());
+    assert!(welch_t(&m1_1, &m2_1).is_err());
+    assert!(welch_t(&m2_1, &m1_1).is_err());
+    assert!(welch_t(&m2_0, &m2_0).is_err());
     if nocover() {
         assert!(welch_t(&m2_0, &m2_1).aok().is_finite());
         assert!(welch_t(&m2_1, &m2_0).aok().is_finite());
@@ -87,11 +87,11 @@ fn test_welch_df() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(welch_df(&m0_0, &m2_1).aok().is_nan());
-    assert!(welch_df(&m2_1, &m0_0).aok().is_nan());
-    assert!(welch_df(&m1_1, &m2_1).aok().is_nan());
-    assert!(welch_df(&m2_1, &m1_1).aok().is_nan());
-    assert!(welch_df(&m2_0, &m2_0).aok().is_nan());
+    assert!(welch_df(&m0_0, &m2_1).is_err());
+    assert!(welch_df(&m2_1, &m0_0).is_err());
+    assert!(welch_df(&m1_1, &m2_1).is_err());
+    assert!(welch_df(&m2_1, &m1_1).is_err());
+    assert!(welch_df(&m2_0, &m2_0).is_err());
     if nocover() {
         assert!(welch_df(&m2_0, &m2_1).aok().is_finite());
         assert!(welch_df(&m2_1, &m2_0).aok().is_finite());
@@ -110,11 +110,11 @@ fn test_welch_p() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(welch_p(&m0_0, &m2_1, AltHyp::Ne).aok().is_nan());
-    assert!(welch_p(&m2_1, &m0_0, AltHyp::Ne).aok().is_nan());
-    assert!(welch_p(&m1_1, &m2_1, AltHyp::Ne).aok().is_nan());
-    assert!(welch_p(&m2_1, &m1_1, AltHyp::Ne).aok().is_nan());
-    assert!(welch_p(&m2_0, &m2_0, AltHyp::Ne).aok().is_nan());
+    assert!(welch_p(&m0_0, &m2_1, AltHyp::Ne).is_err());
+    assert!(welch_p(&m2_1, &m0_0, AltHyp::Ne).is_err());
+    assert!(welch_p(&m1_1, &m2_1, AltHyp::Ne).is_err());
+    assert!(welch_p(&m2_1, &m1_1, AltHyp::Ne).is_err());
+    assert!(welch_p(&m2_0, &m2_0, AltHyp::Ne).is_err());
     if nocover() {
         assert!(welch_p(&m2_0, &m2_1, AltHyp::Ne).aok().is_finite());
         assert!(welch_p(&m2_1, &m2_0, AltHyp::Ne).aok().is_finite());
@@ -199,9 +199,9 @@ fn test_student_1samp_t() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(student_1samp_t(&m0_0, 0.).aok().is_nan());
-    assert!(student_1samp_t(&m1_1, 0.).aok().is_nan());
-    assert!(student_1samp_t(&m2_0, 0.).aok().is_nan());
+    assert!(student_1samp_t(&m0_0, 0.).is_err());
+    assert!(student_1samp_t(&m1_1, 0.).is_err());
+    assert!(student_1samp_t(&m2_0, 0.).is_err());
     if nocover() {
         assert!(student_1samp_t(&m2_1, 0.).aok().is_finite());
     }
@@ -215,8 +215,8 @@ fn test_student_1samp_df() {
     let m1_0 = SampleMoments::new(1, 0., 0.);
     let m2_0 = SampleMoments::new(2, 0., 0.);
 
-    assert!(student_1samp_df(&m0_0).aok().is_nan());
-    assert!(student_1samp_df(&m1_0).aok().is_nan());
+    assert!(student_1samp_df(&m0_0).is_err());
+    assert!(student_1samp_df(&m1_0).is_err());
     if nocover() {
         assert!(student_1samp_df(&m2_0).aok().is_finite());
     }
@@ -235,9 +235,9 @@ fn test_student_1samp_p() {
 
     let alt_hyp = AltHyp::Ne;
 
-    assert!(student_1samp_p(&m0_0, 0., alt_hyp).aok().is_nan());
-    assert!(student_1samp_p(&m1_1, 0., alt_hyp).aok().is_nan());
-    assert!(student_1samp_p(&m2_0, 0., alt_hyp).aok().is_nan());
+    assert!(student_1samp_p(&m0_0, 0., alt_hyp).is_err());
+    assert!(student_1samp_p(&m1_1, 0., alt_hyp).is_err());
+    assert!(student_1samp_p(&m2_0, 0., alt_hyp).is_err());
     if nocover() {
         assert!(student_1samp_p(&m2_1, 0., alt_hyp).aok().is_finite());
     }

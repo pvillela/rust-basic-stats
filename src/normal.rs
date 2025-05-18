@@ -431,6 +431,10 @@ mod test {
         let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA)?;
         let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA)?;
 
+        if alt_hyp == AltHyp::Ne {
+            assert_eq!(ci, welch_ci(&moments_x, &moments_y, ALPHA)?);
+        }
+
         assert!(
             exp_t.approx_eq(t, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_t={exp_t}, t={t}"
@@ -485,6 +489,10 @@ mod test {
         let p = t_to_p(t, df, alt_hyp)?;
         let ci = student_1samp_alt_hyp_ci(&moments, alt_hyp, ALPHA)?;
         let res = student_1samp_test(&moments, mu0, alt_hyp, ALPHA)?;
+
+        if alt_hyp == AltHyp::Ne {
+            assert_eq!(ci, student_1samp_ci(&moments, ALPHA)?);
+        }
 
         assert!(
             exp_t.approx_eq(t, EPSILON),
