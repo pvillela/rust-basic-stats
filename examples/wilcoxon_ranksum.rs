@@ -24,7 +24,7 @@ fn main() -> Result<(), StatsError> {
     ];
     sort_array(&mut dat_y);
 
-    let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
+    let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
     let test_res = rank_sum.z_test(AltHyp::Gt, 0.05)?;
     assert_eq!(Hyp::Null, test_res.accepted());
     println!("test result: {test_res:?}");

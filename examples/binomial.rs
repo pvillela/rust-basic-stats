@@ -19,5 +19,5 @@ fn main() {
     let test_res = exact_binomial_test(n, n_s, 0.5, AltHyp::Lt, ALPHA).unwrap();
     assert_eq!(Hyp::Alt(AltHyp::Lt), test_res.accepted());
     println!("test result: {test_res:?}");
-    // test result: HypTestResult { p: 0.022750131947162633, alpha: 0.05, alt_hyp: Lt, accepted: Alt(Lt) }
+    // test result: HypTestResult { p: 0.028443966820498455, alpha: 0.05, alt_hyp: Lt, accepted: Alt(Lt) }
 }
