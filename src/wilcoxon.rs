@@ -365,7 +365,7 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error in any of these circumstances:
+    /// Returns an error in any of these conditions:
     /// - `self.n_x == 0` or `self.n_y == 0`.
     /// - `alpha` not in `(0, 1)`.
     /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).

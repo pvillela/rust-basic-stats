@@ -19,7 +19,7 @@ fn test_bernoulli_p_hat() {
 
 #[test]
 fn test_binomial_z() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
     assert!(binomial_z(0, 0, 0.5).is_err());
@@ -32,7 +32,7 @@ fn test_binomial_z() {
 
 #[test]
 fn test_binomial_z_p() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
     assert!(binomial_z_p(0, 0, 0.5, AltHyp::Ne).is_err());
@@ -45,7 +45,7 @@ fn test_binomial_z_p() {
 
 #[test]
 fn test_one_proportion_z_test() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0`.
     // - `p0` not in `(0, 1)`.
     // - `alpha` not in `(0, 1)`.
@@ -66,7 +66,7 @@ fn test_binomial_ws_alt_hyp_ci() {
 
 #[test]
 fn test_binomial_ws_ci() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0`.
     // - `alpha` not in `(0, 1)`.
 
@@ -91,7 +91,7 @@ fn test_binomial_cp_alt_hyp_ci() {
 
 #[test]
 fn test_binomial_cp_ci() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0` or `n < n_s`.
     // - `alpha` is not in `(0, 1)`.
 
@@ -103,7 +103,7 @@ fn test_binomial_cp_ci() {
 
 #[test]
 fn test_exact_binomial_p() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0` or `n < n_s`.
     // - `p0` is not in `[0, 1]`.
 
@@ -122,7 +122,7 @@ fn test_exact_binomial_p() {
 
 #[test]
 fn test_exact_binomial_test() {
-    // Returns an error in any of these circumstances:
+    // Returns an error in any of these conditions:
     // - `n == 0` or `n < n_s`.
     // - `p0` is not in `[0, 1]`.
     // - `alpha` is not in `(0, 1)`.
