@@ -284,9 +284,9 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
 
     let binomial = Binomial::new(p0, n).stats_result("arg `p0` must be in interval [0, 1]")?;
 
-    let prob_le = binomial.cdf(n_s);
+    let prob_le = || binomial.cdf(n_s);
 
-    let prob_ge = {
+    let prob_ge = || {
         let prob_lt = if n_s == 0 { 0. } else { binomial.cdf(n_s - 1) };
         1. - prob_lt
     };
@@ -294,7 +294,7 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
     // Sum the probabilities of all values with probability lower or equal to `n_s`'s.
     // Based on https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/binom.test.R
     // code for PVAL.
-    let prob_ne = {
+    let prob_ne = || {
         if p0 == 0. {
             (n_s == 0) as u64 as f64
         } else if p0 == 1. {
@@ -321,7 +321,7 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
                             break;
                         }
                     }
-                    prob_le + sum_prob
+                    prob_le() + sum_prob
                 }
 
                 Ordering::Greater => {
@@ -335,16 +335,16 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
                             break;
                         }
                     }
-                    prob_ge + sum_prob
+                    prob_ge() + sum_prob
                 }
             }
         }
     };
 
     let p_value = match alt_hyp {
-        AltHyp::Lt => prob_le,
-        AltHyp::Gt => prob_ge,
-        AltHyp::Ne => prob_ne,
+        AltHyp::Lt => prob_le(),
+        AltHyp::Gt => prob_ge(),
+        AltHyp::Ne => prob_ne(),
     };
 
     Ok(p_value)
@@ -662,6 +662,60 @@ mod test {
 
     //==================
     // Beta function corner cases.
+
+    //---------------
+    // p0 == 0. or 1.
+
+    #[test]
+    fn test_binom_eq_1_0_00() {
+        let (n, n_s) = (1, 0);
+        let p0 = 0.0;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 1.;
+        let exp_cp_ci = Ci(0.000, 0.975);
+        let exp_accept_hyp = Hyp::Null;
+
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
+    }
+
+    #[test]
+    fn test_binom_eq_1_0_10() {
+        let (n, n_s) = (1, 0);
+        let p0 = 1.0;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 0.0;
+        let exp_cp_ci = Ci(0.000, 0.975);
+        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
+    }
+
+    #[test]
+    fn test_binom_eq_1_1_00() {
+        let (n, n_s) = (1, 1);
+        let p0 = 0.0;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 0.;
+        let exp_cp_ci = Ci(0.025, 1.000);
+        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
+    }
+
+    #[test]
+    fn test_binom_eq_1_1_10() {
+        let (n, n_s) = (1, 1);
+        let p0 = 1.0;
+        let alt_hyp = AltHyp::Ne;
+        let exp_p = 1.;
+        let exp_cp_ci = Ci(0.025, 1.000);
+        let exp_accept_hyp = Hyp::Null;
+
+        check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
+    }
+
+    //---------------
+    // p0 != 0. or 1.
 
     #[test]
     fn test_binom_eq_1_0_095() {

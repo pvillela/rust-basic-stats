@@ -10,8 +10,9 @@ use nocover::nocover;
 
 #[test]
 fn test_bernoulli_p_hat() {
-    // Returns an error if `n == 0`
+    // Returns an error if `n == 0` or `n < n_s`.
     assert!(bernoulli_p_hat(0, 0).is_err());
+    assert!(bernoulli_p_hat(1, 2).is_err());
     if nocover() {
         assert!(bernoulli_p_hat(1, 0).unwrap().is_finite());
     }
