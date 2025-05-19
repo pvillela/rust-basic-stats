@@ -9,6 +9,12 @@
 //!
 //! This module is included by default. However, if `default-features = false` is specified in the dependency
 //! declaration for this library, then inclusion of this module is gated by feature "**normal**".
+//!
+//! # Example
+//!
+//! ```
+#![doc = include_str!("../examples/welch.rs")]
+//! ```
 
 use crate::core::{
     AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,

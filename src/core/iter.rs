@@ -57,6 +57,12 @@ where
 ///   same value.
 /// - The pair's first component is the value from `source`.
 /// - The pair's second component is the count of items from `source` in the grouping.
+///
+/// # Example
+///
+/// ```
+#[doc = include_str!("../../examples/iter_with_counts.rs")]
+/// ```
 pub fn iter_with_counts<V: PartialEq>(
     source: impl Iterator<Item = V>,
 ) -> impl Iterator<Item = (V, u64)> {

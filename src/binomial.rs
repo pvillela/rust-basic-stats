@@ -3,6 +3,12 @@
 //!
 //! This module is included by default. However, if `default-features = false` is specified in the dependency
 //! declaration for this library, then inclusion of this module is gated by feature "**binomial**".
+//!
+//! # Example
+//!
+//! ```
+#![doc = include_str!("../examples/binomial.rs")]
+//! ```
 
 use std::cmp::Ordering;
 
@@ -51,7 +57,7 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
 /// # Errors
 ///
 /// Returns an error in any of these conditions:
-/// Returns an error if `n == 0` or `n < n_s`.
+/// - `n == 0` or `n < n_s`.
 /// - `p0` not in `(0, 1)`.
 pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
     check_p0_in_open_0_1(p0)?;

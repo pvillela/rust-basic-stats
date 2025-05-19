@@ -2,6 +2,12 @@
 //!
 //! This module is included by default. However, if `default-features = false` is specified in the dependency
 //! declaration for this library, then inclusion of this module is gated by feature "**wilcoxon**".
+//!
+//! # Example
+//!
+//! ```
+#![doc = include_str!("../examples/wilcoxon_ranksum.rs")]
+//! ```
 
 use crate::{
     core::{

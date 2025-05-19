@@ -75,6 +75,12 @@ pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
 /// Includes sample size, sum, sum of squares, and, optionally, sample min and max values.
 ///
 /// Used by several by functions in this library.
+///
+/// # Example
+///
+/// ```
+#[doc = include_str!("../../examples/moments.rs")]
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct SampleMoments {
     n: u64,

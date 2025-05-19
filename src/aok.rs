@@ -6,16 +6,26 @@
 //! with blanket implementations for built-in types like `f64`.
 //!
 //! This module is NOT included by default. Inclusion of this module is gated by feature "**aok**".
+//!
+//! # Example
+//!
+//! Requires features **`aok`** and **`normal`**.
+//! ```
+#![doc = include_str!("../examples/aok.rs")]
+//! ```
 
 use crate::core::{AltHyp, Ci, HypTestResult};
 
-/// Enables coercion of `Result<Value, E>` to the underlying type `Value`,
+/// Enables coercion of `Result<T, E>` to the underlying type `T`,
 /// producing a suitable fallback output value instead of panicking in case of error.
 ///
 /// Intended to be implemented for floating point numbers.
 pub trait AokFloat {
     type Value;
 
+    /// Returns the underlying value of a `Result`, without panicking.
+    ///
+    /// If the source result is an error, this method returns `NaN`.
     fn aok(self) -> Self::Value;
 }
 
@@ -42,9 +52,13 @@ pub trait AokBasicStats {
 /// For types constructed from floating point numbers, the fallback value will typically be a
 /// value constructed with `NaN` fields.
 pub trait AokBasicStatsValue {
+    /// Returns a suitable fallback value when the source result is an error.
     fn aok_fallback() -> Self;
+
+    /// Returns `true` if the fallback value originated from an error.
     fn is_tainted(&self) -> bool;
 
+    /// Returns `true` if the source result was `Ok`.
     fn is_untainted(&self) -> bool {
         !self.is_tainted()
     }
@@ -56,13 +70,15 @@ where
 {
     type Value = T;
 
+    /// Returns the underlying value of a `Result`, without panicking.
+    ///
+    /// If the source result is an error, this method returns a suitably constructed fallback value.
     fn aok(self) -> Self::Value {
         self.unwrap_or_else(|_| T::aok_fallback())
     }
 }
 
 impl AokBasicStatsValue for HypTestResult {
-    // Returns an instance constructed with `NaN`s as a fallback value.
     fn aok_fallback() -> Self {
         HypTestResult::new(f64::NAN, f64::NAN, AltHyp::Ne)
     }
@@ -73,7 +89,6 @@ impl AokBasicStatsValue for HypTestResult {
 }
 
 impl AokBasicStatsValue for Ci {
-    // Returns an instance constructed with `NaN`s as a fallback value.
     fn aok_fallback() -> Self {
         Ci(f64::NAN, f64::NAN)
     }

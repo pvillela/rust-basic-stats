@@ -1,4 +1,5 @@
 //! Example of use of [`basic_stats::aok`] traits.
+//! Requires features **`aok`** and **`normal`**.
 
 use basic_stats::{
     aok::{AokBasicStats, AokFloat},
