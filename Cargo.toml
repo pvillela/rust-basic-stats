@@ -1,6 +1,6 @@
 [package]
 name = "basic_stats"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 license = "MIT"
 description = "Lightweight library with basic statistical estimators and hypothesis tests."
@@ -9,7 +9,7 @@ documentation = "https://docs.rs/basic_stats/latest/basic_stats/"
 readme = "README.md"
 keywords = ["statistics", "estimators", "hypothesis", "tests", "non-parametric"]
 categories = ["mathematics"]
-exclude = ["CHANGELOG.md", "*.sh", ".gitignore"]
+exclude = ["CHANGELOG.md", "*.sh", ".gitignore", "R", "tests"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
