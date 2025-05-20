@@ -7,7 +7,12 @@ pub trait ApproxEq {
 
 impl ApproxEq for f32 {
     fn approx_eq(self, other: Self, epsilon: Self) -> bool {
-        (self - other).abs() <= epsilon
+        if self == other {
+            // Covers infinity case
+            true
+        } else {
+            (self - other).abs() < epsilon
+        }
     }
 
     fn round_to(self, sig_decimals: u8) -> f32 {
@@ -18,7 +23,12 @@ impl ApproxEq for f32 {
 
 impl ApproxEq for f64 {
     fn approx_eq(self, other: Self, epsilon: Self) -> bool {
-        (self - other).abs() < epsilon
+        if self == other {
+            // Covers infinity case
+            true
+        } else {
+            (self - other).abs() <= epsilon
+        }
     }
 
     /// Rounds self to `sig_decimals` significant decimals.
@@ -44,6 +54,9 @@ mod test {
             assert!(x.approx_eq(y, epsilon), "x must be approx_eq to y");
             assert!(!x.approx_eq(z, epsilon), "x must not be approx_eq to z");
 
+            assert!(f32::INFINITY.approx_eq(f32::INFINITY, epsilon));
+            assert!((-f32::INFINITY).approx_eq(-f32::INFINITY, epsilon));
+
             assert_eq!(w, x.round_to(3), "w must equal x.round_to(4)");
             assert_ne!(w, y.round_to(3), "w must not equal y.round_to(4)");
             assert_ne!(w, z.round_to(3), "w must not equal z.round_to(4)");
@@ -58,6 +71,9 @@ mod test {
 
             assert!(x.approx_eq(y, epsilon), "x must be approx_eq to y");
             assert!(!x.approx_eq(z, epsilon), "x must not be approx_eq to z");
+
+            assert!(f64::INFINITY.approx_eq(f64::INFINITY, epsilon));
+            assert!((-f64::INFINITY).approx_eq(-f64::INFINITY, epsilon));
 
             assert_eq!(w, x.round_to(4), "w must equal x.round_to(4)");
             assert_ne!(w, y.round_to(4), "w must not equal y.round_to(4)");

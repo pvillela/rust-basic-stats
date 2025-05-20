@@ -1,4 +1,6 @@
 #!/bin/bash
 
-cargo nextest run --lib --bins --examples --tests --features all --target-dir target/test-target
-cargo test --doc --features all
+# NOCOVER environment variable enables tests that are excluded from test coverage measurement.
+
+NOCOVER="1" cargo nextest run --all-targets --all-features --target-dir target/test-target
+cargo test --doc

@@ -1,0 +1,327 @@
+BERNOULLI
+=========
+
+> install.packages('Rlab')
+Installing package into ‘/usr/local/lib/R/site-library’
+(as ‘lib’ is unspecified)
+Warning in install.packages("Rlab") :
+  'lib = "/usr/local/lib/R/site-library"' is not writable
+Would you like to use a personal library instead? (yes/No/cancel) yes
+Would you like to create a personal library
+‘~/R/x86_64-pc-linux-gnu-library/4.1’
+to install packages into? (yes/No/cancel) yes
+trying URL 'https://cloud.r-project.org/src/contrib/Rlab_4.0.tar.gz'
+Content type 'application/x-gzip' length 99164 bytes (96 KB)
+==================================================
+downloaded 96 KB
+
+* installing *source* package ‘Rlab’ ...
+** package ‘Rlab’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (Rlab)
+
+The downloaded source packages are in
+	‘/tmp/RtmpHjMQyi/downloaded_packages’
+
+> library(Rlab)
+Rlab 4.0 attached.
+
+
+Attaching package: ‘Rlab’
+
+The following objects are masked from ‘package:stats’:
+
+    dexp, dgamma, dweibull, pexp, pgamma, pweibull, qexp, qgamma,
+    qweibull, rexp, rgamma, rweibull
+
+The following object is masked from ‘package:datasets’:
+
+    precip
+
+
+> rbern
+function (n, prob) 
+{
+    rbinom(n, size = 1, prob = prob)
+}
+<bytecode: 0x604cbd12eff8>
+<environment: namespace:Rlab>
+
+> dat <- rbern(100, 0.4)
+> 
+> dat
+  [1] 0 1 0 1 0 1 0 0 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 1 1 0 0 0 1 0
+ [38] 1 0 0 0 1 1 0 0 1 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 1 1 1 1 0 1 1 1 1 1 0
+ [75] 1 0 0 0 0 0 0 0 0 0 1 0 1 1 0 1 0 1 0 0 1 1 1 0 1 0
+
+# The number of successes in the sample is exactly 40.
+
+> binom.test(40, 100, 0.5, alternative="less")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 0.02844
+alternative hypothesis: true probability of success is less than 0.5
+95 percent confidence interval:
+ 0.0000000 0.4870242
+sample estimates:
+probability of success 
+                   0.4 
+
+> binom.test(40, 100, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 0.05689
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.3032948 0.5027908
+sample estimates:
+probability of success 
+                   0.4 
+
+> binom.test(40, 100, 0.5, alternative="greater")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 0.9824
+alternative hypothesis: true probability of success is greater than 0.5
+95 percent confidence interval:
+ 0.317526 1.000000
+sample estimates:
+probability of success 
+                   0.4 
+
+> binom.test(40, 100, 0.4, alternative="two.sided")
+
+	Exact binomial test
+
+data:  40 and 100
+number of successes = 40, number of trials = 100, p-value = 1
+alternative hypothesis: true probability of success is not equal to 0.4
+95 percent confidence interval:
+ 0.3032948 0.5027908
+sample estimates:
+probability of success 
+                   0.4 
+
+##########################
+# prop.test: used for Wilson score confidence intervals and one-proportion z test
+
+> prop.test(40, 100, 0.5, alternative='less', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.5
+X-squared = 4, df = 1, p-value = 0.02275
+alternative hypothesis: true p is less than 0.5
+95 percent confidence interval:
+ 0.0000000 0.4821905
+sample estimates:
+  p 
+0.4 
+
+> prop.test(40, 100, 0.5, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.5
+X-squared = 4, df = 1, p-value = 0.0455
+alternative hypothesis: true p is not equal to 0.5
+95 percent confidence interval:
+ 0.3094013 0.4979974
+sample estimates:
+  p 
+0.4 
+
+> prop.test(40, 100, 0.5, alternative='greater', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.5
+X-squared = 4, df = 1, p-value = 0.9772
+alternative hypothesis: true p is greater than 0.5
+95 percent confidence interval:
+ 0.3230781 1.0000000
+sample estimates:
+  p 
+0.4 
+
+> prop.test(40, 100, 0.4, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  40 out of 100, null probability 0.4
+X-squared = 0, df = 1, p-value = 1
+alternative hypothesis: true p is not equal to 0.4
+95 percent confidence interval:
+ 0.3094013 0.4979974
+sample estimates:
+  p 
+0.4 
+
+
+#########################
+# Extreme values of prob success
+
+> binom.test(4, 100, 0.055, alternative="two.sided")
+
+	Exact binomial test
+
+data:  4 and 100
+number of successes = 4, number of trials = 100, p-value = 0.6626
+alternative hypothesis: true probability of success is not equal to 0.055
+95 percent confidence interval:
+ 0.01100449 0.09925716
+sample estimates:
+probability of success 
+                  0.04 
+
+> prop.test(4, 100, 0.055, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  4 out of 100, null probability 0.055
+X-squared = 0.4329, df = 1, p-value = 0.5106
+alternative hypothesis: true p is not equal to 0.055
+95 percent confidence interval:
+ 0.01566330 0.09837071
+sample estimates:
+   p 
+0.04 
+
+> binom.test(96, 100, 0.945, alternative="two.sided")
+
+	Exact binomial test
+
+data:  96 and 100
+number of successes = 96, number of trials = 100, p-value = 0.6626
+alternative hypothesis: true probability of success is not equal to 0.945
+95 percent confidence interval:
+ 0.9007428 0.9889955
+sample estimates:
+probability of success 
+                  0.96 
+
+> prop.test(96, 100, 0.945, alternative='two.sided', correct='FALSE')
+
+	1-sample proportions test without continuity correction
+
+data:  96 out of 100, null probability 0.945
+X-squared = 0.4329, df = 1, p-value = 0.5106
+alternative hypothesis: true p is not equal to 0.945
+95 percent confidence interval:
+ 0.9016293 0.9843367
+sample estimates:
+   p 
+0.96 
+
+
+####################################
+# Beta function corner cases for CI
+
+> binom.test(0, 1, 0.95, alternative="two.sided")
+
+	Exact binomial test
+
+data:  0 and 1
+number of successes = 0, number of trials = 1, p-value = 0.05
+alternative hypothesis: true probability of success is not equal to 0.95
+95 percent confidence interval:
+ 0.000 0.975
+sample estimates:
+probability of success 
+                     0 
+
+> binom.test(0, 1, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  0 and 1
+number of successes = 0, number of trials = 1, p-value = 1
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.000 0.975
+sample estimates:
+probability of success 
+                     0 
+
+> binom.test(1, 1, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  1 and 1
+number of successes = 1, number of trials = 1, p-value = 1
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.025 1.000
+sample estimates:
+probability of success 
+                     1 
+
+> binom.test(0, 100000, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  0 and 1e+05
+number of successes = 0, number of trials = 1e+05, p-value < 2.2e-16
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.000000e+00 3.688811e-05
+sample estimates:
+probability of success 
+                     0 
+
+> binom.test(1, 100000, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  1 and 1e+05
+number of successes = 1, number of trials = 1e+05, p-value < 2.2e-16
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 2.531780e-07 5.571516e-05
+sample estimates:
+probability of success 
+                 1e-05 
+
+> binom.test(99999, 100000, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  99999 and 1e+05
+number of successes = 99999, number of trials = 1e+05, p-value <
+2.2e-16
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.9999443 0.9999997
+sample estimates:
+probability of success 
+               0.99999 
+
+> binom.test(100000, 100000, 0.5, alternative="two.sided")
+
+	Exact binomial test
+
+data:  1e+05 and 1e+05
+number of successes = 1e+05, number of trials = 1e+05, p-value <
+2.2e-16
+alternative hypothesis: true probability of success is not equal to 0.5
+95 percent confidence interval:
+ 0.9999631 1.0000000
+sample estimates:
+probability of success 
+                     1 
+

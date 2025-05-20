@@ -1,6 +1,6 @@
 [package]
 name = "basic_stats"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2024"
 license = "MIT"
 description = "Lightweight library with basic statistical estimators and hypothesis tests."
@@ -14,20 +14,14 @@ exclude = ["CHANGELOG.md", "*.sh", ".gitignore"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-statrs = "0.18"
-# Optional:
-hypors = { version = "0.2", optional = true }
-polars = { version = "0.43", optional = true } # required by hypors
+statrs = { version = "0.18", optional = true }
 
 [features]
-bernoulli = []
-wilcoxon = []
-all = ["bernoulli", "wilcoxon"]
-# Private:
-_hypors = [
-    "dep:hypors",
-    "dep:polars",
-] # to enable testing Wilcoxon rank sum test functionality
+default = ["binomial", "normal", "wilcoxon"]
+aok = []
+binomial = ["normal"]
+normal = ["dep:statrs"]
+wilcoxon = ["normal"]
 
 [package.metadata.docs.rs]
 all-features = true

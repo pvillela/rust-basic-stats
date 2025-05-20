@@ -1,18 +1,18 @@
-//! A lightweight library that provides some basic parametric and non-parametric statistics and hypothesis tests.
-//!
-//! Some modules are gated by cargo features, as indicated in module documentation.
-//! The feature **"all"** includes all features.
+#![doc = include_str!("lib.md")]
 
 pub mod core;
-pub mod error;
-pub mod iter;
+
+#[cfg(feature = "aok")]
+pub mod aok;
+
+#[cfg(feature = "normal")]
 pub mod normal;
 
-#[cfg(feature = "bernoulli")]
-pub mod bernoulli;
+#[cfg(feature = "binomial")]
+pub mod binomial;
 
 #[cfg(feature = "wilcoxon")]
 pub mod wilcoxon;
 
-#[cfg(test)]
-pub(crate) mod dev_utils;
+#[doc(hidden)]
+pub mod dev_utils;

@@ -1,8 +1,25 @@
-//! Statistics related to the Normal distribution and Student's t distribution,
-//! including the Student one-sample t-test and the
-//! Welch two-sample t-test (for samples from distributions that may have different variances).
+//! Statistics related to the Normal distribution and Student's t distribution, including t-tests.
+//!
+//! - For the one-sample t-test and related statistics, use `student_1samp._*` functions.
+//! - For the two-sample t-test and related statistics, use `welch_*` functions, which allow for samples
+//!   from distributions that may have different variances.
+//! - For the paired-sample t-test and related statistics, first construct the [`SampleMoments`] for
+//!   the paired samples (using, e.g., [`SampleMoments::from_paired_iters`] or [`SampleMoments::from_paired_slices`])
+//!   and then use `student_1samp_*` functions.
+//!
+//! This module is included by default. However, if `default-features = false` is specified in the dependency
+//! declaration for this library, then inclusion of this module is gated by feature "**normal**".
+//!
+//! # Example
+//!
+//! ```
+#![doc = include_str!("../examples/welch.rs")]
+//! ```
 
-use super::core::{AltHyp, Ci, HypTestResult, SampleMoments};
+use crate::core::{
+    AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,
+    check_alpha_in_open_0_1,
+};
 use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
 
 /// Returns the the probability that the standard normal distribution will produce a more extreme value
@@ -25,27 +42,51 @@ pub fn z_to_p(z: f64, alt_hyp: AltHyp) -> f64 {
 ///
 /// This function implements the t-test table, with `alt_hyp` defining whether the look-up is left-tailed,
 /// right-tailed, or two-tailed.
-pub fn t_to_p(t: f64, df: f64, alt_hyp: AltHyp) -> f64 {
-    let stud = StudentsT::new(0., 1., df).expect("degrees of freedom must be > 0");
+///
+/// # Errors
+///
+/// Returns an error if `df` is not `> 0`.
+pub fn t_to_p(t: f64, df: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let stud = StudentsT::new(0., 1., df).stats_result("arg `df` must be `> 0`")?;
 
-    match alt_hyp {
+    let value = match alt_hyp {
         AltHyp::Lt => stud.cdf(t),
         AltHyp::Gt => stud.cdf(-t),
         AltHyp::Ne => stud.cdf(-t.abs()) * 2.,
-    }
+    };
+    Ok(value)
 }
 
-/// Returns the probability that the standard normal distribution produces a value greater than `alpha`.
-pub fn z_alpha(alpha: f64) -> f64 {
+/// Returns the value `v` for which `alpha` is the probability that the
+/// standard normal distribution
+/// is greater than `v`.
+///
+/// # Errors
+///
+/// Returns an error if `alpha` not in interval `(0, 1)`.
+pub fn z_alpha(alpha: f64) -> StatsResult<f64> {
+    check_alpha_in_open_0_1(alpha)?;
+
     let normal = Normal::standard();
-    normal.cdf(-alpha)
+    let value = normal.inverse_cdf(1. - alpha);
+    Ok(value)
 }
 
-/// Returns the probability that the Student distribution with location 0, scale 1, and `df` degrees of freedom
-/// produces a value greater than `alpha`.
-pub fn t_alpha(df: f64, alpha: f64) -> f64 {
-    let stud = StudentsT::new(0., 1., df).expect("degrees of freedom must be > 0");
-    stud.cdf(-alpha)
+/// Returns the value `v` for which `alpha` is the probability that the
+/// Student distribution with location 0, scale 1, and `df` degrees of freedom
+/// is greater than `v`.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `df` is not `> 0`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
+    check_alpha_in_open_0_1(alpha)?;
+
+    let stud = StudentsT::new(0., 1., df).stats_result("degrees of freedom must be > 0")?;
+    let value = stud.inverse_cdf(1. - alpha);
+    Ok(value)
 }
 
 /// Welch's two-sample t statistic.
@@ -53,16 +94,26 @@ pub fn t_alpha(df: f64, alpha: f64) -> f64 {
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
-pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
+    if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
+        return Err(StatsError("sample standard deviations are both zero"));
+    }
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
-    let d_means = moments_x.mean() - moments_y.mean();
-    let s2_x = moments_x.stdev().powi(2);
-    let s2_y = moments_y.stdev().powi(2);
+    let d_means = moments_x.mean()? - moments_y.mean()?;
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
     let s_d_means = (s2_mean_x + s2_mean_y).sqrt();
-    d_means / s_d_means
+    Ok(d_means / s_d_means)
 }
 
 /// Degrees of freedom for Welch's two-sample t-test.
@@ -70,16 +121,30 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
-pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
+    if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
+        return Err(StatsError("sample standard deviations are both zero"));
+    }
+    // At this point, df is guaranteed to be > 0.
+
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
-    let s2_x = moments_x.stdev().powi(2);
-    let s2_y = moments_y.stdev().powi(2);
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
     let numerator = (s2_mean_x + s2_mean_y).powi(2);
     let denominator = s2_mean_x.powi(2) / (n_x - 1.) + s2_mean_y.powi(2) / (n_y - 1.);
-    numerator / denominator
+    let df = numerator / denominator;
+    assert!(df > 0., "unexpected welch_df not `> 0.`");
+    Ok(numerator / denominator)
 }
 
 /// p-value of Welch's two-sample t-test for equality.
@@ -88,9 +153,20 @@ pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> f64 {
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `alt_hyp`: alternative hypothesis.
-pub fn welch_p(moments_x: &SampleMoments, moments_y: &SampleMoments, alt_hyp: AltHyp) -> f64 {
-    let t = welch_t(moments_x, moments_y);
-    let df = welch_df(moments_x, moments_y);
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_p(
+    moments_x: &SampleMoments,
+    moments_y: &SampleMoments,
+    alt_hyp: AltHyp,
+) -> StatsResult<f64> {
+    let t = welch_t(moments_x, moments_y)?;
+    let df = welch_df(moments_x, moments_y)?;
     t_to_p(t, df, alt_hyp)
 }
 
@@ -101,22 +177,32 @@ pub fn welch_p(moments_x: &SampleMoments, moments_y: &SampleMoments, alt_hyp: Al
 /// - `moments_y`: second sample's moments struct.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn welch_alt_hyp_ci(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
-) -> Ci {
+) -> StatsResult<Ci> {
+    check_alpha_in_open_0_1(alpha)?;
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
-    let d_means = moments_x.mean() - moments_y.mean();
-    let s2_x = moments_x.stdev().powi(2);
-    let s2_y = moments_y.stdev().powi(2);
+    let d_means = moments_x.mean()? - moments_y.mean()?;
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
-    let df = welch_df(moments_x, moments_y);
+    let df = welch_df(moments_x, moments_y)?;
 
-    let stud = StudentsT::new(0., 1., df).expect("Welch degrees of freedom must be > 0");
+    let stud = StudentsT::new(0., 1., df)
+        .expect("`StudentsT::new` arg `freedom` should be guaranteed to be positive");
     let t0 = match alt_hyp {
         AltHyp::Ne => -stud.inverse_cdf(alpha / 2.),
         _ => -stud.inverse_cdf(alpha),
@@ -125,21 +211,34 @@ pub fn welch_alt_hyp_ci(
     let mid = d_means;
     let delta = (s2_mean_x + s2_mean_y).sqrt() * t0;
 
-    match alt_hyp {
+    let value = match alt_hyp {
         AltHyp::Lt => Ci(-f64::INFINITY, mid + delta),
         AltHyp::Ne => Ci(mid - delta, mid + delta),
         AltHyp::Gt => Ci(mid - delta, f64::INFINITY),
-    }
+    };
+    Ok(value)
 }
 
 /// Welch's confidence interval for the difference of means (μ(X) - μ(Y)) of two distributions,
-/// with the alternative hypothesis of inequality (two-tailed).
+/// with the alternative hypothesis of inequality (two-sided).
 ///
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn welch_ci(moments_x: &SampleMoments, moments_y: &SampleMoments, alpha: f64) -> Ci {
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn welch_ci(
+    moments_x: &SampleMoments,
+    moments_y: &SampleMoments,
+    alpha: f64,
+) -> StatsResult<Ci> {
     welch_alt_hyp_ci(moments_x, moments_y, AltHyp::Ne, alpha)
 }
 
@@ -150,14 +249,23 @@ pub fn welch_ci(moments_x: &SampleMoments, moments_y: &SampleMoments, alpha: f64
 /// - `moments_y`: second sample's moments struct.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn welch_test(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
     alt_hyp: AltHyp,
     alpha: f64,
-) -> HypTestResult {
-    let p = welch_p(moments_x, moments_y, alt_hyp);
-    HypTestResult::new(p, alpha, alt_hyp)
+) -> StatsResult<HypTestResult> {
+    check_alpha_in_open_0_1(alpha)?;
+    let p = welch_p(moments_x, moments_y, alt_hyp)?;
+    Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
 /// Student's one-sample t statistic.
@@ -165,19 +273,35 @@ pub fn welch_test(
 /// Arguments:
 /// - `moments`: sample moments struct.
 /// - `mu0`: hypothesized distribution mean.
-pub fn student_one_sample_t(moments: &SampleMoments, mu0: f64) -> f64 {
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments.n() <= 1`.
+/// - `moments.stdev() == 0`.
+pub fn student_1samp_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
     let n = moments.nf();
-    let mean = moments.mean();
-    let s = moments.stdev();
-    (mean - mu0) / s * n.sqrt()
+    let mean = moments.mean()?;
+    let s = moments.stdev()?;
+    if s == 0. {
+        return Err(StatsError("sample standard deviation must be positive"));
+    }
+    Ok((mean - mu0) / s * n.sqrt())
 }
 
 /// Degrees of freedom for Student's one-sample t-test.
 ///
 /// Arguments:
 /// - `moments`: sample moments struct.
-pub fn student_one_sample_df(moments: &SampleMoments) -> f64 {
-    moments.nf() - 1.
+///
+/// # Errors
+///
+/// Returns an error if `moments.n() <= 1`.
+pub fn student_1samp_df(moments: &SampleMoments) -> StatsResult<f64> {
+    if moments.n() <= 1 {
+        return Err(StatsError("sample size must be greater than 1"));
+    }
+    Ok(moments.nf() - 1.)
 }
 
 /// p-value of Student's one-sample t-test for equality.
@@ -186,9 +310,15 @@ pub fn student_one_sample_df(moments: &SampleMoments) -> f64 {
 /// - `moments`: sample moments struct.
 /// - `mu0`: hypothesized distribution mean.
 /// - `alt_hyp`: alternative hypothesis.
-pub fn student_one_sample_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) -> f64 {
-    let t = student_one_sample_t(moments, mu0);
-    let df = student_one_sample_df(moments);
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments.n() <= 1`.
+/// - `moments.stdev() == 0`.
+pub fn student_1samp_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
+    let t = student_1samp_t(moments, mu0)?;
+    let df = student_1samp_df(moments)?;
     t_to_p(t, df, alt_hyp)
 }
 
@@ -198,34 +328,54 @@ pub fn student_one_sample_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) 
 /// - `moments`: sample moments struct.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn student_one_sample_alt_hyp_ci(moments: &SampleMoments, alt_hyp: AltHyp, alpha: f64) -> Ci {
-    let df = student_one_sample_df(moments);
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments.n() <= 1`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn student_1samp_alt_hyp_ci(
+    moments: &SampleMoments,
+    alt_hyp: AltHyp,
+    alpha: f64,
+) -> StatsResult<Ci> {
+    check_alpha_in_open_0_1(alpha)?;
+
+    let df = student_1samp_df(moments)?;
 
     let stud = StudentsT::new(0., 1., df)
-        .expect("can't happen: degrees of freedom is always >= 3 by construction");
+        .expect("`StudentsT::new` arg `freedom` should be guaranteed to be positive");
     let t0 = match alt_hyp {
         AltHyp::Ne => -stud.inverse_cdf(alpha / 2.),
         _ => -stud.inverse_cdf(alpha),
     };
 
-    let mid = moments.mean();
-    let delta = (moments.stdev() / moments.nf().sqrt()) * t0;
+    let mid = moments.mean()?;
+    let delta = (moments.stdev()? / moments.nf().sqrt()) * t0;
 
-    match alt_hyp {
+    let ci = match alt_hyp {
         AltHyp::Lt => Ci(-f64::INFINITY, mid + delta),
         AltHyp::Ne => Ci(mid - delta, mid + delta),
         AltHyp::Gt => Ci(mid - delta, f64::INFINITY),
-    }
+    };
+
+    Ok(ci)
 }
 
 /// Student's one-sample confidence interval for the distribution mean,
-/// with the alternative hypothesis of inequality (two-tailed).
+/// with the alternative hypothesis of inequality (two-sided).
 ///
 /// Arguments:
 /// - `moments`: sample moments struct.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> Ci {
-    student_one_sample_alt_hyp_ci(moments, AltHyp::Ne, alpha)
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments.n() <= 1`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn student_1samp_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> {
+    student_1samp_alt_hyp_ci(moments, AltHyp::Ne, alpha)
 }
 
 /// Student's one-sample t-test for equality.
@@ -235,14 +385,22 @@ pub fn student_one_sample_ci(moments: &SampleMoments, alpha: f64) -> Ci {
 /// - `mu0`: hypothesized distribution mean.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
-pub fn student_one_sample_test(
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments.n() <= 1`.
+/// - `moments.stdev() == 0`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn student_1samp_test(
     moments: &SampleMoments,
     mu0: f64,
     alt_hyp: AltHyp,
     alpha: f64,
-) -> HypTestResult {
-    let p = student_one_sample_p(moments, mu0, alt_hyp);
-    HypTestResult::new(p, alpha, alt_hyp)
+) -> StatsResult<HypTestResult> {
+    check_alpha_in_open_0_1(alpha)?;
+    let p = student_1samp_p(moments, mu0, alt_hyp)?;
+    Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
 #[cfg(test)]
@@ -269,15 +427,19 @@ mod test {
         exp_p: f64,
         exp_ci: Ci,
         exp_accept_hyp: Hyp,
-    ) {
+    ) -> StatsResult<()> {
         let moments_x = SampleMoments::from_slice(dataset_x);
         let moments_y = SampleMoments::from_slice(dataset_y);
 
-        let t = welch_t(&moments_x, &moments_y);
-        let df = welch_df(&moments_x, &moments_y);
-        let p = t_to_p(t, df, alt_hyp);
-        let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA);
-        let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA);
+        let t = welch_t(&moments_x, &moments_y)?;
+        let df = welch_df(&moments_x, &moments_y)?;
+        let p = t_to_p(t, df, alt_hyp)?;
+        let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA)?;
+        let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA)?;
+
+        if alt_hyp == AltHyp::Ne {
+            assert_eq!(ci, welch_ci(&moments_x, &moments_y, ALPHA)?);
+        }
 
         assert!(
             exp_t.approx_eq(t, EPSILON),
@@ -292,13 +454,13 @@ mod test {
             "alt_hyp={alt_hyp:?} -- exp_p={exp_p}, p={p}"
         );
         assert!(
-            exp_ci.0.approx_eq(ci.0, EPSILON) || exp_ci.0.is_infinite() && ci.0.is_infinite(),
+            exp_ci.0.approx_eq(ci.0, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.0={}, ci.0={}",
             exp_ci.0,
             ci.0
         );
         assert!(
-            exp_ci.1.approx_eq(ci.1, EPSILON) || exp_ci.1.is_infinite() && ci.1.is_infinite(),
+            exp_ci.1.approx_eq(ci.1, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.1={}, ci.1={}",
             exp_ci.1,
             ci.1
@@ -312,6 +474,8 @@ mod test {
             res.accepted(),
             "alt_hyp={alt_hyp:?} -- res.accepted"
         );
+
+        Ok(())
     }
 
     fn check_student(
@@ -323,14 +487,18 @@ mod test {
         exp_p: f64,
         exp_ci: Ci,
         exp_accept_hyp: Hyp,
-    ) {
+    ) -> StatsResult<()> {
         let moments = SampleMoments::from_slice(dataset);
 
-        let t = student_one_sample_t(&moments, mu0);
-        let df = student_one_sample_df(&moments);
-        let p = t_to_p(t, df, alt_hyp);
-        let ci = student_one_sample_alt_hyp_ci(&moments, alt_hyp, ALPHA);
-        let res = student_one_sample_test(&moments, mu0, alt_hyp, ALPHA);
+        let t = student_1samp_t(&moments, mu0)?;
+        let df = student_1samp_df(&moments)?;
+        let p = t_to_p(t, df, alt_hyp)?;
+        let ci = student_1samp_alt_hyp_ci(&moments, alt_hyp, ALPHA)?;
+        let res = student_1samp_test(&moments, mu0, alt_hyp, ALPHA)?;
+
+        if alt_hyp == AltHyp::Ne {
+            assert_eq!(ci, student_1samp_ci(&moments, ALPHA)?);
+        }
 
         assert!(
             exp_t.approx_eq(t, EPSILON),
@@ -345,13 +513,13 @@ mod test {
             "alt_hyp={alt_hyp:?} -- exp_p={exp_p}, p={p}"
         );
         assert!(
-            exp_ci.0.approx_eq(ci.0, EPSILON) || exp_ci.0.is_infinite() && ci.0.is_infinite(),
+            exp_ci.0.approx_eq(ci.0, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.0={}, ci.0={}",
             exp_ci.0,
             ci.0
         );
         assert!(
-            exp_ci.1.approx_eq(ci.1, EPSILON) || exp_ci.1.is_infinite() && ci.1.is_infinite(),
+            exp_ci.1.approx_eq(ci.1, EPSILON),
             "alt_hyp={alt_hyp:?} -- exp_ci.1={}, ci.1={}",
             exp_ci.1,
             ci.1
@@ -365,6 +533,8 @@ mod test {
             res.accepted(),
             "alt_hyp={alt_hyp:?} -- res.accepted"
         );
+
+        Ok(())
     }
 
     #[test]
@@ -381,21 +551,21 @@ mod test {
             let alt_hyp = AltHyp::Lt;
             let exp_p = 0.07067;
             let exp_ci = Ci(-f64::INFINITY, 0.5616789);
-            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null);
+            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null).unwrap();
         }
 
         {
             let alt_hyp = AltHyp::Ne;
             let exp_p = 0.1413;
             let exp_ci = Ci(-10.453875, 1.614714);
-            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null);
+            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null).unwrap();
         }
 
         {
             let alt_hyp = AltHyp::Gt;
             let exp_p = 0.9293;
             let exp_ci = Ci(-9.40084, f64::INFINITY);
-            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null);
+            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null).unwrap();
         }
     }
 
@@ -421,7 +591,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -438,7 +609,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -455,7 +627,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
     }
 
@@ -488,7 +661,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -505,7 +679,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -522,7 +697,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
     }
     #[test]
@@ -547,7 +723,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -564,7 +741,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -581,7 +759,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
     }
 
@@ -607,7 +786,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -624,7 +804,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
 
         {
@@ -641,7 +822,8 @@ mod test {
                 exp_p,
                 exp_ci,
                 exp_accept_hyp,
-            );
+            )
+            .unwrap();
         }
     }
 }

@@ -1,15 +1,24 @@
 //! Statistics related to the Wilcoxon rank sum two-sample test, also known as the Mann-Whitney U test.
-//! Gated by feature **wilcoxon**.
+//!
+//! This module is included by default. However, if `default-features = false` is specified in the dependency
+//! declaration for this library, then inclusion of this module is gated by feature "**wilcoxon**".
+//!
+//! # Example
+//!
+//! ```
+#![doc = include_str!("../examples/wilcoxon_ranksum.rs")]
+//! ```
 
 use crate::{
-    core::{AltHyp, HypTestResult},
-    error::OrderingError,
-    iter::iter_with_counts,
+    core::{
+        AltHyp, HypTestResult, StatsError, StatsResult, check_alpha_in_open_0_1, iter_with_counts,
+    },
     normal::z_to_p,
 };
 
 /// Encapsulates the Wilcoxon rank sum computations on two data samples.
 /// This struct's methods implement the Wilcoxon rank sum test and related statistics.
+#[derive(Debug)]
 pub struct RankSum {
     n_x: u64,
     n_y: u64,
@@ -23,11 +32,12 @@ impl RankSum {
     /// number of occurrences of the value in the sample.
     ///
     /// # Errors
-    /// - Returns an error if an iterator does not yield data values in strictly increasing order.
-    pub fn from_iter_with_counts(
+    ///
+    /// Returns an error if an iterator does not yield data values in strictly increasing order.
+    pub fn from_iters_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,
-    ) -> Result<RankSum, OrderingError> {
+    ) -> Result<RankSum, StatsError> {
         let mut n_x = 0;
         let mut n_y = 0;
         let mut ties_sum_prod = 0;
@@ -37,10 +47,14 @@ impl RankSum {
         fn enforce_order(
             prev_item: &mut Option<(f64, u64)>,
             curr_item: &Option<(f64, u64)>,
-        ) -> Result<(), OrderingError> {
+        ) -> Result<(), StatsError> {
             match (&prev_item, curr_item) {
                 (Some((prev, _)), Some((curr, _))) if *prev < *curr => *prev_item = *curr_item,
-                (Some(_), Some(_)) => return Err(OrderingError),
+                (Some(_), Some(_)) => {
+                    return Err(StatsError(
+                        "invalid iterator argument: items not ordered properly",
+                    ));
+                }
                 (None, Some(_)) => *prev_item = *curr_item,
                 (_, None) => (),
             }
@@ -57,7 +71,7 @@ impl RankSum {
             item_opt_i: &mut Option<(f64, u64)>,
             prev_item_i: &mut Option<(f64, u64)>,
             ties_sum_prod: &mut u64,
-        ) -> Result<(f64, f64), OrderingError> {
+        ) -> Result<(f64, f64), StatsError> {
             let count = count_i + count_other;
             let rank = prev_rank + (count as f64 + 1.) / 2.;
             let rank_sum = count_i as f64 * rank;
@@ -198,14 +212,26 @@ impl RankSum {
     /// by the iterators is a data value.
     ///
     /// # Errors
-    /// - Returns an error if an iterator does not yield data values in non-decreasing order.
-    pub fn from_iter(
+    ///
+    /// Returns an error if an iterator does not yield data values in non-decreasing order.
+    pub fn from_iters(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
-    ) -> Result<RankSum, OrderingError> {
+    ) -> Result<RankSum, StatsError> {
         let itc_x = iter_with_counts(it_x);
         let itc_y = iter_with_counts(it_y);
-        Self::from_iter_with_counts(itc_x, itc_y)
+        Self::from_iters_with_counts(itc_x, itc_y)
+    }
+
+    /// Instantiates `Self` from two samples in the form of two slices.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a slice is not sorted in non-decreasing order.
+    pub fn from_slices(x: &[f64], y: &[f64]) -> Result<RankSum, StatsError> {
+        let itc_x = x.iter().cloned();
+        let itc_y = y.iter().cloned();
+        Self::from_iters(itc_x, itc_y)
     }
 
     /// Size of first sample (X).
@@ -221,105 +247,116 @@ impl RankSum {
     /// Wilcoxon rank sum `W` statistic.
     ///
     /// As defined in the book Nonparametric Statistical Methods, 3rd Edition,
-    /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
-
+    /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Section 4.1.
     pub fn w(&self) -> f64 {
         self.w
     }
 
     /// The `W` value computed by `R`'s `wilcox.test` function, which is the Mann-Whitney U for the
-    /// first sample (X).
+    /// second sample (Y).
     ///
     /// See explanation in the book Nonparametric Statistical Methods, 3rd Edition,
     /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
     pub fn r_w(&self) -> f64 {
-        self.mann_whitney_u_x()
+        self.mann_whitney_u_y()
     }
 
-    /// Mann-Whitney U statistic for the second sample (Y).
-    pub fn mann_whitney_u_y(&self) -> f64 {
+    /// Mann-Whitney U statistic for the first sample (X).
+    ///
+    /// This is the number of X before Y predecessors.
+    pub fn mann_whitney_u_x(&self) -> f64 {
         let n_y = self.n_y as f64;
         self.w - n_y * (n_y + 1.) / 2.
     }
 
-    /// Mann-Whitney U statistic for the first sample (X).
-    pub fn mann_whitney_u_x(&self) -> f64 {
+    /// Mann-Whitney U statistic for the second sample (Y).
+    ///
+    /// This is the number of Y before X predecessors.
+    pub fn mann_whitney_u_y(&self) -> f64 {
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
-        (n_x * n_y) - self.mann_whitney_u_y()
+        (n_x * n_y) - self.mann_whitney_u_x()
     }
 
     /// Mann-Whitney U statistic.
     ///
     /// It is the min of [`mann_whitney_u_x`](Self::mann_whitney_u_x) and [`mann_whitney_u_y`](Self::mann_whitney_u_y).
     pub fn mann_whitney_u(&self) -> f64 {
-        self.mann_whitney_u_y().min(self.mann_whitney_u_x())
+        self.mann_whitney_u_x().min(self.mann_whitney_u_y())
     }
 
-    /// z-value from the large sample normal approximation.
-    pub fn z(&self) -> f64 {
+    /// z-value for the large sample normal approximation, without continuity correction.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in any of the following conditions:
+    /// - `self.n_x == 0` or `self.n_y == 0`.
+    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    ///   This is hard to quantify a priori. For example,
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
+    pub fn z(&self) -> StatsResult<f64> {
+        // Guard against division by 0 in `var0_w_ties_adjust`.
+        if self.n_x == 0 || self.n_y == 0 {
+            return Err(StatsError(
+                "`self.n_x` and `self.n_y` must both be positive",
+            ));
+        }
+
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
         let w = self.w;
         let ties_sum_prod = self.ties_sum_prod as f64;
         let e0_w = n_y * (n_x + n_y + 1.) / 2.;
         let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
-        let var0_w_ties_adjust = n_x * n_y / (12. * (n_x + n_y) * (n_x + n_y - 1.)) * ties_sum_prod;
+        let var0_w_ties_adjust = n_x * n_y * ties_sum_prod / (12. * (n_x + n_y) * (n_x + n_y - 1.));
         let var0_w = var0_w_base - var0_w_ties_adjust;
+        if var0_w <= 0. {
+            return Err(StatsError("too many rank ties"));
+        }
         let w_star = (w - e0_w) / var0_w.sqrt();
 
-        -w_star
+        Ok(-w_star)
     }
 
-    #[cfg(test)]
-    fn z_no_ties_adjust(&self) -> f64 {
-        let n_x = self.n_x as f64;
-        let n_y = self.n_y as f64;
-        let w = self.w;
-        let e0_w = n_y * (n_x + n_y + 1.) / 2.;
-        let var0_w_base = n_x * n_y * (n_x + n_y + 1.) / 12.;
-        let var0_w_ties_adjust = 0.;
-        let var0_w = var0_w_base - var0_w_ties_adjust;
-        let w_star = (w - e0_w) / var0_w.sqrt();
-
-        -w_star
-    }
-
-    /// p-value from the large sample normal approximation.
+    /// p-value for the large sample normal approximation, without continuity correction.
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
-    pub fn p(&self, alt_hyp: AltHyp) -> f64 {
-        let z = self.z();
-        z_to_p(z, alt_hyp)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in any of the following conditions:
+    /// - `self.n_x == 0` or `self.n_y == 0`.
+    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    ///   This is hard to quantify a priori. For example,
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
+    pub fn z_p(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
+        let z = self.z()?;
+        Ok(z_to_p(z, alt_hyp))
     }
 
-    #[cfg(test)]
-    fn p_no_ties_adjust(&self, alt_hyp: AltHyp) -> f64 {
-        let z = self.z_no_ties_adjust();
-        z_to_p(z, alt_hyp)
-    }
-
-    /// Wilcoxon rank sum test.
+    /// Wilcoxon rank sum test using large sample normal approximation, without continuity correction.
     ///
     /// Arguments:
     /// - `alt_hyp`: alternative hypothesis.
     /// - `alpha`: confidence level = `1 - alpha`.
-    pub fn test(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
-        let p = self.p(alt_hyp);
-        HypTestResult::new(p, alpha, alt_hyp)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in any of these conditions:
+    /// - `self.n_x == 0` or `self.n_y == 0`.
+    /// - `alpha` not in interval `(0, 1)`.
+    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    ///   This is hard to quantify a priori. For example,
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
+    pub fn z_test(&self, alt_hyp: AltHyp, alpha: f64) -> StatsResult<HypTestResult> {
+        check_alpha_in_open_0_1(alpha)?;
+        let p = self.z_p(alt_hyp)?;
+        Ok(HypTestResult::new(p, alpha, alt_hyp))
     }
-
-    #[cfg(test)]
-    pub fn test_no_ties_adjust(&self, alt_hyp: AltHyp, alpha: f64) -> HypTestResult {
-        let p = self.p_no_ties_adjust(alt_hyp);
-        HypTestResult::new(p, alpha, alt_hyp)
-    }
-}
-
-#[cfg(test)]
-fn sort_array(arr: &mut [f64]) {
-    arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
 }
 
 #[cfg(test)]
@@ -327,16 +364,19 @@ mod base_test {
     //! Tests other than `test_w` used R's wilcox.test function to generate expected results.
     //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/wilcox.test
 
-    use std::error::Error;
-
     use super::*;
     use crate::{
         core::{AltHyp, Hyp},
         dev_utils::ApproxEq,
     };
+    use std::error::Error;
 
     const ALPHA: f64 = 0.05;
     const EPSILON: f64 = 0.0005;
+
+    fn sort_array(arr: &mut [f64]) {
+        arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    }
 
     fn book_data() -> (Vec<f64>, Vec<f64>) {
         let sample_x = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
@@ -379,10 +419,7 @@ mod base_test {
     /// Example 4.1.
     fn test_w() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = book_data();
-
-        // The iterator must yield f64 values, so use either `.iter().cloned()` or `.into_iter()`.
-        // The latter is more efficient if the data set can be consumed.
-        let rank_sum = RankSum::from_iter(dat_x.iter().cloned(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
 
         let expected_w = 30.;
         let actual_w = rank_sum.w();
@@ -394,7 +431,7 @@ mod base_test {
 
         let expected_p_correct = 0.2544; // R: // R: wilcox.test(a, b)
         let expected_p = 0.2207; // R: wilcox.test(a, b, exact=FALSE, correct=FALSE)
-        let actual_p = rank_sum.p(AltHyp::Ne);
+        let actual_p = rank_sum.z_p(AltHyp::Ne).unwrap();
         println!(
             "expected_p_correct={expected_p_correct}, expected_p={expected_p}, actual_p={actual_p}"
         );
@@ -411,8 +448,8 @@ mod base_test {
     ) {
         let w = rank_sum.w();
         let r_w = rank_sum.r_w();
-        let p = rank_sum.p(alt_hyp);
-        let res = rank_sum.test(alt_hyp, ALPHA);
+        let p = rank_sum.z_p(alt_hyp).unwrap();
+        let res = rank_sum.z_test(alt_hyp, ALPHA).unwrap();
 
         println!("alt_hyp={alt_hyp:?} -- w={w}");
         assert!(
@@ -433,9 +470,9 @@ mod base_test {
             "alt_hyp={alt_hyp:?} -- res.accepted"
         );
 
-        let mann_whitney_u_x = rank_sum.mann_whitney_u_x();
+        let mann_whitney_u_x = rank_sum.mann_whitney_u_y();
         println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_x={mann_whitney_u_x}");
-        let mann_whitney_u_y = rank_sum.mann_whitney_u_y();
+        let mann_whitney_u_y = rank_sum.mann_whitney_u_x();
         println!("alt_hyp={alt_hyp:?} -- mann_whitney_u_y={mann_whitney_u_y}");
         let mann_whitney_u = rank_sum.mann_whitney_u();
         println!("alt_hyp={alt_hyp:?} -- mann_whitney_u={mann_whitney_u}");
@@ -447,7 +484,7 @@ mod base_test {
     /// Example 4.1.
     fn test_book_data() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = book_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
 
         let exp_r_w = 35.;
 
@@ -478,7 +515,7 @@ mod base_test {
     #[test]
     fn test_contrived_data() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = contrived_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 1442.5;
 
@@ -507,9 +544,34 @@ mod base_test {
     }
 
     #[test]
+    fn test_contrived_data_u() -> Result<(), Box<dyn Error>> {
+        let (dat_x, dat_y) = contrived_data();
+        let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
+
+        // From https://www.statskingdom.com/170median_mann_whitney.html:
+        let exp_u_x = 1307.5;
+        let exp_u_y = 1442.5;
+        let exp_u = 1307.5;
+
+        let u_x = rank_sum.mann_whitney_u_x();
+        let u_y = rank_sum.mann_whitney_u_y();
+        let u = rank_sum.mann_whitney_u();
+
+        println!("exp_u_x={exp_u_x}, u_x={u_x}");
+        println!("exp_u_x={exp_u_y}, u_x={u_y}");
+        println!("exp_u_x={exp_u}, u_x={u}");
+
+        assert!(exp_u_x.approx_eq(u_x, EPSILON));
+        assert!(exp_u_y.approx_eq(u_y, EPSILON));
+        assert!(exp_u.approx_eq(u, EPSILON));
+
+        Ok(())
+    }
+
+    #[test]
     fn test_shifted_contrived_data() -> Result<(), Box<dyn Error>> {
         let (dat_x, dat_y) = shifted_contrived_data();
-        let rank_sum = RankSum::from_iter(dat_x.into_iter(), dat_y.into_iter())?;
+        let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
 
         let exp_r_w = 840.;
 
@@ -535,171 +597,5 @@ mod base_test {
         }
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-#[cfg(feature = "_hypors")]
-#[allow(clippy::unwrap_used)]
-mod test_with_hypors {
-    use std::error::Error;
-
-    use super::*;
-    use crate::{core::AltHyp, dev_utils::ApproxEq};
-    use hypors::{common::TailType, mann_whitney::u_test};
-    use polars::prelude::*;
-
-    const ALPHA: f64 = 0.05;
-
-    fn process_samples(sample_x: Vec<f64>, sample_y: Vec<f64>) -> Result<(), Box<dyn Error>> {
-        let rank_sum = RankSum::from_iter(sample_x.iter().cloned(), sample_y.iter().cloned())?;
-
-        let rank_sum_y = rank_sum.w();
-        println!("rank_sum_y={rank_sum_y}");
-
-        let n_x = rank_sum.n_x() as f64;
-        let n_y = rank_sum.n_y() as f64;
-        let rank_sum_x = (1. + n_x + n_y) * (n_x + n_y) / 2. - rank_sum_y;
-        println!("rank_sum_x={rank_sum_x}");
-
-        let wilcoxon_rank_sum_x_lt_y_p = rank_sum.p(AltHyp::Lt);
-        println!("wilcoxon_rank_sum_x_lt_y_p={wilcoxon_rank_sum_x_lt_y_p}");
-        let wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Lt);
-        println!(
-            "wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust={wilcoxon_rank_sum_x_lt_y_p_no_ties_adjust}"
-        );
-        let wilcoxon_rank_sum_x_gt_y_p = rank_sum.p(AltHyp::Gt);
-        println!("wilcoxon_rank_sum_x_gt_y_p={wilcoxon_rank_sum_x_gt_y_p}");
-        let wilcoxon_rank_sum_x_ne_y_p: f64 = rank_sum.p(AltHyp::Ne);
-        println!("wilcoxon_rank_sum_x_ne_y_p={wilcoxon_rank_sum_x_ne_y_p}");
-        let wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust: f64 = rank_sum.p_no_ties_adjust(AltHyp::Ne);
-        println!(
-            "wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust={wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust}"
-        );
-
-        let mann_whitney_x_lt_y_u = rank_sum.mann_whitney_u_y();
-        println!("mann_whitney_x_lt_y_u={mann_whitney_x_lt_y_u}");
-        let mann_whitney_x_gt_y_u = rank_sum.mann_whitney_u_x();
-        println!("mann_whitney_x_gt_y_u={mann_whitney_x_gt_y_u}");
-        let mann_whitney_x_ne_y_u = rank_sum.mann_whitney_u();
-        println!("mann_whitney_x_ne_y_u={mann_whitney_x_ne_y_u}");
-
-        {
-            let series_x = Series::new("a".into(), sample_x);
-            let series_y = Series::new("b".into(), sample_y);
-
-            {
-                let result = u_test(&series_x, &series_y, ALPHA, TailType::Two);
-                println!("result(two tail)={result:?}");
-
-                let result = result.unwrap();
-
-                println!("U Statistic: {}", result.test_statistic);
-                println!("P-value: {}", result.p_value);
-                println!("Reject Null: {}", result.reject_null);
-
-                assert_eq!(
-                    result.test_statistic, mann_whitney_x_ne_y_u,
-                    "comparison of U statistics"
-                );
-
-                assert_eq!(
-                    result.p_value.round_to(5),
-                    wilcoxon_rank_sum_x_ne_y_p_no_ties_adjust.round_to(5),
-                    "comparison of p values for non-equality (no ties adjustment)"
-                );
-                // Below fails because `hypors` does not compute ties adjustment.
-                // assert_eq!(
-                //     result.p_value.round_to_sig_decimals(5),
-                //     wilcoxon_rank_sum_x_ne_y_p.round_to_sig_decimals(5),
-                //     "comparison of p values for non-equality"
-                // );
-            }
-        }
-
-        Ok(())
-    }
-
-    fn expand_sample(sample: &[f64], delta: f64, nrepeats: usize) -> Vec<f64> {
-        let mut cumulative = Vec::with_capacity(sample.len() * nrepeats);
-        let mut curr = Vec::from(sample);
-        for _ in 0..nrepeats {
-            let next = curr.iter().map(|x| x + delta).collect::<Vec<_>>();
-            cumulative.append(&mut next.clone());
-            curr = next;
-        }
-        sort_array(&mut cumulative);
-        cumulative
-    }
-
-    #[test]
-    fn test_book_data() -> Result<(), Box<dyn Error>> {
-        println!(
-            "***** Samples from Nonparametric Statistical Methods, 3rd Edition, Example 4.1. *****"
-        );
-        {
-            let sample_x = vec![0.73, 0.80, 0.83, 1.04, 1.38, 1.45, 1.46, 1.64, 1.89, 1.91];
-            let sample_y = vec![0.74, 0.88, 0.90, 1.15, 1.21];
-
-            process_samples(sample_x, sample_y)
-        }
-    }
-
-    #[test]
-    fn test_contrived_data() {
-        let sample_x0 = vec![85., 90., 78., 92., 88., 76., 95., 89., 91., 82.];
-        let sample_y0 = vec![70., 85., 80., 90., 75., 88., 92., 79., 86., 81., 92.];
-
-        println!("***** Original samples *****");
-        {
-            let mut sorted_x = sample_x0.clone();
-            sort_array(&mut sorted_x);
-
-            let mut sorted_y = sample_y0.clone();
-            sort_array(&mut sorted_y);
-
-            {
-                let mut combined = sorted_x
-                    .iter()
-                    .cloned()
-                    .chain(sorted_y.iter().cloned())
-                    .collect::<Vec<_>>();
-                sort_array(&mut combined);
-
-                let exp_ranks_y = [1., 2., 5., 6., 7., 9.5, 11., 12.5, 15.5, 19., 19.];
-                let exp_rank_sum_y = exp_ranks_y.iter().sum::<f64>();
-
-                println!("sorted_x={sorted_x:?}");
-                println!("sorted_y={sorted_y:?}");
-                println!("combined={combined:?}");
-                println!("exp_ranks_y={exp_ranks_y:?}");
-                println!("exp_rank_sum_y={exp_rank_sum_y:?}");
-            }
-            process_samples(sorted_x, sorted_y).unwrap();
-        }
-
-        println!();
-        println!("***** Magnified samples *****");
-        {
-            let delta = 30.;
-            let nrepeats = 5;
-            let sample_x = expand_sample(&sample_x0, delta, nrepeats);
-            let sample_y = expand_sample(&sample_y0, delta, nrepeats);
-            process_samples(sample_x, sample_y).unwrap();
-        }
-
-        println!();
-        println!("***** sample_x < sample_y *****");
-        {
-            let delta = 30.;
-            let nrepeats = 5;
-            let sample_x = expand_sample(&sample_x0, delta, nrepeats);
-            let sample_y = expand_sample(&sample_y0, delta, nrepeats);
-
-            let shift = 35.;
-            let sample_y = sample_y.iter().map(|x| x + shift).collect::<Vec<_>>();
-
-            process_samples(sample_x, sample_y).unwrap()
-        }
     }
 }
