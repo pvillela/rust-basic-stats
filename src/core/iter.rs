@@ -1,7 +1,5 @@
 //! Iterator functionality.
 
-use std::mem::replace;
-
 /// Wraps a source iterator, transforming it into an iterator that yields pairs of type `(V, u64)` such
 /// that each pair corresponds to a grouping of the contiguous items from the source iterator that have the
 /// same value, where the pair's first component is the value and the pair's second component is the count of
@@ -34,7 +32,7 @@ where
             match (curr_value, &self.prev_value) {
                 (Some(v), Some(prev)) if v == *prev => count += 1,
                 (Some(v), Some(_)) => {
-                    let ret_v = replace(&mut self.prev_value, Some(v));
+                    let ret_v = self.prev_value.replace(v);
                     return Some((ret_v.unwrap_or_else(|| panic!("can't fail")), count));
                 }
                 (Some(v), None) => {

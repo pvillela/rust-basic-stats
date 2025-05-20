@@ -33,7 +33,7 @@ impl<E> AokFloat for Result<f64, E> {
     type Value = f64;
 
     fn aok(self) -> Self::Value {
-        self.unwrap_or_else(|_| f64::NAN)
+        self.unwrap_or(f64::NAN)
     }
 }
 
@@ -151,7 +151,7 @@ mod test {
             type Output = f64;
 
             fn aok(self) -> Self::Output {
-                self.unwrap_or_else(|_| f64::NAN)
+                self.unwrap_or(f64::NAN)
             }
         }
 
