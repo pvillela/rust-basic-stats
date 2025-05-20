@@ -58,7 +58,7 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `p0` not in `(0, 1)`.
+/// - `p0` not in interval `(0, 1)`.
 pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
     check_p0_in_open_0_1(p0)?;
     let p_hat = bernoulli_p_hat(n, n_s)?;
@@ -80,7 +80,7 @@ pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `p0` not in `(0, 1)`.
+/// - `p0` not in interval `(0, 1)`.
 pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
     let z = binomial_z(n, n_s, p0)?;
     Ok(z_to_p(z, alt_hyp))
@@ -100,8 +100,8 @@ pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `p0` is not in `(0, 1)`.
-/// - `alpha` is not in `(0, 1)`.
+/// - `p0` is not in interval `(0, 1)`.
+/// - `alpha` is not in interval `(0, 1)`.
 pub fn one_proportion_z_test(
     n: u64,
     n_s: u64,
@@ -132,7 +132,7 @@ pub fn one_proportion_z_test(
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     let p_hat = bernoulli_p_hat(n, n_s)?;
 
@@ -175,7 +175,7 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
     binomial_ws_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
@@ -189,7 +189,7 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `alpha` is not in `(0, 1)`.
+/// - `alpha` is not in interval `(0, 1)`.
 pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     if n == 0 {
         return Err(StatsError("arg `n` must be positive"));
@@ -256,7 +256,7 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `alpha` is not in `(0, 1)`.
+/// - `alpha` is not in interval `(0, 1)`.
 pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
     binomial_cp_alt_hyp_ci(n, n_s, AltHyp::Ne, alpha)
 }
@@ -273,7 +273,7 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `p0` is not in `[0, 1]`.
+/// - `p0` is not in interval `[0, 1]`.
 pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
     if n == 0 {
         return Err(StatsError("arg `n` must be positive."));
@@ -363,8 +363,8 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
 ///
 /// Returns an error in any of these conditions:
 /// - `n == 0` or `n < n_s`.
-/// - `p0` is not in `[0, 1]`.
-/// - `alpha` is not in `(0, 1)`.
+/// - `p0` is not in interval `[0, 1]`.
+/// - `alpha` is not in interval `(0, 1)`.
 pub fn exact_binomial_test(
     n: u64,
     n_s: u64,

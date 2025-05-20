@@ -98,7 +98,7 @@ fn test_z() {
 fn test_z_test() {
     // Returns an error in any of these conditions:
     // - `self.n_x == 0` or `self.n_y == 0`.
-    // - `alpha` not in `(0, 1)`.
+    // - `alpha` not in interval `(0, 1)`.
     // - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
     //   This is hard to quantify a priori. For example,
     //   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK

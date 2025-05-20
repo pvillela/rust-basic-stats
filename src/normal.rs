@@ -1,7 +1,7 @@
 //! Statistics related to the Normal distribution and Student's t distribution, including t-tests.
 //!
 //! - For the one-sample t-test and related statistics, use `student_1samp._*` functions.
-//! - For the two-sample t-test and related statistics, use `welch_*` functions, which allows for samples
+//! - For the two-sample t-test and related statistics, use `welch_*` functions, which allow for samples
 //!   from distributions that may have different variances.
 //! - For the paired-sample t-test and related statistics, first construct the [`SampleMoments`] for
 //!   the paired samples (using, e.g., [`SampleMoments::from_paired_iters`] or [`SampleMoments::from_paired_slices`])
@@ -63,7 +63,7 @@ pub fn t_to_p(t: f64, df: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
 ///
 /// # Errors
 ///
-/// Returns an error if `alpha` not in `(0, 1)`.
+/// Returns an error if `alpha` not in interval `(0, 1)`.
 pub fn z_alpha(alpha: f64) -> StatsResult<f64> {
     check_alpha_in_open_0_1(alpha)?;
 
@@ -80,7 +80,7 @@ pub fn z_alpha(alpha: f64) -> StatsResult<f64> {
 ///
 /// Returns an error in any of the following conditions:
 /// - `df` is not `> 0`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
     check_alpha_in_open_0_1(alpha)?;
 
@@ -184,7 +184,7 @@ pub fn welch_p(
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn welch_alt_hyp_ci(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
@@ -233,7 +233,7 @@ pub fn welch_alt_hyp_ci(
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn welch_ci(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
@@ -256,7 +256,7 @@ pub fn welch_ci(
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn welch_test(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
@@ -333,7 +333,7 @@ pub fn student_1samp_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) -> St
 ///
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn student_1samp_alt_hyp_ci(
     moments: &SampleMoments,
     alt_hyp: AltHyp,
@@ -373,7 +373,7 @@ pub fn student_1samp_alt_hyp_ci(
 ///
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn student_1samp_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> {
     student_1samp_alt_hyp_ci(moments, AltHyp::Ne, alpha)
 }
@@ -391,7 +391,7 @@ pub fn student_1samp_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> 
 /// Returns an error in any of the following conditions:
 /// - `moments.n() <= 1`.
 /// - `moments.stdev() == 0`.
-/// - `alpha` not in `(0, 1)`.
+/// - `alpha` not in interval `(0, 1)`.
 pub fn student_1samp_test(
     moments: &SampleMoments,
     mu0: f64,

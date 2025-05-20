@@ -30,7 +30,7 @@ fn test_t_to_p() {
 
 #[test]
 fn test_z_alpha() {
-    // Returns an error if `alpha` not in `(0, 1)`.
+    // Returns an error if `alpha` not in interval `(0, 1)`.
     assert!(z_alpha(0.).is_err());
     assert!(z_alpha(1.).is_err());
     if nocover() {
@@ -42,7 +42,7 @@ fn test_z_alpha() {
 fn test_t_alpha() {
     // Returns an error in any of the following conditions:
     // - `df` is not `> 0`.
-    // - `alpha` not in `(0, 1)`.
+    // - `alpha` not in interval `(0, 1)`.
     assert!(t_alpha(0., 0.5).is_err());
     assert!(t_alpha(-1., 0.5).is_err());
     assert!(t_alpha(2., 0.).is_err());
@@ -132,7 +132,7 @@ fn test_welch_ci() {
     // - `moments_x.n() <= 1`.
     // - `moments_y.n() <= 1`.
     // - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
-    // - `alpha` not in `(0, 1)`.
+    // - `alpha` not in interval `(0, 1)`.
 
     let m0_0 = SampleMoments::default();
     let m1_1 = SampleMoments::new(1, 0., 1.);
@@ -162,7 +162,7 @@ fn test_welch_test() {
     // - `moments_x.n() <= 1`.
     // - `moments_y.n() <= 1`.
     // - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
-    // - `alpha` not in `(0, 1)`.
+    // - `alpha` not in interval `(0, 1)`.
 
     let m0_0 = SampleMoments::default();
     let m1_1 = SampleMoments::new(1, 0., 1.);
@@ -252,7 +252,7 @@ fn test_student_1samp_alt_hyp_ci() {
 fn test_student_1samp_ci() {
     // Returns an error in any of the following conditions:
     // - `moments.n() <= 1`.
-    // - `alpha` not in `(0, 1)`.
+    // - `alpha` not in interval `(0, 1)`.
 
     let m0_0 = SampleMoments::default();
     let m1_1 = SampleMoments::new(1, 0., 1.);
@@ -276,7 +276,7 @@ fn test_student_1samp_test() {
     // Returns an error in any of the following conditions:
     // - `moments.n() <= 1`.
     // - `moments.stdev() == 0`.
-    // - `alpha` not in `(0, 1)`.
+    // - `alpha` not in interval `(0, 1)`.
 
     let m0_0 = SampleMoments::default();
     let m1_1 = SampleMoments::new(1, 0., 1.);

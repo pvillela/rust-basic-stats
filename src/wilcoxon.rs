@@ -247,7 +247,7 @@ impl RankSum {
     /// Wilcoxon rank sum `W` statistic.
     ///
     /// As defined in the book Nonparametric Statistical Methods, 3rd Edition,
-    /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Example 4.1.
+    /// by Myles Hollander, Douglas A. Wolfe, Eric Chicken, Section 4.1.
     pub fn w(&self) -> f64 {
         self.w
     }
@@ -293,8 +293,8 @@ impl RankSum {
     /// - `self.n_x == 0` or `self.n_y == 0`.
     /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
     ///   This is hard to quantify a priori. For example,
-    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
-    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
     pub fn z(&self) -> StatsResult<f64> {
         // Guard against division by 0 in `var0_w_ties_adjust`.
         if self.n_x == 0 || self.n_y == 0 {
@@ -330,8 +330,8 @@ impl RankSum {
     /// - `self.n_x == 0` or `self.n_y == 0`.
     /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
     ///   This is hard to quantify a priori. For example,
-    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
-    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
     pub fn z_p(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
         let z = self.z()?;
         Ok(z_to_p(z, alt_hyp))
@@ -347,11 +347,11 @@ impl RankSum {
     ///
     /// Returns an error in any of these conditions:
     /// - `self.n_x == 0` or `self.n_y == 0`.
-    /// - `alpha` not in `(0, 1)`.
+    /// - `alpha` not in interval `(0, 1)`.
     /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
     ///   This is hard to quantify a priori. For example,
-    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
-    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
+    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
     pub fn z_test(&self, alt_hyp: AltHyp, alpha: f64) -> StatsResult<HypTestResult> {
         check_alpha_in_open_0_1(alpha)?;
         let p = self.z_p(alt_hyp)?;

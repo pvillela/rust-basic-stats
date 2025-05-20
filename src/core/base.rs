@@ -74,7 +74,7 @@ pub fn sample_stdev(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
 ///
 /// Includes sample size, sum, sum of squares, and, optionally, sample min and max values.
 ///
-/// Used by several by functions in this library.
+/// Used by several functions in this library.
 ///
 /// # Example
 ///
@@ -280,10 +280,10 @@ impl HypTestResult {
     /// Creates a new instance of `Self`.
     ///
     /// Arguments:
-    /// - `p` - the 'p' value for the test result.
-    /// - `alpha` - determines the confidence level `(1-alpha)`.
-    /// - `alt_hyp` - the alternative hypothesis.
-    /// - `accepted` - the accepted hypothesis (null or alternative).
+    /// - `p`: the "p-value" for the test result.
+    /// - `alpha`: determines the confidence level `(1-alpha)`.
+    /// - `alt_hyp`: the alternative hypothesis.
+    /// - `accepted`: the accepted hypothesis (null or alternative).
     pub fn new(p: f64, alpha: f64, alt_hyp: AltHyp) -> HypTestResult {
         Self {
             p,
@@ -297,12 +297,12 @@ impl HypTestResult {
         }
     }
 
-    /// The 'p' value of the test result.
+    /// The "p-value" of the test result.
     pub fn p(&self) -> f64 {
         self.p
     }
 
-    /// The 'alpha' for the test; determines the confidence level `(1-alpha)`.
+    /// The "alpha" for the test; determines the confidence level `(1-alpha)`.
     pub fn alpha(&self) -> f64 {
         self.alpha
     }
