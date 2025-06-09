@@ -23,5 +23,9 @@ binomial = ["normal"]
 normal = ["dep:statrs"]
 wilcoxon = ["normal"]
 
+[dev-dependencies]
+old_statrs = { package = "statrs", version = "0.13" } # old version required by `statest`
+statest = "0.2.2"
+
 [package.metadata.docs.rs]
 all-features = true
