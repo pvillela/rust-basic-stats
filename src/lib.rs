@@ -14,5 +14,5 @@ pub mod binomial;
 #[cfg(feature = "wilcoxon")]
 pub mod wilcoxon;
 
-#[doc(hidden)]
+#[cfg(feature = "_dev_utils")]
 pub mod dev_utils;

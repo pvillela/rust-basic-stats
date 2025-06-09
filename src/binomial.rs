@@ -380,6 +380,7 @@ pub fn exact_binomial_test(
 }
 
 #[cfg(test)]
+#[cfg(feature = "_dev_utils")]
 mod test {
     use crate::{core::Hyp, dev_utils::ApproxEq};
 

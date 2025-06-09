@@ -22,6 +22,7 @@ aok = []
 binomial = ["normal"]
 normal = ["dep:statrs"]
 wilcoxon = ["normal"]
+_dev_utils = ["aok"]                         # also used by `bench_utils` and `bench_diff`
 
 [dev-dependencies]
 old_statrs = { package = "statrs", version = "0.13" } # old version required by `statest`

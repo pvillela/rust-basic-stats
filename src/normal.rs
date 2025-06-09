@@ -404,6 +404,7 @@ pub fn student_1samp_test(
 }
 
 #[cfg(test)]
+#[cfg(feature = "_dev_utils")]
 #[allow(clippy::too_many_arguments)]
 mod test {
     //! Used R's t.test function to generate expected values.

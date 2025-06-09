@@ -350,6 +350,7 @@ impl Ci {
 }
 
 #[cfg(test)]
+#[cfg(feature = "_dev_utils")]
 mod test {
     use super::*;
     use crate::dev_utils::ApproxEq;

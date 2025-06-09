@@ -360,6 +360,7 @@ impl RankSum {
 }
 
 #[cfg(test)]
+#[cfg(feature = "_dev_utils")]
 mod base_test {
     //! Tests other than `test_w` used R's wilcox.test function to generate expected results.
     //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/wilcox.test

@@ -1,5 +1,5 @@
+#![cfg(feature = "_dev_utils")]
 #![cfg(feature = "binomial")]
-#![cfg(feature = "aok")]
 
 mod nocover;
 

@@ -1,8 +1,8 @@
 //! Used R's t.test function to generate expected values.
 //! https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/t.test
 
+#![cfg(feature = "_dev_utils")]
 #![cfg(feature = "normal")]
-#![cfg(feature = "aok")]
 
 use basic_stats::{
     aok::{AokBasicStats, AokFloat},
