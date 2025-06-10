@@ -18,5 +18,8 @@ cargo nextest run --lib --bins --tests --no-default-features --features _dev_uti
 echo "***** --features wilcoxon"
 cargo nextest run --lib --bins --tests --no-default-features --features _dev_utils,wilcoxon --target-dir target/test-target
 
+echo "***** --features _dev_utils"
+cargo nextest run --lib --bins --tests --no-default-features --features _dev_utils --target-dir target/test-target
+
 echo "***** doc"
 cargo test --doc

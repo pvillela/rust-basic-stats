@@ -17,3 +17,6 @@ cargo check --lib --bins --tests --no-default-features --features binomial
 
 echo "***** --features wilcoxon"
 cargo check --lib --bins --tests --no-default-features --features wilcoxon
+
+echo "***** --features _dev_utils"
+cargo check --lib --bins --tests --no-default-features --features _dev_utils

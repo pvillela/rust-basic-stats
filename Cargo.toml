@@ -17,12 +17,16 @@ exclude = ["CHANGELOG.md", "*.sh", ".gitignore", "R", "tests"]
 statrs = { version = "0.18", optional = true }
 
 [features]
+
+# Public
 default = ["binomial", "normal", "wilcoxon"]
 aok = []
 binomial = ["normal"]
 normal = ["dep:statrs"]
 wilcoxon = ["normal"]
-_dev_utils = ["aok"]                         # also used by `bench_utils` and `bench_diff`
+
+# Shared with friends
+_dev_utils = ["aok"] # also used by `bench_utils` and `bench_diff`
 
 [dev-dependencies]
 old_statrs = { package = "statrs", version = "0.13" } # old version required by `statest`
