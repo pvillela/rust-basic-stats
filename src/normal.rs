@@ -18,7 +18,7 @@
 
 use crate::core::{
     AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,
-    check_alpha_in_open_0_1,
+    check_alpha_in_open_0_1, deterministic_sample,
 };
 use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
 
@@ -401,6 +401,16 @@ pub fn student_1samp_test(
     check_alpha_in_open_0_1(alpha)?;
     let p = student_1samp_p(moments, mu0, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
+}
+
+pub fn deterministic_normal_sample(
+    mu: f64,
+    sigma: f64,
+    n: u64,
+) -> StatsResult<impl Iterator<Item = f64>> {
+    let normal =
+        Normal::new(mu, sigma).stats_result("`mu` must be finite and `sigma` must be positive")?;
+    Ok(deterministic_sample(move |p| normal.inverse_cdf(p), n))
 }
 
 #[cfg(test)]
@@ -826,5 +836,18 @@ mod test {
             )
             .unwrap();
         }
+    }
+
+    #[test]
+    fn test_deterministic_normal() {
+        use old_statrs::distribution::Normal as OldNormal;
+        use statest::ks::KSTest;
+
+        let old_normal = OldNormal::new(0., 1.).unwrap();
+        let iter = deterministic_normal_sample(0., 1., 10).unwrap();
+        let v: Vec<f64> = iter.collect();
+        let ks = KSTest::new(&v);
+        let (p, _) = ks.ks1(&old_normal);
+        assert!(1. - p < EPSILON)
     }
 }

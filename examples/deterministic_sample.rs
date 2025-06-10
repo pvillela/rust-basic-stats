@@ -1,8 +1,8 @@
-use basic_stats::core::{deterministic_sample, deterministic_uniform_sample};
+use basic_stats::core::{deterministic_sample, deterministic_uniform_01_sample};
 use statrs::distribution::{ContinuousCDF, Normal};
 
 fn main() {
-    let iter_u = deterministic_uniform_sample(10);
+    let iter_u = deterministic_uniform_01_sample(10);
 
     let normal = Normal::new(0., 1.).unwrap();
     let mut iter_n = deterministic_sample(|x| normal.inverse_cdf(x), 10);
