@@ -1,11 +1,31 @@
 //! Provides approximate equality for floating point types
 
+use std::ops::{Add, Div, Mul, Sub};
+
 pub trait ApproxEq {
     fn approx_eq(self, other: Self, epsilon: Self) -> bool;
-    fn round_to(self, n: u8) -> Self;
+    fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool;
+    fn round_to(self, sig_decimals: u8) -> Self;
 }
 
-impl ApproxEq for f32 {
+trait AbsPowiRound10 {
+    fn abs(self) -> Self;
+    fn powi(self, n: i32) -> Self;
+    fn round(self) -> Self;
+    fn ten() -> Self;
+}
+
+impl<T> ApproxEq for T
+where
+    T: Add<Output = T>
+        + Sub<Output = T>
+        + Mul<Output = T>
+        + Div<Output = T>
+        + AbsPowiRound10
+        + PartialOrd
+        + PartialEq
+        + Copy,
+{
     fn approx_eq(self, other: Self, epsilon: Self) -> bool {
         if self == other {
             // Covers infinity case
@@ -15,26 +35,52 @@ impl ApproxEq for f32 {
         }
     }
 
-    fn round_to(self, sig_decimals: u8) -> f32 {
-        let pow = 10.0_f32.powi(sig_decimals as i32);
+    fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool {
+        let abs_diff = (self - other).abs();
+        let rel_diff = (abs_diff + abs_diff) / (self + other);
+        let zero = self - self;
+        zero.approx_eq(rel_diff, epsilon)
+    }
+
+    fn round_to(self, sig_decimals: u8) -> Self {
+        let pow = Self::ten().powi(sig_decimals as i32);
         (self * pow).round() / pow
     }
 }
 
-impl ApproxEq for f64 {
-    fn approx_eq(self, other: Self, epsilon: Self) -> bool {
-        if self == other {
-            // Covers infinity case
-            true
-        } else {
-            (self - other).abs() <= epsilon
-        }
+impl AbsPowiRound10 for f32 {
+    fn abs(self) -> Self {
+        f32::abs(self)
     }
 
-    /// Rounds self to `sig_decimals` significant decimals.
-    fn round_to(self, sig_decimals: u8) -> f64 {
-        let pow = 10.0_f64.powi(sig_decimals as i32);
-        (self * pow).round() / pow
+    fn powi(self, n: i32) -> Self {
+        f32::powi(self, n)
+    }
+
+    fn round(self) -> Self {
+        f32::round(self)
+    }
+
+    fn ten() -> Self {
+        10.
+    }
+}
+
+impl AbsPowiRound10 for f64 {
+    fn abs(self) -> Self {
+        f64::abs(self)
+    }
+
+    fn powi(self, n: i32) -> Self {
+        f64::powi(self, n)
+    }
+
+    fn round(self) -> Self {
+        f64::round(self)
+    }
+
+    fn ten() -> Self {
+        10.
     }
 }
 
@@ -63,6 +109,19 @@ mod test {
         }
 
         {
+            let x: f32 = 100_000.;
+            let y: f32 = 100_009.;
+            let z: f32 = 100_020.;
+            let epsilon: f32 = 0.0001;
+
+            assert!(x.rel_approx_eq(y, epsilon), "x must be rel_approx_eq to y");
+            assert!(
+                !x.rel_approx_eq(z, epsilon),
+                "x must not be rel_approx_eq to z"
+            );
+        }
+
+        {
             let w: f64 = 123.4444;
             let x: f64 = 123.444444;
             let y: f64 = 123.444454;
@@ -78,6 +137,19 @@ mod test {
             assert_eq!(w, x.round_to(4), "w must equal x.round_to(4)");
             assert_ne!(w, y.round_to(4), "w must not equal y.round_to(4)");
             assert_ne!(w, z.round_to(4), "w must not equal z.round_to(4)");
+        }
+
+        {
+            let x: f64 = 200_000.0;
+            let y: f64 = 200_001.5;
+            let z: f64 = 200_003.0;
+            let epsilon: f64 = 0.00001;
+
+            assert!(x.rel_approx_eq(y, epsilon), "x must be rel_approx_eq to y");
+            assert!(
+                !x.rel_approx_eq(z, epsilon),
+                "x must not be rel_approx_eq to z"
+            );
         }
     }
 }

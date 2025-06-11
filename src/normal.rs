@@ -406,11 +406,11 @@ pub fn student_1samp_test(
 pub fn deterministic_normal_sample(
     mu: f64,
     sigma: f64,
-    n: u64,
+    k: u64,
 ) -> StatsResult<impl Iterator<Item = f64>> {
     let normal =
         Normal::new(mu, sigma).stats_result("`mu` must be finite and `sigma` must be positive")?;
-    Ok(deterministic_sample(move |p| normal.inverse_cdf(p), n))
+    Ok(deterministic_sample(move |p| normal.inverse_cdf(p), k))
 }
 
 #[cfg(test)]
