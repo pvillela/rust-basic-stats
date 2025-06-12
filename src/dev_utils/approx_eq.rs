@@ -94,6 +94,33 @@ impl AbsPowiRound10 for f64 {
     }
 }
 
+#[macro_use]
+mod macros {
+    #[macro_export]
+    macro_rules! approx_eq {
+        ($a:expr, $b:expr, $epsilon:expr $(,)?) => {
+            if !$crate::dev_utils::ApproxEq::approx_eq($a, $b, $epsilon) {
+                panic!(
+                    "assertion for approximate equality failed: left={}, right={}, epsilon={})",
+                    $a, $b, $epsilon
+                );
+            }
+        };
+    }
+
+    #[macro_export]
+    macro_rules! rel_approx_eq {
+        ($a:expr, $b:expr, $epsilon:expr $(,)?) => {
+            if !$crate::dev_utils::ApproxEq::rel_approx_eq($a, $b, $epsilon) {
+                panic!(
+                    "assertion for relative approximate equality failed: left={}, right={}, epsilon={})",
+                    $a, $b, $epsilon
+                );
+            }
+        };
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::ApproxEq;
@@ -147,6 +174,8 @@ mod test {
             assert_eq!(w, x.round_to(4), "w must equal x.round_to(4)");
             assert_ne!(w, y.round_to(4), "w must not equal y.round_to(4)");
             assert_ne!(w, z.round_to(4), "w must not equal z.round_to(4)");
+
+            approx_eq!(x, y, epsilon);
         }
 
         {
@@ -160,6 +189,8 @@ mod test {
                 !x.rel_approx_eq(z, epsilon),
                 "x must not be rel_approx_eq to z"
             );
+
+            rel_approx_eq!(x, y, epsilon);
         }
     }
 }
