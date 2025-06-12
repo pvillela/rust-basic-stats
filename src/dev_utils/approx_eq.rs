@@ -5,6 +5,7 @@ use std::ops::{Add, Div, Mul, Sub};
 pub trait ApproxEq {
     fn approx_eq(self, other: Self, epsilon: Self) -> bool;
     fn rel_diff(self, other: Self) -> Self;
+    fn abs_rel_diff(self, other: Self) -> Self;
     fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool;
     fn round_to(self, sig_decimals: u8) -> Self;
 }
@@ -37,12 +38,16 @@ where
     }
 
     fn rel_diff(self, other: Self) -> Self {
-        let abs_diff = (self - other).abs();
-        (abs_diff + abs_diff) / (self + other)
+        let diff = self - other;
+        (diff + diff) / (self + other)
+    }
+
+    fn abs_rel_diff(self, other: Self) -> Self {
+        self.rel_diff(other).abs()
     }
 
     fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool {
-        let rel_diff = self.rel_diff(other);
+        let rel_diff = self.abs_rel_diff(other);
         let zero = self - self;
         zero.approx_eq(rel_diff, epsilon)
     }
