@@ -258,13 +258,13 @@ pub enum AltHyp {
     Ne,
 }
 
-/// Statistical test hypothesis.
+/// Accepted hypothesis of a statistical hypothesis test.
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Hyp {
-    /// Null hypothesis of equality.
+pub enum AcceptedHyp {
+    /// Null hypothesis.
     Null,
     /// Alternative hypothesis.
-    Alt(AltHyp),
+    Alt,
 }
 
 /// Result of a statistical hypothesis test with a null hypothesis of equality.
@@ -273,7 +273,7 @@ pub struct HypTestResult {
     p: f64,
     alpha: f64,
     alt_hyp: AltHyp,
-    accepted: Hyp,
+    accepted: AcceptedHyp,
 }
 
 impl HypTestResult {
@@ -290,9 +290,9 @@ impl HypTestResult {
             alpha,
             alt_hyp,
             accepted: if p < alpha {
-                Hyp::Alt(alt_hyp)
+                AcceptedHyp::Alt
             } else {
-                Hyp::Null
+                AcceptedHyp::Null
             },
         }
     }
@@ -313,7 +313,7 @@ impl HypTestResult {
     }
 
     /// The hypothesis accepted by the test.
-    pub fn accepted(&self) -> Hyp {
+    pub fn accepted(&self) -> AcceptedHyp {
         self.accepted
     }
 }

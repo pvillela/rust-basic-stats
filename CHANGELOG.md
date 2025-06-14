@@ -5,15 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-06-XX
+## [2.0.0] - 2025-06-XX
 
 ### Added
 
+- Enum `AcceptedHyp`, which replaces enum `Hyp`, removing a bit of redundancy.
 - Functions to generate deterministic samples of distributions.
 
 ### Changed
 
 - Updated `Cargo.toml` exclusions with `R` and `tests` directories.
+
+### Removed
+
+- Removed `Hyp` enum. It was replaced with enum `AcceptedHyp`, removing a bit of redundancy.
 
 ## [1.0.0] - 2025-05-20
 

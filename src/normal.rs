@@ -422,7 +422,7 @@ mod test {
 
     use super::*;
     use crate::{
-        core::{AltHyp, Hyp},
+        core::{AcceptedHyp, AltHyp},
         dev_utils::ApproxEq,
     };
 
@@ -437,7 +437,7 @@ mod test {
         exp_df: f64,
         exp_p: f64,
         exp_ci: Ci,
-        exp_accept_hyp: Hyp,
+        exp_accept_hyp: AcceptedHyp,
     ) -> StatsResult<()> {
         let moments_x = SampleMoments::from_slice(dataset_x);
         let moments_y = SampleMoments::from_slice(dataset_y);
@@ -497,7 +497,7 @@ mod test {
         exp_df: f64,
         exp_p: f64,
         exp_ci: Ci,
-        exp_accept_hyp: Hyp,
+        exp_accept_hyp: AcceptedHyp,
     ) -> StatsResult<()> {
         let moments = SampleMoments::from_slice(dataset);
 
@@ -562,21 +562,51 @@ mod test {
             let alt_hyp = AltHyp::Lt;
             let exp_p = 0.07067;
             let exp_ci = Ci(-f64::INFINITY, 0.5616789);
-            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null).unwrap();
+            check_welch(
+                &a,
+                &b,
+                alt_hyp,
+                exp_t,
+                exp_df,
+                exp_p,
+                exp_ci,
+                AcceptedHyp::Null,
+            )
+            .unwrap();
         }
 
         {
             let alt_hyp = AltHyp::Ne;
             let exp_p = 0.1413;
             let exp_ci = Ci(-10.453875, 1.614714);
-            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null).unwrap();
+            check_welch(
+                &a,
+                &b,
+                alt_hyp,
+                exp_t,
+                exp_df,
+                exp_p,
+                exp_ci,
+                AcceptedHyp::Null,
+            )
+            .unwrap();
         }
 
         {
             let alt_hyp = AltHyp::Gt;
             let exp_p = 0.9293;
             let exp_ci = Ci(-9.40084, f64::INFINITY);
-            check_welch(&a, &b, alt_hyp, exp_t, exp_df, exp_p, exp_ci, Hyp::Null).unwrap();
+            check_welch(
+                &a,
+                &b,
+                alt_hyp,
+                exp_t,
+                exp_df,
+                exp_p,
+                exp_ci,
+                AcceptedHyp::Null,
+            )
+            .unwrap();
         }
     }
 
@@ -590,7 +620,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.9989;
             let exp_ci = Ci(-f64::INFINITY, 21.00566);
             check_welch(
@@ -608,7 +638,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.00213;
             let exp_ci = Ci(7.57018, 22.49649);
             check_welch(
@@ -626,7 +656,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Gt);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.001065;
             let exp_ci = Ci(9.061005, f64::INFINITY);
             check_welch(
@@ -660,7 +690,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Lt);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.0007288;
             let exp_ci = Ci(-f64::INFINITY, 22.17479);
             check_student(
@@ -678,7 +708,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.001458;
             let exp_ci = Ci(20.46771, 22.33229);
             check_student(
@@ -696,7 +726,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.9993;
             let exp_ci = Ci(20.62521, f64::INFINITY);
             check_student(
@@ -722,7 +752,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.8061;
             let exp_ci = Ci(-f64::INFINITY, 22.17479);
             check_student(
@@ -740,7 +770,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.3879;
             let exp_ci = Ci(20.46771, 22.33229);
             check_student(
@@ -758,7 +788,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.1939;
             let exp_ci = Ci(20.62521, f64::INFINITY);
             check_student(
@@ -785,7 +815,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.9977;
             let exp_ci = Ci(-f64::INFINITY, 22.17479);
             check_student(
@@ -803,7 +833,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.004553;
             let exp_ci = Ci(20.46771, 22.33229);
             check_student(
@@ -821,7 +851,7 @@ mod test {
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Gt);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.002276;
             let exp_ci = Ci(20.62521, f64::INFINITY);
             check_student(

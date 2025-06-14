@@ -382,7 +382,7 @@ pub fn exact_binomial_test(
 #[cfg(test)]
 #[cfg(feature = "_dev_utils")]
 mod test {
-    use crate::{core::Hyp, dev_utils::ApproxEq};
+    use crate::{core::AcceptedHyp, dev_utils::ApproxEq};
 
     use super::*;
 
@@ -396,7 +396,7 @@ mod test {
         alt_hyp: AltHyp,
         exp_p: f64,
         exp_cp_ci: Ci,
-        exp_accept_hyp: Hyp,
+        exp_accept_hyp: AcceptedHyp,
     ) {
         let cp_ci = binomial_cp_alt_hyp_ci(n, n_s, alt_hyp, ALPHA).unwrap();
         let res = exact_binomial_test(n, n_s, p0, alt_hyp, ALPHA).unwrap();
@@ -453,8 +453,8 @@ mod test {
         exp_z_p: f64,
         exp_cp_ci: Ci,
         exp_ws_ci: Ci,
-        exp_accept_hyp: Hyp,
-        exp_z_accept_hyp: Hyp,
+        exp_accept_hyp: AcceptedHyp,
+        exp_z_accept_hyp: AcceptedHyp,
     ) {
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
 
@@ -514,7 +514,7 @@ mod test {
         let exp_z_p = 0.02275;
         let exp_cp_ci = Ci(0.0000000, 0.4870242);
         let exp_ws_ci = Ci(0.0000000, 0.4821905);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Lt);
+        let exp_accept_hyp = AcceptedHyp::Alt;
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_binomial(
@@ -540,8 +540,8 @@ mod test {
         let exp_z_p = 0.0455;
         let exp_cp_ci = Ci(0.3032948, 0.5027908);
         let exp_ws_ci = Ci(0.3094013, 0.4979974);
-        let exp_accept_hyp = Hyp::Null;
-        let exp_z_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Null;
+        let exp_z_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial(
             n,
@@ -566,7 +566,7 @@ mod test {
         let exp_z_p = 0.9772;
         let exp_cp_ci = Ci(0.317526, 1.000000);
         let exp_ws_ci = Ci(0.3230781, 1.0000000);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_binomial(
@@ -592,7 +592,7 @@ mod test {
         let exp_z_p = 1.;
         let exp_cp_ci = Ci(0.3032948, 0.5027908);
         let exp_ws_ci = Ci(0.3094013, 0.4979974);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_binomial(
@@ -618,7 +618,7 @@ mod test {
         let exp_z_p = 0.5106;
         let exp_cp_ci = Ci(0.01100449, 0.09925716);
         let exp_ws_ci = Ci(0.01566330, 0.09837071);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_binomial(
@@ -644,7 +644,7 @@ mod test {
         let exp_z_p = 0.5106;
         let exp_cp_ci = Ci(0.9007428, 0.9889955);
         let exp_ws_ci = Ci(0.9016293, 0.9843367);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
         let exp_z_accept_hyp = exp_accept_hyp;
 
         check_binomial(
@@ -674,7 +674,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
         let exp_cp_ci = Ci(0.000, 0.975);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -686,7 +686,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.0;
         let exp_cp_ci = Ci(0.000, 0.975);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -698,7 +698,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.;
         let exp_cp_ci = Ci(0.025, 1.000);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -710,7 +710,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
         let exp_cp_ci = Ci(0.025, 1.000);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -725,7 +725,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 0.05;
         let exp_cp_ci = Ci(0.000, 0.975);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -737,7 +737,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
         let exp_cp_ci = Ci(0.000, 0.975);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -749,7 +749,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 1.;
         let exp_cp_ci = Ci(0.025, 1.000);
-        let exp_accept_hyp = Hyp::Null;
+        let exp_accept_hyp = AcceptedHyp::Null;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -761,7 +761,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
         let exp_cp_ci = Ci(0.000000e+00, 3.688811e-05);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -773,7 +773,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
         let exp_cp_ci = Ci(2.531780e-07, 5.571516e-05);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -785,7 +785,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
         let exp_cp_ci = Ci(0.9999443, 0.9999997);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }
@@ -797,7 +797,7 @@ mod test {
         let alt_hyp = AltHyp::Ne;
         let exp_p = 2.2e-16;
         let exp_cp_ci = Ci(0.9999631, 1.0000000);
-        let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+        let exp_accept_hyp = AcceptedHyp::Alt;
 
         check_binomial_no_z(n, n_s, p0, alt_hyp, exp_p, exp_cp_ci, exp_accept_hyp);
     }

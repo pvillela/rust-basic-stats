@@ -367,7 +367,7 @@ mod base_test {
 
     use super::*;
     use crate::{
-        core::{AltHyp, Hyp},
+        core::{AcceptedHyp, AltHyp},
         dev_utils::ApproxEq,
     };
     use std::error::Error;
@@ -445,7 +445,7 @@ mod base_test {
         alt_hyp: AltHyp,
         exp_r_w: f64,
         exp_p: f64,
-        exp_accept_hyp: Hyp,
+        exp_accept_hyp: AcceptedHyp,
     ) {
         let w = rank_sum.w();
         let r_w = rank_sum.r_w();
@@ -491,21 +491,21 @@ mod base_test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.8897;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.2207;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.1103;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
@@ -522,21 +522,21 @@ mod base_test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.6675;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.6649;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.3325;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
@@ -578,21 +578,21 @@ mod base_test {
 
         {
             let alt_hyp = AltHyp::Lt;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Lt);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.0002987;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
 
         {
             let alt_hyp = AltHyp::Ne;
-            let exp_accept_hyp = Hyp::Alt(AltHyp::Ne);
+            let exp_accept_hyp = AcceptedHyp::Alt;
             let exp_p = 0.0005974;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }
 
         {
             let alt_hyp = AltHyp::Gt;
-            let exp_accept_hyp = Hyp::Null;
+            let exp_accept_hyp = AcceptedHyp::Null;
             let exp_p = 0.9997;
             check_wilcoxon(&rank_sum, alt_hyp, exp_r_w, exp_p, exp_accept_hyp);
         }

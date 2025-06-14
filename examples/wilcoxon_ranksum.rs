@@ -1,5 +1,5 @@
 use basic_stats::{
-    core::{AltHyp, Hyp, StatsError},
+    core::{AltHyp, AcceptedHyp, StatsError},
     wilcoxon::RankSum,
 };
 
@@ -26,7 +26,7 @@ fn main() -> Result<(), StatsError> {
 
     let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
     let test_res = rank_sum.z_test(AltHyp::Gt, 0.05)?;
-    assert_eq!(Hyp::Null, test_res.accepted());
+    assert_eq!(AcceptedHyp::Null, test_res.accepted());
     println!("test result: {test_res:?}");
     // test result: HypTestResult { p: 0.33244724790581637, alpha: 0.05, alt_hyp: Gt, accepted: Null }
 
