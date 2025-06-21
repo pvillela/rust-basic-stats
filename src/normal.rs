@@ -94,6 +94,7 @@ pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
+/// - `d0`: hypthesized difference between means.
 ///
 /// # Errors
 ///
@@ -101,7 +102,7 @@ pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
 /// - `moments_x.n() <= 1`.
 /// - `moments_y.n() <= 1`.
 /// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
-pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
+pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments, d0: f64) -> StatsResult<f64> {
     if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
         return Err(StatsError("sample standard deviations are both zero"));
     }
@@ -113,7 +114,7 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsRes
     let s2_mean_x = s2_x / n_x;
     let s2_mean_y = s2_y / n_y;
     let s_d_means = (s2_mean_x + s2_mean_y).sqrt();
-    Ok(d_means / s_d_means)
+    Ok((d_means - d0) / s_d_means)
 }
 
 /// Degrees of freedom for Welch's two-sample t-test.
@@ -152,6 +153,7 @@ pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsRe
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
+/// - `d0`: hypthesized difference between means.
 /// - `alt_hyp`: alternative hypothesis.
 ///
 /// # Errors
@@ -163,9 +165,10 @@ pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsRe
 pub fn welch_p(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
+    d0: f64,
     alt_hyp: AltHyp,
 ) -> StatsResult<f64> {
-    let t = welch_t(moments_x, moments_y)?;
+    let t = welch_t(moments_x, moments_y, d0)?;
     let df = welch_df(moments_x, moments_y)?;
     t_to_p(t, df, alt_hyp)
 }
@@ -247,6 +250,7 @@ pub fn welch_ci(
 /// Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
+/// - `d0`: hypthesized difference between means.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
 ///
@@ -260,11 +264,12 @@ pub fn welch_ci(
 pub fn welch_test(
     moments_x: &SampleMoments,
     moments_y: &SampleMoments,
+    d0: f64,
     alt_hyp: AltHyp,
     alpha: f64,
 ) -> StatsResult<HypTestResult> {
     check_alpha_in_open_0_1(alpha)?;
-    let p = welch_p(moments_x, moments_y, alt_hyp)?;
+    let p = welch_p(moments_x, moments_y, d0, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
@@ -432,6 +437,7 @@ mod test {
     fn check_welch(
         dataset_x: &[f64],
         dataset_y: &[f64],
+        d0: f64,
         alt_hyp: AltHyp,
         exp_t: f64,
         exp_df: f64,
@@ -442,11 +448,11 @@ mod test {
         let moments_x = SampleMoments::from_slice(dataset_x);
         let moments_y = SampleMoments::from_slice(dataset_y);
 
-        let t = welch_t(&moments_x, &moments_y)?;
+        let t = welch_t(&moments_x, &moments_y, d0)?;
         let df = welch_df(&moments_x, &moments_y)?;
         let p = t_to_p(t, df, alt_hyp)?;
         let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA)?;
-        let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA)?;
+        let res = welch_test(&moments_x, &moments_y, d0, alt_hyp, ALPHA)?;
 
         if alt_hyp == AltHyp::Ne {
             assert_eq!(ci, welch_ci(&moments_x, &moments_y, ALPHA)?);
@@ -554,6 +560,7 @@ mod test {
         let b = [
             10., 12., 14., 15., 18., 22., 24., 27., 31., 33., 34., 34., 34.,
         ];
+        let d0 = 0.;
 
         let exp_t = -1.5379;
         let exp_df = 18.137;
@@ -565,6 +572,7 @@ mod test {
             check_welch(
                 &a,
                 &b,
+                d0,
                 alt_hyp,
                 exp_t,
                 exp_df,
@@ -582,6 +590,7 @@ mod test {
             check_welch(
                 &a,
                 &b,
+                d0,
                 alt_hyp,
                 exp_t,
                 exp_df,
@@ -599,6 +608,7 @@ mod test {
             check_welch(
                 &a,
                 &b,
+                d0,
                 alt_hyp,
                 exp_t,
                 exp_df,
@@ -611,9 +621,10 @@ mod test {
     }
 
     #[test]
-    fn test_welch_gt() {
+    fn test_welch_gt_0() {
         let a = [24., 28., 32., 29., 35., 36., 30., 32., 25., 31.];
         let b = [5., 10., 25., 15., 16., 20.];
+        let d0 = 0.;
 
         let exp_t = 4.7857;
         let exp_df = 6.8409;
@@ -626,6 +637,7 @@ mod test {
             check_welch(
                 &a,
                 &b,
+                d0,
                 alt_hyp,
                 exp_t,
                 exp_df,
@@ -644,6 +656,7 @@ mod test {
             check_welch(
                 &a,
                 &b,
+                d0,
                 alt_hyp,
                 exp_t,
                 exp_df,
@@ -662,6 +675,74 @@ mod test {
             check_welch(
                 &a,
                 &b,
+                d0,
+                alt_hyp,
+                exp_t,
+                exp_df,
+                exp_p,
+                exp_ci,
+                exp_accept_hyp,
+            )
+            .unwrap();
+        }
+    }
+
+    #[test]
+    fn test_welch_gt_5() {
+        let a = [24., 28., 32., 29., 35., 36., 30., 32., 25., 31.];
+        let b = [5., 10., 25., 15., 16., 20.];
+        let d0 = 5.;
+
+        let exp_t = 3.194;
+        let exp_df = 6.8409;
+
+        {
+            let alt_hyp = AltHyp::Lt;
+            let exp_accept_hyp = AcceptedHyp::Null;
+            let exp_p = 0.9922;
+            let exp_ci = Ci(-f64::INFINITY, 21.00566);
+            check_welch(
+                &a,
+                &b,
+                d0,
+                alt_hyp,
+                exp_t,
+                exp_df,
+                exp_p,
+                exp_ci,
+                exp_accept_hyp,
+            )
+            .unwrap();
+        }
+
+        {
+            let alt_hyp = AltHyp::Ne;
+            let exp_accept_hyp = AcceptedHyp::Alt;
+            let exp_p = 0.01567;
+            let exp_ci = Ci(7.57018, 22.49649);
+            check_welch(
+                &a,
+                &b,
+                d0,
+                alt_hyp,
+                exp_t,
+                exp_df,
+                exp_p,
+                exp_ci,
+                exp_accept_hyp,
+            )
+            .unwrap();
+        }
+
+        {
+            let alt_hyp = AltHyp::Gt;
+            let exp_accept_hyp = AcceptedHyp::Alt;
+            let exp_p = 0.007835;
+            let exp_ci = Ci(9.061005, f64::INFINITY);
+            check_welch(
+                &a,
+                &b,
+                d0,
                 alt_hyp,
                 exp_t,
                 exp_df,
@@ -680,6 +761,7 @@ mod test {
             25.06, 22.44, 19.08, 19.88, 21.39, 22.33, 25.79,
         ]
     }
+
     #[test]
     fn test_student_lt() {
         let data = student_data();

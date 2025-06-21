@@ -85,3 +85,48 @@ alternative hypothesis: true difference in means is less than 0
 sample estimates:
 mean of x mean of y 
  30.20000  15.16667 
+
+
+***** Tests for non-zero difference of sample means *****
+
+> t.test(sample1, sample2, mu=5, alternative='less')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = 3.194, df = 6.8409, p-value = 0.9922
+alternative hypothesis: true difference in means is less than 5
+95 percent confidence interval:
+     -Inf 21.00566
+sample estimates:
+mean of x mean of y 
+ 30.20000  15.16667 
+
+
+
+> t.test(sample1, sample2, mu=5, alternative='two.sided')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = 3.194, df = 6.8409, p-value = 0.01567
+alternative hypothesis: true difference in means is not equal to 5
+95 percent confidence interval:
+  7.57018 22.49649
+sample estimates:
+mean of x mean of y 
+ 30.20000  15.16667 
+
+> t.test(sample1, sample2, mu=5, alternative='greater')
+
+	Welch Two Sample t-test
+
+data:  sample1 and sample2
+t = 3.194, df = 6.8409, p-value = 0.007835
+alternative hypothesis: true difference in means is greater than 5
+95 percent confidence interval:
+ 9.061005      Inf
+sample estimates:
+mean of x mean of y 
+ 30.20000  15.16667 
+

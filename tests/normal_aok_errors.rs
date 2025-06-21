@@ -64,14 +64,14 @@ fn test_welch_t() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(welch_t(&m0_0, &m2_1).is_err());
-    assert!(welch_t(&m2_1, &m0_0).is_err());
-    assert!(welch_t(&m1_1, &m2_1).is_err());
-    assert!(welch_t(&m2_1, &m1_1).is_err());
-    assert!(welch_t(&m2_0, &m2_0).is_err());
+    assert!(welch_t(&m0_0, &m2_1, 0.).is_err());
+    assert!(welch_t(&m2_1, &m0_0, 0.).is_err());
+    assert!(welch_t(&m1_1, &m2_1, 0.).is_err());
+    assert!(welch_t(&m2_1, &m1_1, 0.).is_err());
+    assert!(welch_t(&m2_0, &m2_0, 0.).is_err());
     if nocover() {
-        assert!(welch_t(&m2_0, &m2_1).aok().is_finite());
-        assert!(welch_t(&m2_1, &m2_0).aok().is_finite());
+        assert!(welch_t(&m2_0, &m2_1, 0.).aok().is_finite());
+        assert!(welch_t(&m2_1, &m2_0, 0.).aok().is_finite());
     }
 }
 
@@ -110,14 +110,14 @@ fn test_welch_p() {
     let m2_0 = SampleMoments::new(2, 0., 0.);
     let m2_1 = SampleMoments::new(2, 0., 1.);
 
-    assert!(welch_p(&m0_0, &m2_1, AltHyp::Ne).is_err());
-    assert!(welch_p(&m2_1, &m0_0, AltHyp::Ne).is_err());
-    assert!(welch_p(&m1_1, &m2_1, AltHyp::Ne).is_err());
-    assert!(welch_p(&m2_1, &m1_1, AltHyp::Ne).is_err());
-    assert!(welch_p(&m2_0, &m2_0, AltHyp::Ne).is_err());
+    assert!(welch_p(&m0_0, &m2_1, 0., AltHyp::Ne).is_err());
+    assert!(welch_p(&m2_1, &m0_0, 0., AltHyp::Ne).is_err());
+    assert!(welch_p(&m1_1, &m2_1, 0., AltHyp::Ne).is_err());
+    assert!(welch_p(&m2_1, &m1_1, 0., AltHyp::Ne).is_err());
+    assert!(welch_p(&m2_0, &m2_0, 0., AltHyp::Ne).is_err());
     if nocover() {
-        assert!(welch_p(&m2_0, &m2_1, AltHyp::Ne).aok().is_finite());
-        assert!(welch_p(&m2_1, &m2_0, AltHyp::Ne).aok().is_finite());
+        assert!(welch_p(&m2_0, &m2_1, 0., AltHyp::Ne).aok().is_finite());
+        assert!(welch_p(&m2_1, &m2_0, 0., AltHyp::Ne).aok().is_finite());
     }
 }
 
@@ -171,20 +171,52 @@ fn test_welch_test() {
 
     let alt_hyp = AltHyp::Ne;
 
-    assert!(welch_test(&m0_0, &m2_1, alt_hyp, 0.5).aok().is_tainted());
-    assert!(welch_test(&m2_1, &m0_0, alt_hyp, 0.5).aok().is_tainted());
-    assert!(welch_test(&m1_1, &m2_1, alt_hyp, 0.5).aok().is_tainted());
-    assert!(welch_test(&m2_1, &m1_1, alt_hyp, 0.5).aok().is_tainted());
-    assert!(welch_test(&m2_0, &m2_0, alt_hyp, 0.5).aok().is_tainted());
+    assert!(
+        welch_test(&m0_0, &m2_1, 0., alt_hyp, 0.5)
+            .aok()
+            .is_tainted()
+    );
+    assert!(
+        welch_test(&m2_1, &m0_0, 0., alt_hyp, 0.5)
+            .aok()
+            .is_tainted()
+    );
+    assert!(
+        welch_test(&m1_1, &m2_1, 0., alt_hyp, 0.5)
+            .aok()
+            .is_tainted()
+    );
+    assert!(
+        welch_test(&m2_1, &m1_1, 0., alt_hyp, 0.5)
+            .aok()
+            .is_tainted()
+    );
+    assert!(
+        welch_test(&m2_0, &m2_0, 0., alt_hyp, 0.5)
+            .aok()
+            .is_tainted()
+    );
 
-    assert!(welch_test(&m2_1, &m2_1, alt_hyp, -1.).aok().is_tainted());
-    assert!(welch_test(&m2_1, &m2_1, alt_hyp, 0.).aok().is_tainted());
-    assert!(welch_test(&m2_1, &m2_1, alt_hyp, 1.).aok().is_tainted());
-    assert!(welch_test(&m2_1, &m2_1, alt_hyp, 2.).aok().is_tainted());
+    assert!(
+        welch_test(&m2_1, &m2_1, 0., alt_hyp, -1.)
+            .aok()
+            .is_tainted()
+    );
+    assert!(welch_test(&m2_1, &m2_1, 0., alt_hyp, 0.).aok().is_tainted());
+    assert!(welch_test(&m2_1, &m2_1, 0., alt_hyp, 1.).aok().is_tainted());
+    assert!(welch_test(&m2_1, &m2_1, 0., alt_hyp, 2.).aok().is_tainted());
 
     if nocover() {
-        assert!(welch_test(&m2_0, &m2_1, alt_hyp, 0.5).aok().is_untainted());
-        assert!(welch_test(&m2_1, &m2_0, alt_hyp, 0.5).aok().is_untainted());
+        assert!(
+            welch_test(&m2_0, &m2_1, 0., alt_hyp, 0.5)
+                .aok()
+                .is_untainted()
+        );
+        assert!(
+            welch_test(&m2_1, &m2_0, 0., alt_hyp, 0.5)
+                .aok()
+                .is_untainted()
+        );
     }
 }
 

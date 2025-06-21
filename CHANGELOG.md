@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Added argument to Welch statistics to enable testing that the difference of means equals a specific value which doesn't have to be zero.
 - Updated `Cargo.toml` exclusions with `R` and `tests` directories.
 
 ### Removed

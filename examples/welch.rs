@@ -12,14 +12,14 @@ fn main() {
     let moments_x = SampleMoments::from_slice(&dat_x);
     let moments_y = SampleMoments::from_slice(&dat_y);
     {
-        let test_res_lt = welch_test(&moments_x, &moments_y, AltHyp::Lt, ALPHA).unwrap();
+        let test_res_lt = welch_test(&moments_x, &moments_y, 0., AltHyp::Lt, ALPHA).unwrap();
         assert_eq!(AcceptedHyp::Null, test_res_lt.accepted());
         println!("test result lt: {test_res_lt:?}");
         // test result lt: HypTestResult { p: 0.9989352090850637, alpha: 0.05, alt_hyp: Lt, accepted: Null }
     }
 
     {
-        let test_res_gt = welch_test(&moments_x, &moments_y, AltHyp::Gt, ALPHA).unwrap();
+        let test_res_gt = welch_test(&moments_x, &moments_y, 0., AltHyp::Gt, ALPHA).unwrap();
         assert_eq!(AcceptedHyp::Alt, test_res_gt.accepted());
         println!("test result gt: {test_res_gt:?}");
         // test result gt: HypTestResult { p: 0.0010647909149362593, alpha: 0.05, alt_hyp: Gt, accepted: Alt }

@@ -28,11 +28,11 @@ fn check_welch(
     let moments_x = SampleMoments::from_slice(dataset_x);
     let moments_y = SampleMoments::from_slice(dataset_y);
 
-    let t = welch_t(&moments_x, &moments_y).aok();
+    let t = welch_t(&moments_x, &moments_y, 0.).aok();
     let df = welch_df(&moments_x, &moments_y).aok();
     let p = t_to_p(t, df, alt_hyp).aok();
     let ci = welch_alt_hyp_ci(&moments_x, &moments_y, alt_hyp, ALPHA).aok();
-    let res = welch_test(&moments_x, &moments_y, alt_hyp, ALPHA).aok();
+    let res = welch_test(&moments_x, &moments_y, 0., alt_hyp, ALPHA).aok();
 
     assert!(
         exp_t.approx_eq(t, EPSILON),
