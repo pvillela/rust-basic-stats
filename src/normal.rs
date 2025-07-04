@@ -20,7 +20,7 @@ use crate::core::{
     AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,
     check_alpha_in_open_0_1, deterministic_sample,
 };
-use statrs::distribution::{ContinuousCDF, Normal, StudentsT};
+use statrs::distribution::{ContinuousCDF, LogNormal, Normal, StudentsT};
 
 /// Returns the the probability that the standard normal distribution will produce a more extreme value
 /// than the argument `z`, with alternative hypothesis `alt_hyp`.
@@ -418,6 +418,16 @@ pub fn deterministic_normal_sample(
     Ok(deterministic_sample(move |p| normal.inverse_cdf(p), k))
 }
 
+pub fn deterministic_lognormal_sample(
+    mu: f64,
+    sigma: f64,
+    k: u64,
+) -> StatsResult<impl Iterator<Item = f64>> {
+    let lognormal = LogNormal::new(mu, sigma)
+        .stats_result("`mu` must be finite and `sigma` must be positive")?;
+    Ok(deterministic_sample(move |p| lognormal.inverse_cdf(p), k))
+}
+
 #[cfg(test)]
 #[cfg(feature = "_dev_utils")]
 #[allow(clippy::too_many_arguments)]
@@ -427,6 +437,7 @@ mod test {
 
     use super::*;
     use crate::{
+        approx_eq,
         core::{AcceptedHyp, AltHyp},
         dev_utils::ApproxEq,
     };
@@ -960,6 +971,25 @@ mod test {
         let v: Vec<f64> = iter.collect();
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&old_normal);
-        assert!(1. - p < EPSILON)
+        assert!(1. - p < EPSILON);
+    }
+
+    #[test]
+    fn test_deterministic_lognormal_equivalence() {
+        let mu = 0.0;
+        let sigma = 1.0;
+        let k = 10;
+        let epsilon = 0.000000005;
+
+        let iter1 = deterministic_normal_sample(mu, sigma, k)
+            .unwrap()
+            .map(|x| x.exp());
+        let mut iter2 = deterministic_lognormal_sample(mu, sigma, k).unwrap();
+
+        for v1 in iter1 {
+            let v2 = iter2.next().unwrap();
+            println!("v1={v1}, v2={v2}");
+            approx_eq!(v1, v2, epsilon);
+        }
     }
 }
