@@ -408,21 +408,13 @@ pub fn student_1samp_test(
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
-pub fn deterministic_normal_sample(
-    mu: f64,
-    sigma: f64,
-    k: u64,
-) -> StatsResult<impl Iterator<Item = f64>> {
+pub fn normal_detm_samp(mu: f64, sigma: f64, k: u64) -> StatsResult<impl Iterator<Item = f64>> {
     let normal =
         Normal::new(mu, sigma).stats_result("`mu` must be finite and `sigma` must be positive")?;
     Ok(deterministic_sample(move |p| normal.inverse_cdf(p), k))
 }
 
-pub fn deterministic_lognormal_sample(
-    mu: f64,
-    sigma: f64,
-    k: u64,
-) -> StatsResult<impl Iterator<Item = f64>> {
+pub fn lognormal_detm_samp(mu: f64, sigma: f64, k: u64) -> StatsResult<impl Iterator<Item = f64>> {
     let lognormal = LogNormal::new(mu, sigma)
         .stats_result("`mu` must be finite and `sigma` must be positive")?;
     Ok(deterministic_sample(move |p| lognormal.inverse_cdf(p), k))
@@ -967,7 +959,7 @@ mod test {
         use statest::ks::KSTest;
 
         let old_normal = OldNormal::new(0., 1.).unwrap();
-        let iter = deterministic_normal_sample(0., 1., 10).unwrap();
+        let iter = normal_detm_samp(0., 1., 10).unwrap();
         let v: Vec<f64> = iter.collect();
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&old_normal);
@@ -981,10 +973,8 @@ mod test {
         let k = 10;
         let epsilon = 0.000000005;
 
-        let iter1 = deterministic_normal_sample(mu, sigma, k)
-            .unwrap()
-            .map(|x| x.exp());
-        let mut iter2 = deterministic_lognormal_sample(mu, sigma, k).unwrap();
+        let iter1 = normal_detm_samp(mu, sigma, k).unwrap().map(|x| x.exp());
+        let mut iter2 = lognormal_detm_samp(mu, sigma, k).unwrap();
 
         for v1 in iter1 {
             let v2 = iter2.next().unwrap();

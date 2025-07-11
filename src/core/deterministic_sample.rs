@@ -6,7 +6,7 @@ pub fn deterministic_sample<'a>(
     inv_cdf: impl Fn(f64) -> f64 + 'a,
     k: u64,
 ) -> impl Iterator<Item = f64> + 'a {
-    let unif_iter = deterministic_uniform_01_sample(k);
+    let unif_iter = uniform_01_detm_samp(k);
     unif_iter.map(inv_cdf)
 }
 
@@ -14,7 +14,7 @@ pub fn deterministic_sample<'a>(
 /// uniform probability distribution in open interval `(0, 1)`.
 ///
 /// The sample covers the output range evenly throughout the generation process.
-pub fn deterministic_uniform_01_sample(k: u64) -> impl Iterator<Item = f64> {
+pub fn uniform_01_detm_samp(k: u64) -> impl Iterator<Item = f64> {
     UnifIter { k, i: 0 }
 }
 
@@ -25,8 +25,8 @@ pub fn deterministic_uniform_01_sample(k: u64) -> impl Iterator<Item = f64> {
 ///
 /// If `lo > hi` then the sample will be in the interval `(hi, lo)`.
 /// If `lo == hi` then all samples will be equal to `lo`.
-pub fn deterministic_uniform_sample(lo: f64, hi: f64, k: u64) -> impl Iterator<Item = f64> {
-    deterministic_uniform_01_sample(k).map(move |v| (hi - lo) * v + lo)
+pub fn uniform_detm_samp(lo: f64, hi: f64, k: u64) -> impl Iterator<Item = f64> {
+    uniform_01_detm_samp(k).map(move |v| (hi - lo) * v + lo)
 }
 
 struct UnifIter {
@@ -75,7 +75,7 @@ mod test {
 
     #[test]
     fn test_uniform_01() {
-        let iter = deterministic_uniform_01_sample(10);
+        let iter = uniform_01_detm_samp(10);
         let v: Vec<f64> = iter.collect();
         let dist = Uniform::new(0.0, 1.0).unwrap();
         let ks = KSTest::new(&v);
@@ -85,7 +85,7 @@ mod test {
 
     #[test]
     fn test_uniform() {
-        let iter = deterministic_uniform_sample(1., 4., 10);
+        let iter = uniform_detm_samp(1., 4., 10);
         let v: Vec<f64> = iter.collect();
         let dist = Uniform::new(1.0, 4.0).unwrap();
         let ks = KSTest::new(&v);
