@@ -51,7 +51,7 @@ impl RankSum {
             match (&prev_item, curr_item) {
                 (Some((prev, _)), Some((curr, _))) if *prev < *curr => *prev_item = *curr_item,
                 (Some(_), Some(_)) => {
-                    return Err(StatsError(
+                    return Err(StatsError::new(
                         "invalid iterator argument: items not ordered properly",
                     ));
                 }
@@ -298,7 +298,7 @@ impl RankSum {
     pub fn z(&self) -> StatsResult<f64> {
         // Guard against division by 0 in `var0_w_ties_adjust`.
         if self.n_x == 0 || self.n_y == 0 {
-            return Err(StatsError(
+            return Err(StatsError::new(
                 "`self.n_x` and `self.n_y` must both be positive",
             ));
         }
@@ -312,7 +312,7 @@ impl RankSum {
         let var0_w_ties_adjust = n_x * n_y * ties_sum_prod / (12. * (n_x + n_y) * (n_x + n_y - 1.));
         let var0_w = var0_w_base - var0_w_ties_adjust;
         if var0_w <= 0. {
-            return Err(StatsError("too many rank ties"));
+            return Err(StatsError::new("too many rank ties"));
         }
         let w_star = (w - e0_w) / var0_w.sqrt();
 

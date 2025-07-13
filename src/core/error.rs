@@ -1,6 +1,7 @@
 //! Errors returned by functions in this library.
 
 use std::{
+    borrow::Cow,
     error::Error,
     fmt::{Debug, Display},
 };
@@ -10,10 +11,20 @@ pub(crate) type StatsResult<V> = Result<V, StatsError>;
 
 /// Used for errors from functions in this library.
 #[derive(Debug)]
-pub struct StatsError(
-    /// Error message
-    pub &'static str,
-);
+pub struct StatsError {
+    msg: Cow<'static, str>,
+}
+
+impl StatsError {
+    /// Instantiates Self. `msg` can be either a `String` or a `&'static str`.
+    pub fn new(msg: impl Into<Cow<'static, str>>) -> Self {
+        Self { msg: msg.into() }
+    }
+
+    pub fn msg(&self) -> &Cow<'static, str> {
+        &self.msg
+    }
+}
 
 impl Display for StatsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -33,6 +44,23 @@ where
     E: Error,
 {
     fn stats_result(self: Result<V, E>, msg: &'static str) -> StatsResult<V> {
-        self.map_err(|_| StatsError(msg))
+        self.map_err(|_| StatsError::new(msg))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::core::StatsError;
+
+    #[test]
+    fn test_stats_error() {
+        let e1 = StatsError::new("foo");
+        let e2 = StatsError::new("bar".to_string());
+
+        let msg1 = e1.msg();
+        assert_eq!(msg1, "foo");
+
+        let msg2 = e2.msg();
+        assert_eq!(msg2, "bar");
     }
 }

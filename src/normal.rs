@@ -104,7 +104,7 @@ pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
 /// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments, d0: f64) -> StatsResult<f64> {
     if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
-        return Err(StatsError("sample standard deviations are both zero"));
+        return Err(StatsError::new("sample standard deviations are both zero"));
     }
     let n_x = moments_x.nf();
     let n_y = moments_y.nf();
@@ -131,7 +131,7 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments, d0: f64) ->
 /// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
 pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsResult<f64> {
     if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
-        return Err(StatsError("sample standard deviations are both zero"));
+        return Err(StatsError::new("sample standard deviations are both zero"));
     }
     // At this point, df is guaranteed to be > 0.
 
@@ -289,7 +289,9 @@ pub fn student_1samp_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
     let mean = moments.mean()?;
     let s = moments.stdev()?;
     if s == 0. {
-        return Err(StatsError("sample standard deviation must be positive"));
+        return Err(StatsError::new(
+            "sample standard deviation must be positive",
+        ));
     }
     Ok((mean - mu0) / s * n.sqrt())
 }
@@ -304,7 +306,7 @@ pub fn student_1samp_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
 /// Returns an error if `moments.n() <= 1`.
 pub fn student_1samp_df(moments: &SampleMoments) -> StatsResult<f64> {
     if moments.n() <= 1 {
-        return Err(StatsError("sample size must be greater than 1"));
+        return Err(StatsError::new("sample size must be greater than 1"));
     }
     Ok(moments.nf() - 1.)
 }

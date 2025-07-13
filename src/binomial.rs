@@ -23,7 +23,7 @@ fn check_p0_in_open_0_1(p0: f64) -> StatsResult<()> {
     if 0.0 < p0 && p0 < 1.0 {
         return Ok(());
     }
-    Err(StatsError("arg `p0` must be in interval (0, 1)"))
+    Err(StatsError::new("arg `p0` must be in interval (0, 1)"))
 }
 
 /// Estimator of success probability of Bernoulli distribution.
@@ -37,10 +37,12 @@ fn check_p0_in_open_0_1(p0: f64) -> StatsResult<()> {
 /// Returns an error if `n == 0` or `n < n_s`.
 pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
     if n == 0 {
-        return Err(StatsError("arg `n` must be positive"));
+        return Err(StatsError::new("arg `n` must be positive"));
     }
     if n < n_s {
-        return Err(StatsError("arg `n` must be greater than or equal to n_s"));
+        return Err(StatsError::new(
+            "arg `n` must be greater than or equal to n_s",
+        ));
     }
     Ok(n_s as f64 / n as f64)
 }
@@ -192,10 +194,10 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 /// - `alpha` is not in interval `(0, 1)`.
 pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> StatsResult<Ci> {
     if n == 0 {
-        return Err(StatsError("arg `n` must be positive"));
+        return Err(StatsError::new("arg `n` must be positive"));
     }
     if n < n_s {
-        return Err(StatsError(
+        return Err(StatsError::new(
             "arg `n` must be greater than or equal to arg `n_s`",
         ));
     }
@@ -276,10 +278,10 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 /// - `p0` is not in interval `[0, 1]`.
 pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f64> {
     if n == 0 {
-        return Err(StatsError("arg `n` must be positive."));
+        return Err(StatsError::new("arg `n` must be positive."));
     }
     if n < n_s {
-        return Err(StatsError("arg `n` must not be less than arg `n_s`."));
+        return Err(StatsError::new("arg `n` must not be less than arg `n_s`."));
     }
 
     let binomial = Binomial::new(p0, n).stats_result("arg `p0` must be in interval [0, 1]")?;
