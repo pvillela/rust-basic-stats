@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Added argument to Welch statistics to enable testing that the difference of means equals a specific value which doesn't have to be zero. To migrate from the previous version:
-  - Use `0.0` as the value for the new argument.
-- Changed `StatsError` so it can hold either a `&'static str` or a `String`. To migrate from the previous version:
-  - Construction of a `StatsError` with a `&'static str` arguement `s` changes from `StatsError(s)` to `StatsError::new(s)`.
-  - Access to the message contained in a `StatsError` instance `e` changes from `&e.0` to `e.msg()`.
+- Added argument to Welch statistics to enable testing that the difference of means equals a specific value which doesn't have to be zero.
+  - **To migrate from the previous version:**
+    - Use `0.0` as the value for the new argument.
+- Changed `StatsError` so it can hold either a `&'static str` or a `String`.
+  - **To migrate from the previous version:**
+    - Construction of a `StatsError` with a `&'static str` arguement `s` changes from `StatsError(s)` to `StatsError::new(s)`.
+    - Access to the message contained in a `StatsError` instance `e` changes from `&e.0` to `e.msg()`.
 - Updated `Cargo.toml` exclusions with `R` and `tests` directories.
 
 ### Removed
