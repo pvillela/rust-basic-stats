@@ -117,6 +117,110 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments, d0: f64) ->
     Ok((d_means - d0) / s_d_means)
 }
 
+/// Modified Welch's two-sample t statistic.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `median_x`: first sample's median.
+/// - `moments_y`: second sample's moments struct.
+/// - `median_y`: second sample's median.
+/// - `d0`: hypthesized difference between medians.
+///
+/// This is a modification of the standard Welch t statistic where the sample means are replaced by sample medians.
+/// This statistic is more **robust** when there is deviation from the assumption of log-normality.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_t_ra(
+    moments_x: &SampleMoments,
+    median_x: f64,
+    moments_y: &SampleMoments,
+    median_y: f64,
+    d0: f64,
+) -> StatsResult<f64> {
+    if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
+        return Err(StatsError::new("sample standard deviations are both zero"));
+    }
+    let n_x = moments_x.nf();
+    let n_y = moments_y.nf();
+    let mean_x = moments_x.mean()?;
+    let mean_y = moments_y.mean()?;
+
+    let d_mm = if (median_x - median_y - d0).abs() < (mean_x - mean_y - d0).abs() {
+        median_x - median_y
+    } else {
+        mean_x - mean_y
+    };
+
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
+    let s2_mean_x = s2_x / n_x;
+    let s2_mean_y = s2_y / n_y;
+    let s_d_means = (s2_mean_x + s2_mean_y).sqrt();
+    Ok((d_mm - d0) / s_d_means)
+}
+
+/// Modified Welch's two-sample t statistic.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `median_x`: first sample's median.
+/// - `moments_y`: second sample's moments struct.
+/// - `median_y`: second sample's median.
+/// - `d0`: hypthesized difference between medians.
+///
+/// This is a modification of the standard Welch t statistic where the sample means are replaced by sample medians.
+/// This statistic is more **robust** when there is deviation from the assumption of log-normality.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_t_rb(
+    moments_x: &SampleMoments,
+    median_x: f64,
+    moments_y: &SampleMoments,
+    median_y: f64,
+    d0: f64,
+) -> StatsResult<f64> {
+    if (moments_x.stdev()? + moments_y.stdev()?) == 0. {
+        return Err(StatsError::new("sample standard deviations are both zero"));
+    }
+    let n_x = moments_x.nf();
+    let n_y = moments_y.nf();
+    let mean_x = moments_x.mean()?;
+    let mean_y = moments_y.mean()?;
+
+    let (mm_x, mm_y) = if (median_x - median_y - d0).abs() < (mean_x - mean_y - d0).abs() {
+        (median_x, median_y)
+    } else {
+        (mean_x, mean_y)
+    };
+
+    // let d_means = moments_x.mean()? - moments_y.mean()?;
+    let s2_x = moments_x.stdev()?.powi(2);
+    let s2_y = moments_y.stdev()?.powi(2);
+    // let s2_mean_x = s2_x / n_x;
+    // let s2_mean_y = s2_y / n_y;
+    // let s_d_means = (s2_mean_x + s2_mean_y).sqrt();
+
+    let diff_mean_mm_x = mean_x - mm_x;
+    let diff_mean_mm_y = mean_y - mm_y;
+
+    let d_mm = mm_x - mm_y;
+    let s2_mm_x = (s2_x + diff_mean_mm_x.powi(2) / (n_x - 1.)) / n_x;
+    let s2_mm_y = (s2_y + diff_mean_mm_y.powi(2) / (n_y - 1.)) / n_y;
+    let s_d_mm = (s2_mm_x + s2_mm_y).sqrt();
+
+    Ok((d_mm - d0) / s_d_mm)
+}
+
 /// Degrees of freedom for Welch's two-sample t-test.
 ///
 /// Arguments:
@@ -169,6 +273,68 @@ pub fn welch_p(
     alt_hyp: AltHyp,
 ) -> StatsResult<f64> {
     let t = welch_t(moments_x, moments_y, d0)?;
+    let df = welch_df(moments_x, moments_y)?;
+    t_to_p(t, df, alt_hyp)
+}
+
+/// Modified p-value of Welch's two-sample t-test for equality.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `median_x`: first sample's median.
+/// - `moments_y`: second sample's moments struct.
+/// - `median_y`: second sample's median.
+/// - `d0`: hypthesized difference between medians.
+///
+/// This is a modification of the standard Welch p-value statistic where the sample means are replaced by sample medians.
+/// This statistic is more **robust** when there is deviation from the assumption of log-normality.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_p_ra(
+    moments_x: &SampleMoments,
+    median_x: f64,
+    moments_y: &SampleMoments,
+    median_y: f64,
+    d0: f64,
+    alt_hyp: AltHyp,
+) -> StatsResult<f64> {
+    let t = welch_t_ra(moments_x, median_x, moments_y, median_y, d0)?;
+    let df = welch_df(moments_x, moments_y)?;
+    t_to_p(t, df, alt_hyp)
+}
+
+/// Modified p-value of Welch's two-sample t-test for equality.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `median_x`: first sample's median.
+/// - `moments_y`: second sample's moments struct.
+/// - `median_y`: second sample's median.
+/// - `d0`: hypthesized difference between medians.
+///
+/// This is a modification of the standard Welch p-value statistic where the sample means are replaced by sample medians.
+/// This statistic is more **robust** when there is deviation from the assumption of log-normality.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+pub fn welch_p_rb(
+    moments_x: &SampleMoments,
+    median_x: f64,
+    moments_y: &SampleMoments,
+    median_y: f64,
+    d0: f64,
+    alt_hyp: AltHyp,
+) -> StatsResult<f64> {
+    let t = welch_t_rb(moments_x, median_x, moments_y, median_y, d0)?;
     let df = welch_df(moments_x, moments_y)?;
     t_to_p(t, df, alt_hyp)
 }
@@ -270,6 +436,76 @@ pub fn welch_test(
 ) -> StatsResult<HypTestResult> {
     check_alpha_in_open_0_1(alpha)?;
     let p = welch_p(moments_x, moments_y, d0, alt_hyp)?;
+    Ok(HypTestResult::new(p, alpha, alt_hyp))
+}
+
+/// Modified Welch's two-sample t-test for equality of means of two distributions.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `median_x`: first sample's median.
+/// - `moments_y`: second sample's moments struct.
+/// - `median_y`: second sample's median.
+/// - `d0`: hypthesized difference between medians.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
+///
+/// This is a modification of the standard Welch t test where the sample means are replaced by sample medians.
+/// This test is more **robust** when there is deviation from the assumption of log-normality.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn welch_test_ra(
+    moments_x: &SampleMoments,
+    median_x: f64,
+    moments_y: &SampleMoments,
+    median_y: f64,
+    d0: f64,
+    alt_hyp: AltHyp,
+    alpha: f64,
+) -> StatsResult<HypTestResult> {
+    check_alpha_in_open_0_1(alpha)?;
+    let p = welch_p_ra(moments_x, median_x, moments_y, median_y, d0, alt_hyp)?;
+    Ok(HypTestResult::new(p, alpha, alt_hyp))
+}
+
+/// Modified Welch's two-sample t-test for equality of means of two distributions.
+///
+/// Arguments:
+/// - `moments_x`: first sample's moments struct.
+/// - `median_x`: first sample's median.
+/// - `moments_y`: second sample's moments struct.
+/// - `median_y`: second sample's median.
+/// - `d0`: hypthesized difference between medians.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
+///
+/// This is a modification of the standard Welch t test where the sample means are replaced by sample medians.
+/// This test is more **robust** when there is deviation from the assumption of log-normality.
+///
+/// # Errors
+///
+/// Returns an error in any of the following conditions:
+/// - `moments_x.n() <= 1`.
+/// - `moments_y.n() <= 1`.
+/// - `moments_x.stdev() == 0` AND `moments_y.stdev() == 0`.
+/// - `alpha` not in interval `(0, 1)`.
+pub fn welch_test_rb(
+    moments_x: &SampleMoments,
+    median_x: f64,
+    moments_y: &SampleMoments,
+    median_y: f64,
+    d0: f64,
+    alt_hyp: AltHyp,
+    alpha: f64,
+) -> StatsResult<HypTestResult> {
+    check_alpha_in_open_0_1(alpha)?;
+    let p = welch_p_rb(moments_x, median_x, moments_y, median_y, d0, alt_hyp)?;
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
