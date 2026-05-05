@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enum `AcceptedHyp`, which replaces enum `Hyp`, removing a bit of redundancy.
 - Functions to generate deterministic samples of distributions.
+- `RankSum::prob_x_lt_y` method: the Mann-Whitney estimator of P(X < Y), a.k.a. the probabilistic index (PI).
 
 ### Changed
 
@@ -22,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Construction of a `StatsError` with a `&'static str` arguement `s` changes from `StatsError(s)` to `StatsError::new(s)`.
     - Access to the message contained in a `StatsError` instance `e` changes from `&e.0` to `e.msg()`.
 - Updated `Cargo.toml` exclusions with `R` and `tests` directories.
+- `RankSum::from_iters_with_counts`, `from_iters`, and `from_slices` now return an error if either sample is empty.
+  - **To migrate from the previous version:**
+    - Calls to `z()`, `z_p()`, and `z_test()` no longer return an error for empty samples.
 
 ### Removed
 
