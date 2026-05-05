@@ -33,7 +33,9 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error if an iterator does not yield data values in strictly increasing order.
+    /// Returns an error in any of these conditions:
+    /// - An iterator does not yield data values in strictly increasing order.
+    /// - Either sample is empty (`n_x == 0` or `n_y == 0` after reading all items).
     pub fn from_iters_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,
@@ -200,6 +202,10 @@ impl RankSum {
             rank_sum_y
         };
 
+        if n_x == 0 || n_y == 0 {
+            return Err(StatsError::new("both samples must be non-empty"));
+        }
+
         Ok(RankSum {
             n_x,
             n_y,
@@ -213,7 +219,9 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error if an iterator does not yield data values in non-decreasing order.
+    /// Returns an error in any of these conditions:
+    /// - An iterator does not yield data values in non-decreasing order.
+    /// - Either sample is empty.
     pub fn from_iters(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,
@@ -227,7 +235,9 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error if a slice is not sorted in non-decreasing order.
+    /// Returns an error in any of these conditions:
+    /// - A slice is not sorted in non-decreasing order.
+    /// - Either slice is empty.
     pub fn from_slices(x: &[f64], y: &[f64]) -> Result<RankSum, StatsError> {
         let itc_x = x.iter().cloned();
         let itc_y = y.iter().cloned();
@@ -300,39 +310,21 @@ impl RankSum {
     ///   for additional properties of the estimator.
     /// - [Unbiasedness and efficiency of non-parametric and UMVUE estimators of the probabilistic index and related statistics](https://pubmed.ncbi.nlm.nih.gov/33256560/),
     ///   for additional perspective on this estimator and its uses.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if `self.n_x == 0` or `self.n_y == 0`.
-    pub fn prob_x_lt_y(&self) -> StatsResult<f64> {
-        if self.n_x == 0 || self.n_y == 0 {
-            return Err(StatsError::new(
-                "`self.n_x` and `self.n_y` must both be positive",
-            ));
-        }
+    pub fn prob_x_lt_y(&self) -> f64 {
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
-        Ok(self.mann_whitney_u_x() / (n_x * n_y))
+        self.mann_whitney_u_x() / (n_x * n_y)
     }
 
     /// z-value for the large sample normal approximation, without continuity correction.
     ///
     /// # Errors
     ///
-    /// Returns an error in any of the following conditions:
-    /// - `self.n_x == 0` or `self.n_y == 0`.
-    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
-    ///   This is hard to quantify a priori. For example,
-    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
-    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
+    /// Returns an error if there are too many rank ties between the two samples (causing an intermediate
+    /// `NaN` value). This is hard to quantify a priori. For example,
+    /// `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    /// but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
     pub fn z(&self) -> StatsResult<f64> {
-        // Guard against division by 0 in `var0_w_ties_adjust`.
-        if self.n_x == 0 || self.n_y == 0 {
-            return Err(StatsError::new(
-                "`self.n_x` and `self.n_y` must both be positive",
-            ));
-        }
-
         let n_x = self.n_x as f64;
         let n_y = self.n_y as f64;
         let w = self.w;
@@ -356,12 +348,10 @@ impl RankSum {
     ///
     /// # Errors
     ///
-    /// Returns an error in any of the following conditions:
-    /// - `self.n_x == 0` or `self.n_y == 0`.
-    /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
-    ///   This is hard to quantify a priori. For example,
-    ///   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
-    ///   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
+    /// Returns an error if there are too many rank ties between the two samples (causing an intermediate
+    /// `NaN` value). This is hard to quantify a priori. For example,
+    /// `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` are OK
+    /// but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` result in an error.
     pub fn z_p(&self, alt_hyp: AltHyp) -> StatsResult<f64> {
         let z = self.z()?;
         Ok(z_to_p(z, alt_hyp))
@@ -376,7 +366,6 @@ impl RankSum {
     /// # Errors
     ///
     /// Returns an error in any of these conditions:
-    /// - `self.n_x == 0` or `self.n_y == 0`.
     /// - `alpha` not in interval `(0, 1)`.
     /// - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
     ///   This is hard to quantify a priori. For example,
@@ -604,7 +593,7 @@ mod base_test {
         {
             let (dat_x, dat_y) = book_data();
             let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
-            let prob = rank_sum.prob_x_lt_y()?;
+            let prob = rank_sum.prob_x_lt_y();
             // U_x = 15, n_x=10, n_y=5 => 15/50 = 0.3
             assert!(
                 0.3.approx_eq(prob, EPSILON),
@@ -614,7 +603,7 @@ mod base_test {
         {
             let (dat_x, dat_y) = contrived_data();
             let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
-            let prob = rank_sum.prob_x_lt_y()?;
+            let prob = rank_sum.prob_x_lt_y();
             // U_x = 1307.5, n_x=50, n_y=55 => 1307.5/2750 ≈ 0.475454545...
             let expected = 1307.5 / (50. * 55.);
             assert!(
@@ -625,7 +614,7 @@ mod base_test {
         {
             let (dat_x, dat_y) = shifted_contrived_data();
             let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
-            let prob = rank_sum.prob_x_lt_y()?;
+            let prob = rank_sum.prob_x_lt_y();
             // r_w = 840 = U_y, so U_x = 50*55 - 840 = 1910
             // expected = 1910 / (50*55) = 1910/2750 ≈ 0.694545...
             let expected = 1910. / (50. * 55.);

@@ -22,41 +22,36 @@ use nocover::nocover;
 fn test_from_slices() {
     // Returns an error if a slice is not sorted in non-decreasing order.
 
-    let good = [];
+    let good = [1.];
     let bad = [1., 2., 1.];
+    let empty = [];
 
-    assert!(RankSum::from_slices(&bad, &bad).is_err());
-    assert!(RankSum::from_slices(&bad, &good).is_err());
-    assert!(RankSum::from_slices(&good, &bad).is_err());
     if nocover() {
         assert!(RankSum::from_slices(&good, &good).is_ok());
     }
+    assert!(RankSum::from_slices(&good, &bad).is_err());
+    assert!(RankSum::from_slices(&bad, &good).is_err());
+    assert!(RankSum::from_slices(&good, &empty).is_err());
+    assert!(RankSum::from_slices(&empty, &good).is_err());
+    assert!(RankSum::from_slices(&bad, &bad).is_err());
+    assert!(RankSum::from_slices(&bad, &empty).is_err());
+    assert!(RankSum::from_slices(&empty, &bad).is_err());
+    assert!(RankSum::from_slices(&empty, &empty).is_err());
 }
 
 #[test]
 fn test_z() {
-    // Returns an error in any of the following conditions:
-    // - `self.n_x == 0` or `self.n_y == 0`.
-    // - There are too many rank ties between the two samples (causing an intermediate `NaN` value).
+    // Returns an error if there are too many rank ties between the two samples (causing an intermediate `NaN` value).
     //   This is hard to quantify a priori. For example,
     //   `x = [2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` is OK
     //   but `x = [2., 2., 2., 2., 2.]` and `y = [2., 2., 2., 3., 3.]` results in an error.
 
-    let s0 = [];
     let s11 = [1.];
     let s12 = [2.];
     let s22 = [2., 2.];
     let s42 = [2., 2., 2., 2.];
     let s52 = [2., 2., 2., 2., 2.];
     let smx = [2., 2., 2., 3., 3.];
-
-    let rs0_0 = RankSum::from_slices(&s0, &s0).unwrap();
-    let rs0_11 = RankSum::from_slices(&s0, &s11).unwrap();
-    let rs11_0 = RankSum::from_slices(&s11, &s0).unwrap();
-
-    assert!(rs0_0.z().is_err());
-    assert!(rs0_11.z().is_err());
-    assert!(rs11_0.z().is_err());
 
     let get_z = |name: &str, x: &[f64], y: &[f64]| -> Result<f64, StatsError> {
         let rs = RankSum::from_slices(x, y).unwrap();
@@ -96,21 +91,12 @@ fn test_z() {
 
 #[test]
 fn test_prob_x_lt_y() {
-    // Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+    // Tests that `prob_x_lt_y()` returns a finite value for non-empty samples.
 
-    let s0 = [];
-    let s1 = [1.];
-
-    let rs0_0 = RankSum::from_slices(&s0, &s0).unwrap();
-    let rs0_1 = RankSum::from_slices(&s0, &s1).unwrap();
-    let rs1_0 = RankSum::from_slices(&s1, &s0).unwrap();
-    let rs1_1 = RankSum::from_slices(&s1, &s1).unwrap();
-
-    assert!(rs0_0.prob_x_lt_y().is_err());
-    assert!(rs0_1.prob_x_lt_y().is_err());
-    assert!(rs1_0.prob_x_lt_y().is_err());
+    let s = [1.];
+    let rs = RankSum::from_slices(&s, &s).unwrap();
     if nocover() {
-        assert!(rs1_1.prob_x_lt_y().is_ok());
+        assert!(rs.prob_x_lt_y().is_finite());
     }
 }
 
