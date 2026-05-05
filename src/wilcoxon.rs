@@ -285,6 +285,36 @@ impl RankSum {
         self.mann_whitney_u_x().min(self.mann_whitney_u_y())
     }
 
+    /// Mann-Whitney estimator of `Prob(X < Y) + 1/2*Prob(X = Y)`, a.k.a. the probabilistic index (PI).
+    ///
+    /// This is the Mann-Whitney U statistic for X divided by the product of the sample sizes:
+    ///
+    /// `PI` ≈ [`mann_whitney_u_x`](Self::mann_whitney_u_x)`() / (n_x * n_y)`
+    ///
+    /// See:
+    /// - Chapter 4 of Nonparametric Statistical Methods, 3rd Edition by Myles Hollander, Douglas A. Wolfe, Eric Chicken,
+    ///   for the expression of the Mann-Whitney statistic in terms of the Wilcoxon rank sum statistic.
+    /// - E. L. Lehmann "Consistency and Unbiasedness of Certain Nonparametric Tests," The Annals of Mathematical Statistics,
+    ///   Ann. Math. Statist. 22(2), 165-179, (June, 1951), for the original proof.
+    /// - [Yu & Govindarajulu (1995) — "Admissibility and minimaxity of the UMVU estimator of P{X<Y}", Annals of Statistics](https://projecteuclid.org/journalArticle/Download?urlId=10.1214%2Faos%2F1176324538),
+    ///   for additional properties of the estimator.
+    /// - [Unbiasedness and efficiency of non-parametric and UMVUE estimators of the probabilistic index and related statistics](https://pubmed.ncbi.nlm.nih.gov/33256560/),
+    ///   for additional perspective on this estimator and its uses.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+    pub fn prob_x_lt_y(&self) -> StatsResult<f64> {
+        if self.n_x == 0 || self.n_y == 0 {
+            return Err(StatsError::new(
+                "`self.n_x` and `self.n_y` must both be positive",
+            ));
+        }
+        let n_x = self.n_x as f64;
+        let n_y = self.n_y as f64;
+        Ok(self.mann_whitney_u_x() / (n_x * n_y))
+    }
+
     /// z-value for the large sample normal approximation, without continuity correction.
     ///
     /// # Errors
@@ -566,6 +596,44 @@ mod base_test {
         assert!(exp_u_y.approx_eq(u_y, EPSILON));
         assert!(exp_u.approx_eq(u, EPSILON));
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_prob_x_lt_y() -> Result<(), Box<dyn Error>> {
+        {
+            let (dat_x, dat_y) = book_data();
+            let rank_sum = RankSum::from_slices(&dat_x, &dat_y)?;
+            let prob = rank_sum.prob_x_lt_y()?;
+            // U_x = 15, n_x=10, n_y=5 => 15/50 = 0.3
+            assert!(
+                0.3.approx_eq(prob, EPSILON),
+                "book data: prob_x_lt_y={prob}"
+            );
+        }
+        {
+            let (dat_x, dat_y) = contrived_data();
+            let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
+            let prob = rank_sum.prob_x_lt_y()?;
+            // U_x = 1307.5, n_x=50, n_y=55 => 1307.5/2750 ≈ 0.475454545...
+            let expected = 1307.5 / (50. * 55.);
+            assert!(
+                expected.approx_eq(prob, EPSILON),
+                "contrived data: prob_x_lt_y={prob}"
+            );
+        }
+        {
+            let (dat_x, dat_y) = shifted_contrived_data();
+            let rank_sum = RankSum::from_iters(dat_x.into_iter(), dat_y.into_iter())?;
+            let prob = rank_sum.prob_x_lt_y()?;
+            // r_w = 840 = U_y, so U_x = 50*55 - 840 = 1910
+            // expected = 1910 / (50*55) = 1910/2750 ≈ 0.694545...
+            let expected = 1910. / (50. * 55.);
+            assert!(
+                expected.approx_eq(prob, EPSILON),
+                "shifted contrived data: prob_x_lt_y={prob}"
+            );
+        }
         Ok(())
     }
 

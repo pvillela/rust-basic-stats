@@ -95,6 +95,26 @@ fn test_z() {
 // }
 
 #[test]
+fn test_prob_x_lt_y() {
+    // Returns an error if `self.n_x == 0` or `self.n_y == 0`.
+
+    let s0 = [];
+    let s1 = [1.];
+
+    let rs0_0 = RankSum::from_slices(&s0, &s0).unwrap();
+    let rs0_1 = RankSum::from_slices(&s0, &s1).unwrap();
+    let rs1_0 = RankSum::from_slices(&s1, &s0).unwrap();
+    let rs1_1 = RankSum::from_slices(&s1, &s1).unwrap();
+
+    assert!(rs0_0.prob_x_lt_y().is_err());
+    assert!(rs0_1.prob_x_lt_y().is_err());
+    assert!(rs1_0.prob_x_lt_y().is_err());
+    if nocover() {
+        assert!(rs1_1.prob_x_lt_y().is_ok());
+    }
+}
+
+#[test]
 fn test_z_test() {
     // Returns an error in any of these conditions:
     // - `self.n_x == 0` or `self.n_y == 0`.
