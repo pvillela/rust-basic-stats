@@ -184,6 +184,7 @@ bin
 .DS_Store
 
 ## Other
+.devcontainer/
 .idea/
 .gradle/
 out/
