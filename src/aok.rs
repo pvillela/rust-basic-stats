@@ -44,6 +44,9 @@ impl<E> AokFloat for Result<f64, E> {
 pub trait AokBasicStats {
     type Value: AokBasicStatsValue;
 
+    /// Returns the underlying value of a `Result`, without panicking.
+    ///
+    /// If the source result is an error, this method returns a suitably constructed fallback value.
     fn aok(self) -> Self::Value;
 }
 
@@ -70,9 +73,6 @@ where
 {
     type Value = T;
 
-    /// Returns the underlying value of a `Result`, without panicking.
-    ///
-    /// If the source result is an error, this method returns a suitably constructed fallback value.
     fn aok(self) -> Self::Value {
         self.unwrap_or_else(|_| T::aok_fallback())
     }

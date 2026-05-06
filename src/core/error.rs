@@ -21,6 +21,7 @@ impl StatsError {
         Self { msg: msg.into() }
     }
 
+    /// Returns the error message.
     pub fn msg(&self) -> &Cow<'static, str> {
         &self.msg
     }
@@ -34,6 +35,7 @@ impl Display for StatsError {
 
 impl Error for StatsError {}
 
+/// Maps an `Error` type into a [`StatsError`] to convert between result types.
 #[allow(unused)]
 pub(crate) trait AsStatsResult<V> {
     fn stats_result(self, msg: &'static str) -> StatsResult<V>;

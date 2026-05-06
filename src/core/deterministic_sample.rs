@@ -47,7 +47,7 @@ impl Iterator for UnifIter {
     }
 }
 
-/// Generates the `i`-th observation for [`deterministic_uniform_sample`].
+/// Generates the `i`-th observation for [`uniform_01_detm_samp`].
 ///
 /// The sample covers the output range evenly throughout the generation process.
 #[inline(always)]

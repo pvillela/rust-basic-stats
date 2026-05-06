@@ -2,10 +2,20 @@
 
 use std::ops::{Add, Div, Mul, Sub};
 
+/// Provides approximate equality comparisons for floating point types.
+///
+/// Implemented for `f32` and `f64`.
 pub trait ApproxEq {
+    /// Returns `true` if the absolute difference between `self` and `other` is less than `epsilon`.
     fn approx_eq(self, other: Self, epsilon: Self) -> bool;
+
+    /// Returns the absolute relative difference between `self` and `other`.
     fn abs_rel_diff(self, other: Self, epsilon: Self) -> Self;
+
+    /// Returns `true` if the absolute relative difference between `self` and `other` is less than `epsilon`.
     fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool;
+
+    /// Rounds `self` to `sig_decimals` significant decimal digits.
     fn round_to(self, sig_decimals: u8) -> Self;
 }
 
@@ -103,6 +113,7 @@ impl AbsPowiRound10 for f64 {
 
 #[macro_use]
 mod macros {
+    /// Asserts that two values are approximately equal within `epsilon`.
     #[macro_export]
     macro_rules! approx_eq {
         ($a:expr, $b:expr, $epsilon:expr $(,)?) => {
@@ -115,6 +126,7 @@ mod macros {
         };
     }
 
+    /// Asserts that two values are approximately equal within `epsilon` relative to their magnitudes.
     #[macro_export]
     macro_rules! rel_approx_eq {
         ($a:expr, $b:expr, $epsilon:expr $(,)?) => {

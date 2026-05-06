@@ -187,6 +187,12 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
 ///
+/// Arguments:
+/// - `n`: number of trials.
+/// - `n_s`: number of successes (`1`s) observed.
+/// - `alt_hyp`: alternative hypothesis.
+/// - `alpha`: confidence level = `1 - alpha`.
+///
 /// # Errors
 ///
 /// Returns an error in any of these conditions:
@@ -253,6 +259,11 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// with the alternative hypothesis of inequality (two-sided).
 ///
 /// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
+///
+/// Arguments:
+/// - `n`: number of trials.
+/// - `n_s`: number of successes (`1`s) observed.
+/// - `alpha`: confidence level = `1 - alpha`.
 ///
 /// # Errors
 ///

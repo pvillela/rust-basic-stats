@@ -283,7 +283,8 @@ impl HypTestResult {
     /// - `p`: the "p-value" for the test result.
     /// - `alpha`: determines the confidence level `(1-alpha)`.
     /// - `alt_hyp`: the alternative hypothesis.
-    /// - `accepted`: the accepted hypothesis (null or alternative).
+    ///
+    /// The accepted hypothesis is determined by comparing `p` to `alpha`.
     pub fn new(p: f64, alpha: f64, alt_hyp: AltHyp) -> HypTestResult {
         Self {
             p,
@@ -318,8 +319,8 @@ impl HypTestResult {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
 /// Represents the position of a value with respect to a confidence interval.
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum PositionWrtCi {
     /// The value is lower than the low end of the confidence interval.
     Below,
@@ -329,8 +330,8 @@ pub enum PositionWrtCi {
     Above,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
 /// Confidence interval. It is a closed interval of real numbers.
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Ci(
     /// Low end of interval.
     pub f64,

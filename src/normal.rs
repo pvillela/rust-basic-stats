@@ -4,7 +4,7 @@
 //! - For the two-sample t-test and related statistics, use `welch_*` functions, which allow for samples
 //!   from distributions that may have different variances.
 //! - For the paired-sample t-test and related statistics, first construct the [`SampleMoments`] for
-//!   the paired samples (using, e.g., [`SampleMoments::from_paired_iters`] or [`SampleMoments::from_paired_slices`])
+//!   the paired samples (using, e.g., [`SampleMoments::from_paired_iterators`] or [`SampleMoments::from_paired_slices`])
 //!   and then use `student_1samp_*` functions.
 //!
 //! This module is included by default. However, if `default-features = false` is specified in the dependency
@@ -22,7 +22,7 @@ use crate::core::{
 };
 use statrs::distribution::{ContinuousCDF, LogNormal, Normal, StudentsT};
 
-/// Returns the the probability that the standard normal distribution will produce a more extreme value
+/// Returns the probability that the standard normal distribution will produce a more extreme value
 /// than the argument `z`, with alternative hypothesis `alt_hyp`.
 ///
 /// This function implements the z-test table, with `alt_hyp` defining whether the look-up is left-tailed,
@@ -37,7 +37,7 @@ pub fn z_to_p(z: f64, alt_hyp: AltHyp) -> f64 {
     }
 }
 
-/// Returns the the probability that the Student distribution with location 0, scale 1, and `df` degrees of freedom
+/// Returns the probability that the Student distribution with location 0, scale 1, and `df` degrees of freedom
 /// will produce a more extreme value than the argument `t`, with alternative hypothesis `alt_hyp`.
 ///
 /// This function implements the t-test table, with `alt_hyp` defining whether the look-up is left-tailed,
@@ -410,12 +410,28 @@ pub fn student_1samp_test(
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
+/// Generates a deterministic sample of size `2*k*k - 1` for the normal distribution
+/// with mean `mu` and standard deviation `sigma`.
+///
+/// The sample covers the output range evenly throughout the generation process.
+///
+/// # Errors
+///
+/// Returns an error if `mu` is not finite or `sigma` is not positive.
 pub fn normal_detm_samp(mu: f64, sigma: f64, k: u64) -> StatsResult<impl Iterator<Item = f64>> {
     let normal =
         Normal::new(mu, sigma).stats_result("`mu` must be finite and `sigma` must be positive")?;
     Ok(deterministic_sample(move |p| normal.inverse_cdf(p), k))
 }
 
+/// Generates a deterministic sample of size `2*k*k - 1` for the log-normal distribution
+/// with parameters `mu` and `sigma`.
+///
+/// The sample covers the output range evenly throughout the generation process.
+///
+/// # Errors
+///
+/// Returns an error if `mu` is not finite or `sigma` is not positive.
 pub fn lognormal_detm_samp(mu: f64, sigma: f64, k: u64) -> StatsResult<impl Iterator<Item = f64>> {
     let lognormal = LogNormal::new(mu, sigma)
         .stats_result("`mu` must be finite and `sigma` must be positive")?;
