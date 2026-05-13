@@ -10,7 +10,7 @@ pub trait ApproxEq {
     fn approx_eq(self, other: Self, epsilon: Self) -> bool;
 
     /// Returns the absolute relative difference between `self` and `other`.
-    fn abs_rel_diff(self, other: Self) -> Self;
+    fn abs_rel_diff(self, other: Self, epsilon: Self) -> Self;
 
     /// Returns `true` if the absolute relative difference between `self` and `other` is less than `epsilon`.
     fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool;
@@ -23,7 +23,6 @@ trait AbsPowiRound10 {
     fn abs(self) -> Self;
     fn powi(self, n: i32) -> Self;
     fn round(self) -> Self;
-    fn zero() -> Self;
     fn ten() -> Self;
 }
 
@@ -47,12 +46,13 @@ where
         }
     }
 
-    fn abs_rel_diff(self, other: Self) -> Self {
+    fn abs_rel_diff(self, other: Self, epsilon: Self) -> Self {
         let abs_diff = (self - other).abs();
         let abs_sum = self.abs() + other.abs();
 
-        if abs_diff == Self::zero() {
-            abs_diff
+        if abs_sum < epsilon {
+            // case where values are too close to zero
+            abs_diff // which is always <= abs_sum
         } else {
             // normal case: abs_diff / abs_mean
             (abs_diff + abs_diff) / abs_sum
@@ -64,7 +64,7 @@ where
         if self == other {
             return true;
         }
-        let rel_diff = self.abs_rel_diff(other);
+        let rel_diff = self.abs_rel_diff(other, epsilon);
         let zero = self - self;
         zero.approx_eq(rel_diff, epsilon)
     }
@@ -88,10 +88,6 @@ impl AbsPowiRound10 for f32 {
         f32::round(self)
     }
 
-    fn zero() -> Self {
-        0.
-    }
-
     fn ten() -> Self {
         10.
     }
@@ -108,10 +104,6 @@ impl AbsPowiRound10 for f64 {
 
     fn round(self) -> Self {
         f64::round(self)
-    }
-
-    fn zero() -> Self {
-        0.
     }
 
     fn ten() -> Self {
@@ -177,16 +169,12 @@ mod test {
             let y: f32 = 100_009.;
             let z: f32 = 100_020.;
             let epsilon: f32 = 0.0001;
-            let zero = 0.0f32;
 
             assert!(x.rel_approx_eq(y, epsilon), "x must be rel_approx_eq to y");
             assert!(
                 !x.rel_approx_eq(z, epsilon),
                 "x must not be rel_approx_eq to z"
             );
-
-            rel_approx_eq!(x, y, epsilon);
-            rel_approx_eq!(zero, zero, epsilon);
         }
 
         {
@@ -214,7 +202,6 @@ mod test {
             let y: f64 = 200_001.5;
             let z: f64 = 200_003.0;
             let epsilon: f64 = 0.00001;
-            let zero = 0.0f64;
 
             assert!(x.rel_approx_eq(y, epsilon), "x must be rel_approx_eq to y");
             assert!(
@@ -223,7 +210,6 @@ mod test {
             );
 
             rel_approx_eq!(x, y, epsilon);
-            rel_approx_eq!(zero, zero, epsilon);
         }
     }
 }
