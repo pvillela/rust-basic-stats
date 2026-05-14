@@ -51,7 +51,9 @@ where
         let abs_sum = self.abs() + other.abs();
 
         if abs_sum < epsilon {
-            // case where values are too close to zero
+            // Case where both values are too close to zero, so the ratio below can get as high as 2
+            // for values of the same sign and as high as 4 for values of opposing signs. In this case,
+            // the ratio below defeats the purpose of the metric and this return value is appropriate.
             abs_diff // which is always <= abs_sum
         } else {
             // normal case: abs_diff / abs_mean
