@@ -33,4 +33,4 @@ old_statrs = { package = "statrs", version = "0.13" } # old version required by 
 statest = "0.2.2"
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["aok"]
