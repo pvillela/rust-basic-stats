@@ -1,22 +1,53 @@
 #!/bin/bash
 
+set -e  # Stop script immediately on any error
+
+### With default features: Externally exposed feature combinations
+
+echo "***** (default feature)"
+cargo check --lib --tests
+
+echo "*****  --features aok"
+cargo check --lib --tests  --features aok
+
+echo "*****  --features binomial"
+cargo check --lib --tests  --features binomial
+
+echo "*****  --features normal"
+cargo check --lib --tests  --features normal
+
+echo "*****  --features wilcoxon"
+cargo check --lib --tests  --features wilcoxon
+
+echo "*****  --features _dev_utils"
+cargo check --lib --tests  --features _dev_utils
+
+### All targets and features
+
 echo "***** --all-targets --all-features"
 cargo check --all-targets --all-features
 
-echo "***** --lib --bins --tests (default feature)"
-cargo check --lib --bins --tests
+### Without default features: Externally exposed feature combinations
 
 echo "***** --no-default-features"
-cargo check --lib --bins --tests --no-default-features
+cargo check --lib --tests --no-default-features
 
-echo "***** --features normal"
-cargo check --lib --bins --tests --no-default-features --features normal
+echo "***** --no-default-features --features aok"
+cargo check --lib --tests --no-default-features --features aok
 
-echo "***** --features binomial"
-cargo check --lib --bins --tests --no-default-features --features binomial
+echo "***** --no-default-features --features binomial"
+cargo check --lib --tests --no-default-features --features binomial
 
-echo "***** --features wilcoxon"
-cargo check --lib --bins --tests --no-default-features --features wilcoxon
+echo "***** --no-default-features --features normal"
+cargo check --lib --tests --no-default-features --features normal
 
-echo "***** --features _dev_utils"
-cargo check --lib --bins --tests --no-default-features --features _dev_utils
+echo "***** --no-default-features --features wilcoxon"
+cargo check --lib --tests --no-default-features --features wilcoxon
+
+echo "***** --no-default-features --features _dev_utils"
+cargo check --lib --tests --no-default-features --features _dev_utils
+
+### Benches
+
+# None
+

@@ -3,6 +3,7 @@
 
 #![cfg(feature = "normal")]
 #![cfg(feature = "aok")]
+#![cfg(feature = "_dev_utils")]
 
 use basic_stats::{
     aok::{AokBasicStats, AokFloat},
