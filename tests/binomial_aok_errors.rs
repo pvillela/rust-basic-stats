@@ -4,7 +4,7 @@
 mod nocover;
 
 use basic_stats::{
-    aok::{AokBasicStats, AokBasicStatsValue, AokFloat},
+    aok::{Aok, AokValue},
     binomial::*,
     core::AltHyp,
 };

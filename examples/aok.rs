@@ -2,7 +2,7 @@
 //! Requires features **`aok`** and **`normal`**.
 
 use basic_stats::{
-    aok::{AokBasicStats, AokFloat},
+    aok::Aok,
     core::{AltHyp, SampleMoments},
     normal::{welch_alt_hyp_ci, welch_p, welch_test},
 };

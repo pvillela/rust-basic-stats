@@ -4,7 +4,7 @@
 mod nocover;
 
 use basic_stats::{
-    aok::{AokBasicStats, AokBasicStatsValue, AokFloat},
+    aok::{Aok, AokValue},
     core::{AltHyp, SampleMoments},
     normal::{
         student_1samp_ci, student_1samp_df, student_1samp_p, student_1samp_t, student_1samp_test,

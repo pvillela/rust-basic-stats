@@ -6,7 +6,7 @@
 #![cfg(feature = "_dev_utils")]
 
 use basic_stats::{
-    aok::{AokBasicStats, AokFloat},
+    aok::Aok,
     core::{AcceptedHyp, AltHyp, Ci, SampleMoments},
     dev_utils::ApproxEq,
     normal::*,
