@@ -89,6 +89,27 @@ impl AokValue for Ci {
     }
 }
 
+#[cfg(feature = "wilcoxon")]
+mod wilcoxon {
+    use super::*;
+    use crate::wilcoxon::RankSum;
+
+    impl AokValue for RankSum {
+        fn aok_fallback() -> Self {
+            RankSum {
+                n_x: 0,
+                n_y: 0,
+                w: f64::NAN,
+                ties_sum_prod: 0,
+            }
+        }
+
+        fn is_tainted(&self) -> bool {
+            self.w.is_nan()
+        }
+    }
+}
+
 #[deprecated(note = "use `Aok` instead")]
 /// Enables coercion of `Result<T, E>` to the underlying type `T`,
 /// producing a suitable fallback output value instead of panicking in case of error.

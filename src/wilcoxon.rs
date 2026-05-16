@@ -20,10 +20,10 @@ use crate::{
 /// This struct's methods implement the Wilcoxon rank sum test and related statistics.
 #[derive(Debug)]
 pub struct RankSum {
-    n_x: u64,
-    n_y: u64,
-    w: f64,
-    ties_sum_prod: u64,
+    pub(crate) n_x: u64,
+    pub(crate) n_y: u64,
+    pub(crate) w: f64,
+    pub(crate) ties_sum_prod: u64,
 }
 
 impl RankSum {
