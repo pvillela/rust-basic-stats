@@ -4,7 +4,7 @@ use super::{StatsError, StatsResult};
 
 /// Sample mean.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 ///
@@ -21,7 +21,7 @@ pub fn sample_mean(n: u64, sum: f64) -> StatsResult<f64> {
 
 /// Sample's sum of squares of deviations from sample mean.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 /// - `sum2` - sample sum of squares.
@@ -39,7 +39,7 @@ pub fn sample_sum2_deviations(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
 
 /// Sample variance.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 /// - `sum2` - sample sum of squares.
@@ -57,7 +57,7 @@ pub fn sample_var(n: u64, sum: f64, sum2: f64) -> StatsResult<f64> {
 
 /// Sample standard deviation.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n` - sample size.
 /// - `sum` - sample sum.
 /// - `sum2` - sample sum of squares.
@@ -279,7 +279,7 @@ pub struct HypTestResult {
 impl HypTestResult {
     /// Creates a new instance of `Self`.
     ///
-    /// Arguments:
+    /// # Arguments:
     /// - `p`: the "p-value" for the test result.
     /// - `alpha`: determines the confidence level `(1-alpha)`.
     /// - `alt_hyp`: the alternative hypothesis.

@@ -28,7 +28,7 @@ fn check_p0_in_open_0_1(p0: f64) -> StatsResult<()> {
 
 /// Estimator of success probability of Bernoulli distribution.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 ///
@@ -51,7 +51,7 @@ pub fn bernoulli_p_hat(n: u64, n_s: u64) -> StatsResult<f64> {
 /// under the hypothesis that the probability of success is `p0`.
 /// Without continuity correction.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
@@ -72,7 +72,7 @@ pub fn binomial_z(n: u64, n_s: u64, p0: f64) -> StatsResult<f64> {
 /// under the hypothesis that the probability of success is `p0`.
 /// Without continuity correction.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
@@ -91,7 +91,7 @@ pub fn binomial_z_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResult<f
 /// One-sample proportion test (Bernoulli distribution) using the Binomial Normal approximation.
 /// Without continuity correction.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
@@ -124,7 +124,7 @@ pub fn one_proportion_z_test(
 /// [Statistics How To](https://www.statisticshowto.com/wilson-ci/),
 /// [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf)
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alt_hyp`: alternative hypothesis.
@@ -168,7 +168,7 @@ pub fn binomial_ws_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 /// [Statistics How To](https://www.statisticshowto.com/wilson-ci/),
 /// [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf)
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alpha`: confidence level = `1 - alpha`.
@@ -187,7 +187,7 @@ pub fn binomial_ws_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 ///
 /// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alt_hyp`: alternative hypothesis.
@@ -260,7 +260,7 @@ pub fn binomial_cp_alt_hyp_ci(n: u64, n_s: u64, alt_hyp: AltHyp, alpha: f64) -> 
 ///
 /// See also [Confidence Intervals for One Proportion](https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Confidence_Intervals_for_One_Proportion.pdf).
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `alpha`: confidence level = `1 - alpha`.
@@ -276,7 +276,7 @@ pub fn binomial_cp_ci(n: u64, n_s: u64, alpha: f64) -> StatsResult<Ci> {
 
 /// p-value for the [one-sample proportion test](exact_binomial_test) (Bernoulli distribution).
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.
@@ -365,7 +365,7 @@ pub fn exact_binomial_p(n: u64, n_s: u64, p0: f64, alt_hyp: AltHyp) -> StatsResu
 
 /// One-sample proportion test (Bernoulli distribution).
 ///
-/// Arguments:
+/// # Arguments:
 /// - `n`: number of trials.
 /// - `n_s`: number of successes (`1`s) observed.
 /// - `p0`: probability of success under null hypothesis.

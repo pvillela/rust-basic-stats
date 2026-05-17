@@ -343,7 +343,7 @@ impl RankSum {
 
     /// p-value for the large sample normal approximation, without continuity correction.
     ///
-    /// Arguments:
+    /// # Arguments:
     /// - `alt_hyp`: alternative hypothesis.
     ///
     /// # Errors
@@ -359,7 +359,7 @@ impl RankSum {
 
     /// Wilcoxon rank sum test using large sample normal approximation, without continuity correction.
     ///
-    /// Arguments:
+    /// # Arguments:
     /// - `alt_hyp`: alternative hypothesis.
     /// - `alpha`: confidence level = `1 - alpha`.
     ///

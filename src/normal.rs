@@ -91,7 +91,7 @@ pub fn t_alpha(df: f64, alpha: f64) -> StatsResult<f64> {
 
 /// Welch's two-sample t statistic.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `d0`: hypthesized difference between means.
@@ -119,7 +119,7 @@ pub fn welch_t(moments_x: &SampleMoments, moments_y: &SampleMoments, d0: f64) ->
 
 /// Degrees of freedom for Welch's two-sample t-test.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 ///
@@ -150,7 +150,7 @@ pub fn welch_df(moments_x: &SampleMoments, moments_y: &SampleMoments) -> StatsRe
 
 /// p-value of Welch's two-sample t-test for equality.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `d0`: hypthesized difference between means.
@@ -175,7 +175,7 @@ pub fn welch_p(
 
 /// Welch's confidence interval for the difference of means (μ(X) - μ(Y)) of two distributions.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `alt_hyp`: alternative hypothesis.
@@ -225,7 +225,7 @@ pub fn welch_alt_hyp_ci(
 /// Welch's confidence interval for the difference of means (μ(X) - μ(Y)) of two distributions,
 /// with the alternative hypothesis of inequality (two-sided).
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `alpha`: confidence level = `1 - alpha`.
@@ -247,7 +247,7 @@ pub fn welch_ci(
 
 /// Welch's two-sample t-test for equality of means of two distributions.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments_x`: first sample's moments struct.
 /// - `moments_y`: second sample's moments struct.
 /// - `d0`: hypthesized difference between means.
@@ -275,7 +275,7 @@ pub fn welch_test(
 
 /// Student's one-sample t statistic.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments`: sample moments struct.
 /// - `mu0`: hypothesized distribution mean.
 ///
@@ -298,7 +298,7 @@ pub fn student_1samp_t(moments: &SampleMoments, mu0: f64) -> StatsResult<f64> {
 
 /// Degrees of freedom for Student's one-sample t-test.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments`: sample moments struct.
 ///
 /// # Errors
@@ -313,7 +313,7 @@ pub fn student_1samp_df(moments: &SampleMoments) -> StatsResult<f64> {
 
 /// p-value of Student's one-sample t-test for equality.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments`: sample moments struct.
 /// - `mu0`: hypothesized distribution mean.
 /// - `alt_hyp`: alternative hypothesis.
@@ -331,7 +331,7 @@ pub fn student_1samp_p(moments: &SampleMoments, mu0: f64, alt_hyp: AltHyp) -> St
 
 /// Student's one-sample confidence interval for the distribution mean.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments`: sample moments struct.
 /// - `alt_hyp`: alternative hypothesis.
 /// - `alpha`: confidence level = `1 - alpha`.
@@ -372,7 +372,7 @@ pub fn student_1samp_alt_hyp_ci(
 /// Student's one-sample confidence interval for the distribution mean,
 /// with the alternative hypothesis of inequality (two-sided).
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments`: sample moments struct.
 /// - `alpha`: confidence level = `1 - alpha`.
 ///
@@ -387,7 +387,7 @@ pub fn student_1samp_ci(moments: &SampleMoments, alpha: f64) -> StatsResult<Ci> 
 
 /// Student's one-sample t-test for equality.
 ///
-/// Arguments:
+/// # Arguments:
 /// - `moments`: sample moments struct.
 /// - `mu0`: hypothesized distribution mean.
 /// - `alt_hyp`: alternative hypothesis.
