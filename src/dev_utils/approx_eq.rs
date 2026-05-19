@@ -132,10 +132,11 @@ mod macros {
     #[macro_export]
     macro_rules! rel_approx_eq {
         ($a:expr, $b:expr, $epsilon:expr $(,)?) => {
+            let rel_diff = $crate::dev_utils::ApproxEq::abs_rel_diff($a, $b, $epsilon);
             if !$crate::dev_utils::ApproxEq::rel_approx_eq($a, $b, $epsilon) {
                 panic!(
-                    "assertion for relative approximate equality failed: left={}, right={}, epsilon={})",
-                    $a, $b, $epsilon
+                    "assertion for relative approximate equality failed: left={}, right={}, rel_diff={}, epsilon={})",
+                    $a, $b, rel_diff, $epsilon
                 );
             }
         };
