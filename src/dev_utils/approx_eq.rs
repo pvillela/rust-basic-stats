@@ -10,7 +10,7 @@ pub trait ApproxEq {
     fn approx_eq(self, other: Self, epsilon: Self) -> bool;
 
     /// Returns the absolute relative difference between `self` and `other`.
-    fn abs_rel_diff(self, other: Self, epsilon: Self) -> Self;
+    fn abs_rel_diff(self, other: Self) -> Self;
 
     /// Returns `true` if the absolute relative difference between `self` and `other` is less than `epsilon`.
     fn rel_approx_eq(self, other: Self, epsilon: Self) -> bool;
@@ -46,15 +46,13 @@ where
         }
     }
 
-    fn abs_rel_diff(self, other: Self, epsilon: Self) -> Self {
+    fn abs_rel_diff(self, other: Self) -> Self {
         let abs_diff = (self - other).abs();
         let abs_sum = self.abs() + other.abs();
+        let zero = self - self;
 
-        if abs_sum < epsilon {
-            // Case where both values are too close to zero, so the ratio below can get as high as 2
-            // for values of the same sign and as high as 4 for values of opposing signs. In this case,
-            // the ratio below defeats the purpose of the metric and this return value is appropriate.
-            abs_diff // which is always <= abs_sum
+        if abs_diff == zero {
+            zero
         } else {
             // normal case: abs_diff / abs_mean
             (abs_diff + abs_diff) / abs_sum
@@ -66,7 +64,7 @@ where
         if self == other {
             return true;
         }
-        let rel_diff = self.abs_rel_diff(other, epsilon);
+        let rel_diff = self.abs_rel_diff(other);
         let zero = self - self;
         zero.approx_eq(rel_diff, epsilon)
     }
@@ -132,7 +130,7 @@ mod macros {
     #[macro_export]
     macro_rules! rel_approx_eq {
         ($a:expr, $b:expr, $epsilon:expr $(,)?) => {
-            let rel_diff = $crate::dev_utils::ApproxEq::abs_rel_diff($a, $b, $epsilon);
+            let rel_diff = $crate::dev_utils::ApproxEq::abs_rel_diff($a, $b);
             if !$crate::dev_utils::ApproxEq::rel_approx_eq($a, $b, $epsilon) {
                 panic!(
                     "assertion for relative approximate equality failed: left={}, right={}, rel_diff={}, epsilon={})",
