@@ -10,6 +10,12 @@ cargo check --lib --tests
 echo "*****  --features aok"
 cargo check --lib --tests  --features aok
 
+echo "*****  --features aok_f64"
+cargo check --lib --tests  --features aok_f64
+
+echo "*****  --features aok_stats"
+cargo check --lib --tests  --features aok_stats
+
 echo "*****  --features binomial"
 cargo check --lib --tests  --features binomial
 
@@ -34,6 +40,12 @@ cargo check --lib --tests --no-default-features
 
 echo "***** --no-default-features --features aok"
 cargo check --lib --tests --no-default-features --features aok
+
+echo "***** --no-default-features --features aok_f64"
+cargo check --lib --tests --no-default-features --features aok_f64
+
+echo "***** --no-default-features --features aok_stats"
+cargo check --lib --tests --no-default-features --features aok_stats
 
 echo "***** --no-default-features --features binomial"
 cargo check --lib --tests --no-default-features --features binomial

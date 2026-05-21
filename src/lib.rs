@@ -2,7 +2,8 @@
 
 pub mod core;
 
-#[cfg(feature = "aok")]
+#[cfg(feature = "_aok_core")]
+// impls in this module have additional feature gating
 pub mod aok;
 
 #[cfg(feature = "normal")]
