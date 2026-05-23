@@ -42,7 +42,7 @@ where
             // Covers infinity case
             true
         } else {
-            (self - other).abs() < epsilon
+            (self - other).abs() <= epsilon
         }
     }
 
