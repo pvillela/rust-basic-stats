@@ -6,6 +6,9 @@ pub mod core;
 // impls in this module have additional feature gating
 pub mod aok;
 
+#[cfg(feature = "detm_samp")]
+pub mod detm_samp;
+
 #[cfg(feature = "normal")]
 pub mod normal;
 

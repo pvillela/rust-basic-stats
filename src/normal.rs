@@ -18,7 +18,7 @@
 
 use crate::core::{
     AltHyp, AsStatsResult, Ci, HypTestResult, SampleMoments, StatsError, StatsResult,
-    check_alpha_in_open_0_1, deterministic_sample,
+    check_alpha_in_open_0_1,
 };
 use statrs::distribution::{ContinuousCDF, LogNormal, Normal, StudentsT};
 
@@ -410,32 +410,73 @@ pub fn student_1samp_test(
     Ok(HypTestResult::new(p, alpha, alt_hyp))
 }
 
-/// Generates a deterministic sample of size `2*k*k - 1` for the normal distribution
-/// with mean `mu` and standard deviation `sigma`.
-///
-/// The sample covers the output range evenly throughout the generation process.
-///
-/// # Errors
-///
-/// Returns an error if `mu` is not finite or `sigma` is not positive.
-pub fn normal_detm_samp(mu: f64, sigma: f64, k: u64) -> StatsResult<impl Iterator<Item = f64>> {
-    let normal =
-        Normal::new(mu, sigma).stats_result("`mu` must be finite and `sigma` must be positive")?;
-    Ok(deterministic_sample(move |p| normal.inverse_cdf(p), k))
-}
+#[cfg(feature = "detm_samp")]
+pub use detm_samp::*;
 
-/// Generates a deterministic sample of size `2*k*k - 1` for the log-normal distribution
-/// with parameters `mu` and `sigma`.
-///
-/// The sample covers the output range evenly throughout the generation process.
-///
-/// # Errors
-///
-/// Returns an error if `mu` is not finite or `sigma` is not positive.
-pub fn lognormal_detm_samp(mu: f64, sigma: f64, k: u64) -> StatsResult<impl Iterator<Item = f64>> {
-    let lognormal = LogNormal::new(mu, sigma)
-        .stats_result("`mu` must be finite and `sigma` must be positive")?;
-    Ok(deterministic_sample(move |p| lognormal.inverse_cdf(p), k))
+#[cfg(feature = "detm_samp")]
+mod detm_samp {
+    use super::*;
+    use crate::detm_samp::deterministic_gen;
+
+    /// Returns an infinite iterator that samples from the
+    /// normal distribution with mean `mu` and standard deviation `sigma`.
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn normal_detm_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
+        let normal = Normal::new(mu, sigma)
+            .stats_result("`mu` must be finite and `sigma` must be positive")?;
+        Ok(deterministic_gen(move |p| normal.inverse_cdf(p)))
+    }
+
+    /// Returns a finite iterator that produces a sample of size `n` from the
+    /// normal distribution with mean `mu` and standard deviation `sigma`.
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn normal_detm_samp(
+        mu: f64,
+        sigma: f64,
+        n: usize,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
+        Ok(normal_detm_gen(mu, sigma)?.take(n))
+    }
+
+    /// Returns an infinite iterator that samples from the
+    /// log-normal distribution with parameters `mu` and `sigma`.
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn lognormal_detm_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
+        let lognormal = LogNormal::new(mu, sigma)
+            .stats_result("`mu` must be finite and `sigma` must be positive")?;
+        Ok(deterministic_gen(move |p| lognormal.inverse_cdf(p)))
+    }
+
+    /// Returns a finite iterator that produces a sample of size `n` from the
+    /// log-normal distribution with parameters `mu` and `sigma`.
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn lognormal_detm_samp(
+        mu: f64,
+        sigma: f64,
+        n: usize,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
+        Ok(lognormal_detm_gen(mu, sigma)?.take(n))
+    }
 }
 
 #[cfg(test)]
