@@ -25,6 +25,9 @@ cargo check --lib --tests  --features normal
 echo "*****  --features wilcoxon"
 cargo check --lib --tests  --features wilcoxon
 
+echo "*****  --features detm_samp"
+cargo check --lib --tests  --features detm_samp
+
 echo "*****  --features _dev_utils"
 cargo check --lib --tests  --features _dev_utils
 
@@ -55,6 +58,12 @@ cargo check --lib --tests --no-default-features --features normal
 
 echo "***** --no-default-features --features wilcoxon"
 cargo check --lib --tests --no-default-features --features wilcoxon
+
+echo "***** --no-default-features --features detm_samp"
+cargo check --lib --tests --no-default-features --features detm_samp
+
+echo "***** --no-default-features --features normal,detm_samp"
+cargo check --lib --tests --no-default-features --features normal,detm_samp
 
 echo "***** --no-default-features --features _dev_utils"
 cargo check --lib --tests --no-default-features --features _dev_utils

@@ -6,7 +6,7 @@ There is no support for parallel processing. In particular, there is no dependen
 
 # Cargo features
 
-By default, use of this library as a dependency includes modules [`core`], [`normal`], [`binomial`], and [`wilcoxon`]. The `aok` module is not included by default.
+By default, use of this library as a dependency includes modules [`core`], [`normal`], [`binomial`], [`wilcoxon`], and [`detm_samp`]. The `aok` module is not included by default.
 
 Each module other than [`core`] (which is always enabled) has an associated cargo feature that enables the module. To include only selected modules, specify `default-features = false` in the dependency declaration (or `--no-default-features` on the command line) and specify the desired features in the dependency declaration (or command line).
 
