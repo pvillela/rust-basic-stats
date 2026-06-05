@@ -7,9 +7,9 @@
 /// the Kolmogorov-Smirnov test
 pub fn deterministic_gen<'a>(
     inv_cdf: impl Fn(f64) -> f64 + 'a,
-    base_samp_size: usize,
+    samp_size2: usize,
 ) -> impl Iterator<Item = f64> + 'a {
-    let unif_iter = uniform_01_detm_gen(base_samp_size);
+    let unif_iter = uniform_01_detm_gen(samp_size2);
     unif_iter.map(inv_cdf)
 }
 
@@ -20,8 +20,9 @@ pub fn deterministic_gen<'a>(
 ///
 /// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
 /// the Kolmogorov-Smirnov test
-pub fn uniform_01_detm_gen(base_samp_size: usize) -> impl Iterator<Item = f64> {
-    BucketIter::new(true, base_samp_size)
+pub fn uniform_01_detm_gen(samp_size2: usize) -> impl Iterator<Item = f64> {
+    BucketIter::new(true, samp_size2)
+        .filter_map(|(value, flag)| if flag { None } else { Some(value) })
 }
 
 /// Returns an infinite iterator that samples from the
@@ -34,8 +35,8 @@ pub fn uniform_01_detm_gen(base_samp_size: usize) -> impl Iterator<Item = f64> {
 ///
 /// If `lo > hi` then the sample will be in the interval `(hi, lo)`.
 /// If `lo == hi` then all samples will be equal to `lo`.
-pub fn uniform_detm_gen(lo: f64, hi: f64, base_samp_size: usize) -> impl Iterator<Item = f64> {
-    uniform_01_detm_gen(base_samp_size).map(move |v| (hi - lo) * v + lo)
+pub fn uniform_detm_gen(lo: f64, hi: f64, samp_size2: usize) -> impl Iterator<Item = f64> {
+    uniform_01_detm_gen(samp_size2).map(move |v| (hi - lo) * v + lo)
 }
 
 #[derive(Debug)]
@@ -46,12 +47,14 @@ enum Side {
 
 #[derive(Debug)]
 pub(crate) struct BucketIter {
+    is_initial_sample: bool,
     is_infinite: bool,
-    samp_size: usize,
-    left_base: f64,
-    right_base: f64,
-    k: usize,
-    k_range: usize,
+    samp_size2: usize,
+    bucket_size: usize,
+    n_buckets: usize,
+    bucket_idx: usize,
+    in_bucket_idx: usize,
+    // k: usize,
     side: Side,
     granule: f64,
     last_value: f64,
@@ -59,15 +62,34 @@ pub(crate) struct BucketIter {
     items_generated: u64,
 }
 
+fn max_sqrt_divisor(n: usize) -> usize {
+    if n == 0 {
+        return 0; // Handle 0 case to avoid division by zero or panic
+    }
+
+    let limit = (n as f64).sqrt() as usize;
+
+    for k in (1..=limit).rev() {
+        if n % k == 0 {
+            return k;
+        }
+    }
+    1 // Fallback for prime numbers
+}
+
 impl BucketIter {
+    const MIDPOINT: f64 = 0.5;
+
     fn new_empty() -> Self {
         Self {
+            is_initial_sample: true,
             is_infinite: false,
-            samp_size: 0,
-            left_base: 0.0,
-            right_base: 0.0,
-            k: 0,
-            k_range: 0,
+            samp_size2: 0,
+            bucket_size: 0,
+            n_buckets: 0,
+            bucket_idx: 0,
+            in_bucket_idx: 0,
+            // k: 0,
             side: Side::Left,
             granule: 0.0,
             last_value: 0.0,
@@ -76,68 +98,62 @@ impl BucketIter {
         }
     }
 
-    pub(crate) fn new(is_infinite: bool, samp_size: usize) -> Self {
+    pub(crate) fn new(is_infinite: bool, samp_size2: usize) -> Self {
         let mut it = Self::new_empty();
-        it.update(is_infinite, samp_size);
+        it.update(samp_size2);
+        it.is_infinite = is_infinite;
         it
     }
 
-    fn update(&mut self, is_infinite: bool, samp_size: usize) {
-        let samp_sizef = samp_size as f64;
-        let (left_base, right_base) = if samp_size % 2 == 1 {
-            (0.5, 0.5)
-        } else {
-            let left_base = (1.0 / samp_sizef) * (samp_sizef / 2.0).ceil();
-            let right_base = 1.0 - left_base;
-            (left_base, right_base)
-        };
-        let k_range = samp_size / 2;
-        let granule = 1.0 / samp_sizef;
-
-        self.is_infinite = is_infinite;
-        self.samp_size = samp_size;
-        self.left_base = left_base;
-        self.right_base = right_base;
-        self.k = 1;
-        self.k_range = k_range;
-        self.granule = granule;
+    fn update(&mut self, samp_size2: usize) {
+        self.samp_size2 = samp_size2;
+        self.bucket_size = max_sqrt_divisor(samp_size2);
+        self.n_buckets = samp_size2 / self.bucket_size;
+        let samp_size2f = samp_size2 as f64;
+        self.granule = 1.0 / (samp_size2f * 2.0);
+        self.bucket_idx = 1;
+        self.in_bucket_idx = 1;
         self.last_value = f64::NAN;
     }
 
-    fn increment_sample(&mut self) {
-        self.update(self.is_infinite, self.samp_size * 2);
+    fn increase_sample(&mut self) {
+        self.update(self.samp_size2 * 2);
+        self.is_infinite = true;
+        self.is_initial_sample = false;
     }
 }
 
 impl Iterator for BucketIter {
-    type Item = f64;
+    type Item = (f64, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.samp_size == 1 {
+        if self.samp_size2 == 0 {
             let ret = 0.5;
             if self.is_infinite {
-                self.increment_sample()
+                self.samp_size2 = 1;
+                self.increase_sample()
             }
             self.items_generated += 1;
-            return Some(ret);
+            return Some((ret, false));
         }
 
-        if self.k > self.k_range {
+        if self.in_bucket_idx > self.bucket_size {
             println!("*** old struct={self:?}");
             if self.is_infinite {
-                self.increment_sample();
+                self.increase_sample();
                 println!("*** new struct={self:?}");
             } else {
                 return None;
             }
         }
 
-        let (base, sign) = match self.side {
-            Side::Left => (self.left_base, -1.0),
-            Side::Right => (self.right_base, 1.0),
+        let sign = match self.side {
+            Side::Left => -1.0,
+            Side::Right => 1.0,
         };
 
-        let res = base + sign * self.k as f64 * self.granule;
+        let k = (self.bucket_idx - 1) * self.bucket_size + self.in_bucket_idx;
+        let res = Self::MIDPOINT + sign * k as f64 * self.granule;
         self.last_value = res;
         self.lowest_value_in_range = self.lowest_value_in_range.min(res);
         self.items_generated += 1;
@@ -148,16 +164,16 @@ impl Iterator for BucketIter {
             }
             Side::Right => {
                 self.side = Side::Left;
-                if self.is_infinite {
-                    // skip previously generated values
-                    self.k += 2;
-                } else {
-                    self.k += 1
+
+                self.bucket_idx += 1;
+                if self.bucket_idx > self.n_buckets {
+                    self.bucket_idx = 1;
+                    self.in_bucket_idx += 1;
                 }
             }
         }
 
-        Some(res)
+        Some((res, !self.is_initial_sample && k % 2 == 0))
     }
 }
 
@@ -171,6 +187,18 @@ mod test {
     const EPSILON: f64 = 0.005;
     const SAMPLE_SIZE: usize = 255; // `= 2_usize.pow(8) - 1`
 
+    #[test]
+    // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::show_uniform_01 --exact --nocapture --include-ignored
+    fn show_uniform_01() {
+        let iter = uniform_01_detm_gen(1).take(10);
+        let v: Vec<f64> = iter.collect();
+        println!("*** v.len()={}, v={:?}", v.len(), v);
+        let dist = Uniform::new(0.0, 1.0).unwrap();
+        let ks = KSTest::new(&v);
+        let (p, _) = ks.ks1(&dist);
+        assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
+        assert!(false);
+    }
     #[test]
     fn test_uniform_01() {
         let iter = uniform_01_detm_gen(1).take(SAMPLE_SIZE);

@@ -21,7 +21,7 @@ pub fn deterministic_samp<'a>(
 ///
 /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
 pub fn uniform_01_detm_samp(k: u32) -> impl Iterator<Item = f64> {
-    BucketIter::new(false, 2_usize.pow(k) - 1)
+    BucketIter::new(false, 2_usize.pow(k) - 1).map(|(value, _)| value)
 }
 
 /// Generates a deterministic sample of size `2*k*k - 1` for the
@@ -35,41 +35,42 @@ pub fn uniform_detm_samp(lo: f64, hi: f64, k: u32) -> impl Iterator<Item = f64> 
     uniform_01_detm_samp(k).map(move |v| (hi - lo) * v + lo)
 }
 
-// struct UnifIter {
-//     k: usize,
-//     i: usize,
-// }
+#[allow(unused)]
+pub(crate) struct UnifIter {
+    k: usize,
+    i: usize,
+}
 
-// impl Iterator for UnifIter {
-//     type Item = f64;
+impl Iterator for UnifIter {
+    type Item = f64;
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         if self.i >= 2 * self.k * self.k - 1 {
-//             return None;
-//         }
-//         let item = uniform_observation(self.k, self.i);
-//         self.i += 1;
-//         Some(item)
-//     }
-// }
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= 2 * self.k * self.k - 1 {
+            return None;
+        }
+        let item = uniform_observation(self.k, self.i);
+        self.i += 1;
+        Some(item)
+    }
+}
 
-// /// Generates the `i`-th observation for [`uniform_01_detm_samp`].
-// ///
-// /// The sample covers the output range evenly throughout the generation process.
-// #[inline(always)]
-// fn uniform_observation(k: usize, i: usize) -> f64 {
-//     let side = i % 2;
-//     let j = i / 2;
-//     let bucket_idx = j % k;
-//     let item_idx = j / k;
-//     let left_idx = bucket_idx * k + item_idx + 1;
-//     let idx = if side == 0 {
-//         left_idx
-//     } else {
-//         2 * k * k - left_idx
-//     };
-//     idx as f64 / (2 * k * k) as f64
-// }
+/// Generates the `i`-th observation for [`uniform_01_detm_samp`].
+///
+/// The sample covers the output range evenly throughout the generation process.
+#[inline(always)]
+fn uniform_observation(k: usize, i: usize) -> f64 {
+    let side = i % 2;
+    let j = i / 2;
+    let bucket_idx = j % k;
+    let item_idx = j / k;
+    let left_idx = bucket_idx * k + item_idx + 1;
+    let idx = if side == 0 {
+        left_idx
+    } else {
+        2 * k * k - left_idx
+    };
+    idx as f64 / (2 * k * k) as f64
+}
 
 #[cfg(test)]
 mod test {
