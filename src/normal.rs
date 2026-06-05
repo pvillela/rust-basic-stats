@@ -431,10 +431,17 @@ mod detm_samp {
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
-    pub fn normal_detm_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
+    pub fn normal_detm_gen(
+        mu: f64,
+        sigma: f64,
+        base_samp_size: u64,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
         let normal = Normal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
-        Ok(deterministic_gen(move |p| normal.inverse_cdf(p)))
+        Ok(deterministic_gen(
+            move |p| normal.inverse_cdf(p),
+            base_samp_size,
+        ))
     }
 
     /// Generates a deterministic sample of size `2*k*k - 1` for the
@@ -468,10 +475,17 @@ mod detm_samp {
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
-    pub fn lognormal_detm_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
+    pub fn lognormal_detm_gen(
+        mu: f64,
+        sigma: f64,
+        base_samp_size: u64,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
         let lognormal = LogNormal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
-        Ok(deterministic_gen(move |p| lognormal.inverse_cdf(p)))
+        Ok(deterministic_gen(
+            move |p| lognormal.inverse_cdf(p),
+            base_samp_size,
+        ))
     }
 
     /// Generates a deterministic sample of size `2*k*k - 1` for the
