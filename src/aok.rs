@@ -27,10 +27,6 @@ pub trait Aok: Sized {
 }
 
 /// Constructs a suitable fallback value for an implementing type, to be used instead of an error [`Result`].
-///
-/// # Type parameter
-/// `D`: dummy type used for disambiguation so that a value type V can be the target of multiple implementations
-/// of Aok and AokValue.
 pub trait AokValue {
     /// Returns a suitable fallback value to be used instead of an error [`Result`].
     fn aok_fallback() -> Self;
