@@ -195,7 +195,6 @@ mod test {
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_1 --exact --nocapture --include-ignored
     fn test_buck_iter_new_1() {
         let samp_size = 45; // fails with `samp_size = 44`
-        // let iter = uniform_01_detm_gen(1).take(10);
         let iter = BucketIter::new(1).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
@@ -205,7 +204,6 @@ mod test {
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&dist);
         assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
-        // assert!(false);
     }
 
     #[test]
@@ -213,7 +211,6 @@ mod test {
     fn test_buck_iter_new_17() {
         let samp_size2 = 17;
         let samp_size = 2 * samp_size2 - 1;
-        // let iter = uniform_01_detm_gen(1).take(10);
         let iter = BucketIter::new(samp_size2).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
@@ -225,7 +222,6 @@ mod test {
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&dist);
         assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
-        // assert!(false);
     }
 
     #[test]
@@ -234,7 +230,6 @@ mod test {
         let samp_size2 = 17;
         let delta = 30; // fails for delta = 29
         let samp_size = 2 * samp_size2 - 1 + delta;
-        // let iter = uniform_01_detm_gen(1).take(10);
         let iter = BucketIter::new(samp_size2).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
@@ -246,7 +241,26 @@ mod test {
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&dist);
         assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
-        // assert!(false);
+    }
+
+    #[test]
+    // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_skip_take --exact --nocapture --include-ignored
+    fn test_skip_take() {
+        let samp_size2 = 17;
+        let delta = 30; // fails for delta = 29
+        let samp_size = 2 * samp_size2 - 1 + delta;
+        let iter = BucketIter::new(samp_size2).skip(samp_size).take(samp_size);
+        let v: Vec<_> = iter.collect();
+        println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
+        let v: Vec<_> = BucketIter::new_infinite(samp_size2)
+            .skip(samp_size)
+            .take(samp_size)
+            .collect();
+        println!("=== filtered v.len()={}, v={:?}", v.len(), v);
+        let dist = Uniform::new(0.0, 1.0).unwrap();
+        let ks = KSTest::new(&v);
+        let (p, _) = ks.ks1(&dist);
+        assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
     }
 
     #[test]
