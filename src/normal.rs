@@ -425,8 +425,7 @@ mod detm_samp {
     ///
     /// The sampling covers the output range evenly throughout the generation process.
     ///
-    /// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
-    /// the Kolmogorov-Smirnov test
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
     ///
     /// # Errors
     ///
@@ -437,12 +436,12 @@ mod detm_samp {
         Ok(deterministic_gen(move |p| normal.inverse_cdf(p)))
     }
 
-    /// Generates a deterministic sample of size `2*k - 1` for the
+    /// Generates a deterministic sample of size `samp_size` for the
     /// normal distribution with mean `mu` and standard deviation `sigma`.
     ///
     /// The sample covers the output range evenly throughout the generation process.
     ///
-    /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
     ///
     /// # Errors
     ///
@@ -450,17 +449,22 @@ mod detm_samp {
     pub fn normal_detm_samp(
         mu: f64,
         sigma: f64,
-        k: usize,
+        samp_size: usize,
     ) -> StatsResult<impl Iterator<Item = f64>> {
         let normal = Normal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
-        Ok(deterministic_samp(move |p| normal.inverse_cdf(p), k))
+        Ok(deterministic_samp(
+            move |p| normal.inverse_cdf(p),
+            samp_size,
+        ))
     }
 
     /// Returns an infinite iterator that samples from the
     /// log-normal distribution with parameters `mu` and `sigma`.
     ///
     /// The sampling covers the output range evenly throughout the generation process.
+    ///
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
     ///
     /// # Errors
     ///
@@ -471,12 +475,12 @@ mod detm_samp {
         Ok(deterministic_gen(move |p| lognormal.inverse_cdf(p)))
     }
 
-    /// Generates a deterministic sample of size `2*k - 1` for the
+    /// Generates a deterministic sample of size `samp_size` for the
     /// log-normal distribution with parameters `mu` and `sigma`.
     ///
     /// The sample covers the output range evenly throughout the generation process.
     ///
-    /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
     ///
     /// # Errors
     ///
@@ -484,11 +488,14 @@ mod detm_samp {
     pub fn lognormal_detm_samp(
         mu: f64,
         sigma: f64,
-        k: usize,
+        samp_size: usize,
     ) -> StatsResult<impl Iterator<Item = f64>> {
         let lognormal = LogNormal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
-        Ok(deterministic_samp(move |p| lognormal.inverse_cdf(p), k))
+        Ok(deterministic_samp(
+            move |p| lognormal.inverse_cdf(p),
+            samp_size,
+        ))
     }
 }
 
@@ -1029,13 +1036,15 @@ mod test {
         use super::*;
         use crate::normal::normal_detm_samp;
 
+        const SAMP_SIZE: usize = 19;
+
         #[test]
         fn test_deterministic_normal() {
             use old_statrs::distribution::Normal as OldNormal;
             use statest::ks::KSTest;
 
             let old_normal = OldNormal::new(0., 1.).unwrap();
-            let iter = normal_detm_samp(0., 1., 10).unwrap();
+            let iter = normal_detm_samp(0., 1., SAMP_SIZE).unwrap();
             let v: Vec<f64> = iter.collect();
             let ks = KSTest::new(&v);
             let (p, _) = ks.ks1(&old_normal);
@@ -1046,11 +1055,12 @@ mod test {
         fn test_deterministic_lognormal_equivalence() {
             let mu = 0.0;
             let sigma = 1.0;
-            let k = 10;
             let epsilon = 0.000000005;
 
-            let iter1 = normal_detm_samp(mu, sigma, k).unwrap().map(|x| x.exp());
-            let mut iter2 = lognormal_detm_samp(mu, sigma, k).unwrap();
+            let iter1 = normal_detm_samp(mu, sigma, SAMP_SIZE)
+                .unwrap()
+                .map(|x| x.exp());
+            let mut iter2 = lognormal_detm_samp(mu, sigma, SAMP_SIZE).unwrap();
 
             for v1 in iter1 {
                 use crate::approx_eq;
