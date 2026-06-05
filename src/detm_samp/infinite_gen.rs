@@ -7,7 +7,7 @@
 /// the Kolmogorov-Smirnov test
 pub fn deterministic_gen<'a>(
     inv_cdf: impl Fn(f64) -> f64 + 'a,
-    base_samp_size: u64,
+    base_samp_size: usize,
 ) -> impl Iterator<Item = f64> + 'a {
     let unif_iter = uniform_01_detm_gen(base_samp_size);
     unif_iter.map(inv_cdf)
@@ -20,7 +20,7 @@ pub fn deterministic_gen<'a>(
 ///
 /// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
 /// the Kolmogorov-Smirnov test
-pub fn uniform_01_detm_gen(base_samp_size: u64) -> impl Iterator<Item = f64> {
+pub fn uniform_01_detm_gen(base_samp_size: usize) -> impl Iterator<Item = f64> {
     BucketIter::new(true, base_samp_size)
 }
 
@@ -34,7 +34,7 @@ pub fn uniform_01_detm_gen(base_samp_size: u64) -> impl Iterator<Item = f64> {
 ///
 /// If `lo > hi` then the sample will be in the interval `(hi, lo)`.
 /// If `lo == hi` then all samples will be equal to `lo`.
-pub fn uniform_detm_gen(lo: f64, hi: f64, base_samp_size: u64) -> impl Iterator<Item = f64> {
+pub fn uniform_detm_gen(lo: f64, hi: f64, base_samp_size: usize) -> impl Iterator<Item = f64> {
     uniform_01_detm_gen(base_samp_size).map(move |v| (hi - lo) * v + lo)
 }
 
@@ -45,13 +45,13 @@ enum Side {
 }
 
 #[derive(Debug)]
-struct BucketIter {
+pub(crate) struct BucketIter {
     is_infinite: bool,
-    samp_size: u64,
+    samp_size: usize,
     left_base: f64,
     right_base: f64,
-    k: u64,
-    k_range: u64,
+    k: usize,
+    k_range: usize,
     side: Side,
     granule: f64,
     last_value: f64,
@@ -76,13 +76,13 @@ impl BucketIter {
         }
     }
 
-    fn new(is_infinite: bool, samp_size: u64) -> Self {
+    pub(crate) fn new(is_infinite: bool, samp_size: usize) -> Self {
         let mut it = Self::new_empty();
         it.update(is_infinite, samp_size);
         it
     }
 
-    fn update(&mut self, is_infinite: bool, samp_size: u64) {
+    fn update(&mut self, is_infinite: bool, samp_size: usize) {
         let samp_sizef = samp_size as f64;
         let (left_base, right_base) = if samp_size % 2 == 1 {
             (0.5, 0.5)

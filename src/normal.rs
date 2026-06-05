@@ -434,7 +434,7 @@ mod detm_samp {
     pub fn normal_detm_gen(
         mu: f64,
         sigma: f64,
-        base_samp_size: u64,
+        base_samp_size: usize,
     ) -> StatsResult<impl Iterator<Item = f64>> {
         let normal = Normal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
@@ -454,11 +454,7 @@ mod detm_samp {
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
-    pub fn normal_detm_samp(
-        mu: f64,
-        sigma: f64,
-        k: usize,
-    ) -> StatsResult<impl Iterator<Item = f64>> {
+    pub fn normal_detm_samp(mu: f64, sigma: f64, k: u32) -> StatsResult<impl Iterator<Item = f64>> {
         let normal = Normal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
         Ok(deterministic_samp(move |p| normal.inverse_cdf(p), k))
@@ -478,7 +474,7 @@ mod detm_samp {
     pub fn lognormal_detm_gen(
         mu: f64,
         sigma: f64,
-        base_samp_size: u64,
+        base_samp_size: usize,
     ) -> StatsResult<impl Iterator<Item = f64>> {
         let lognormal = LogNormal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
@@ -501,7 +497,7 @@ mod detm_samp {
     pub fn lognormal_detm_samp(
         mu: f64,
         sigma: f64,
-        k: usize,
+        k: u32,
     ) -> StatsResult<impl Iterator<Item = f64>> {
         let lognormal = LogNormal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
