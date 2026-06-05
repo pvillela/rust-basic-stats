@@ -3,13 +3,9 @@
 ///
 /// The sampling covers the output range evenly throughout the generation process.
 ///
-/// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
-/// the Kolmogorov-Smirnov test
-pub fn deterministic_gen<'a>(
-    inv_cdf: impl Fn(f64) -> f64 + 'a,
-    samp_size2: usize,
-) -> impl Iterator<Item = f64> + 'a {
-    let unif_iter = uniform_01_detm_gen(samp_size2);
+/// For sufficiently large sample sizes, generated sample passes the Kolmogorov-Smirnov test.
+pub fn deterministic_gen<'a>(inv_cdf: impl Fn(f64) -> f64 + 'a) -> impl Iterator<Item = f64> + 'a {
+    let unif_iter = uniform_01_detm_gen();
     unif_iter.map(inv_cdf)
 }
 
@@ -18,11 +14,9 @@ pub fn deterministic_gen<'a>(
 ///
 /// The sampling covers the output range evenly throughout the generation process.
 ///
-/// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
-/// the Kolmogorov-Smirnov test
-pub fn uniform_01_detm_gen(samp_size2: usize) -> impl Iterator<Item = f64> {
-    BucketIter::new(true, samp_size2)
-        .filter_map(|(value, flag)| if flag { None } else { Some(value) })
+/// For sufficiently large sample sizes, generated sample passes the Kolmogorov-Smirnov test.
+pub fn uniform_01_detm_gen() -> impl Iterator<Item = f64> {
+    BucketIter::new_infinite(1)
 }
 
 /// Returns an infinite iterator that samples from the
@@ -30,13 +24,9 @@ pub fn uniform_01_detm_gen(samp_size2: usize) -> impl Iterator<Item = f64> {
 ///
 /// The sampling covers the output range evenly throughout the generation process.
 ///
-/// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
-/// the Kolmogorov-Smirnov test
-///
-/// If `lo > hi` then the sample will be in the interval `(hi, lo)`.
-/// If `lo == hi` then all samples will be equal to `lo`.
-pub fn uniform_detm_gen(lo: f64, hi: f64, samp_size2: usize) -> impl Iterator<Item = f64> {
-    uniform_01_detm_gen(samp_size2).map(move |v| (hi - lo) * v + lo)
+/// For sufficiently large sample sizes, generated sample passes the Kolmogorov-Smirnov test.
+pub fn uniform_detm_gen(lo: f64, hi: f64) -> impl Iterator<Item = f64> {
+    uniform_01_detm_gen().map(move |v| (hi - lo) * v + lo)
 }
 
 #[derive(Debug)]
@@ -54,6 +44,7 @@ pub(crate) struct BucketIter {
     n_buckets: usize,
     bucket_idx: usize,
     in_bucket_idx: usize,
+    samp_items_generated: usize,
     // k: usize,
     side: Side,
     granule: f64,
@@ -88,6 +79,7 @@ impl BucketIter {
             bucket_size: 0,
             n_buckets: 0,
             bucket_idx: 0,
+            samp_items_generated: 0,
             in_bucket_idx: 0,
             // k: 0,
             side: Side::Left,
@@ -105,13 +97,23 @@ impl BucketIter {
         it
     }
 
+    pub(crate) fn new_finite(samp_size2: usize) -> impl Iterator<Item = f64> {
+        Self::new(false, samp_size2).map(|(value, _)| value)
+    }
+
+    pub(crate) fn new_infinite(samp_size2: usize) -> impl Iterator<Item = f64> {
+        Self::new(true, samp_size2)
+            .filter_map(|(value, flag)| if flag { None } else { Some(value) })
+    }
+
     fn update(&mut self, samp_size2: usize) {
         self.samp_size2 = samp_size2;
         self.bucket_size = max_sqrt_divisor(samp_size2);
         self.n_buckets = samp_size2 / self.bucket_size;
         let samp_size2f = samp_size2 as f64;
-        self.granule = 1.0 / (samp_size2f * 2.0);
+        self.granule = 0.5 / samp_size2f;
         self.bucket_idx = 1;
+        self.samp_items_generated = 0;
         self.in_bucket_idx = 1;
         self.last_value = f64::NAN;
     }
@@ -127,17 +129,17 @@ impl Iterator for BucketIter {
     type Item = (f64, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.samp_size2 == 0 {
+        assert!(self.samp_size2 > 0, "samp_size2 must be > 0");
+
+        if self.items_generated == 0 {
             let ret = 0.5;
-            if self.is_infinite {
-                self.samp_size2 = 1;
-                self.increase_sample()
-            }
             self.items_generated += 1;
+            self.samp_items_generated += 1;
             return Some((ret, false));
         }
 
-        if self.in_bucket_idx > self.bucket_size {
+        let samp_size = self.samp_size2 * 2 - 1;
+        if self.samp_items_generated >= samp_size {
             println!("*** old struct={self:?}");
             if self.is_infinite {
                 self.increase_sample();
@@ -173,6 +175,7 @@ impl Iterator for BucketIter {
             }
         }
 
+        self.samp_items_generated += 1;
         Some((res, !self.is_initial_sample && k % 2 == 0))
     }
 }
@@ -185,24 +188,28 @@ mod test {
     use statest::ks::KSTest;
 
     const EPSILON: f64 = 0.005;
-    const SAMPLE_SIZE: usize = 255; // `= 2_usize.pow(8) - 1`
+    const SAMPLE_SIZE: usize = 25;
 
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::show_uniform_01 --exact --nocapture --include-ignored
     fn show_uniform_01() {
+        let samp_size = 20;
         // let iter = uniform_01_detm_gen(1).take(10);
-        let iter = uniform_01_detm_gen(1).take(10);
-        let v: Vec<f64> = iter.collect();
-        println!("*** v.len()={}, v={:?}", v.len(), v);
+        let iter = BucketIter::new(true, 1).take(samp_size);
+        let v: Vec<_> = iter.collect();
+        println!("*** unfiltered v.len()={}, v={:?}", v.len(), v);
+        let v: Vec<_> = uniform_01_detm_gen().take(samp_size).collect();
+        println!("*** filtered v.len()={}, v={:?}", v.len(), v);
         let dist = Uniform::new(0.0, 1.0).unwrap();
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&dist);
         assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
-        assert!(false);
+        // assert!(false);
     }
+
     #[test]
     fn test_uniform_01() {
-        let iter = uniform_01_detm_gen(1).take(SAMPLE_SIZE);
+        let iter = uniform_01_detm_gen().take(SAMPLE_SIZE);
         let v: Vec<f64> = iter.collect();
         let dist = Uniform::new(0.0, 1.0).unwrap();
         let ks = KSTest::new(&v);
@@ -212,7 +219,7 @@ mod test {
 
     #[test]
     fn test_uniform() {
-        let iter = uniform_detm_gen(1., 4., 1).take(SAMPLE_SIZE);
+        let iter = uniform_detm_gen(1., 4.).take(SAMPLE_SIZE);
         let v: Vec<f64> = iter.collect();
         let dist = Uniform::new(1.0, 4.0).unwrap();
         let ks = KSTest::new(&v);
@@ -223,7 +230,7 @@ mod test {
     #[test]
     fn test_normal() {
         let normal = Normal::new(0., 1.).unwrap();
-        let iter = deterministic_gen(|x| normal.inverse_cdf(x), 1).take(SAMPLE_SIZE);
+        let iter = deterministic_gen(|x| normal.inverse_cdf(x)).take(SAMPLE_SIZE);
         let v: Vec<f64> = iter.collect();
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&normal);

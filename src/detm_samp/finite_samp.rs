@@ -1,6 +1,6 @@
 use crate::detm_samp::BucketIter;
 
-/// Generates a deterministic sample of size `2*k*k - 1` for the
+/// Generates a deterministic sample of size `2*k - 1` for the
 /// probability distribution given by the inverse CDF function `inv_cdf`.
 ///
 /// The sample covers the output range evenly throughout the generation process.
@@ -8,30 +8,30 @@ use crate::detm_samp::BucketIter;
 /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
 pub fn deterministic_samp<'a>(
     inv_cdf: impl Fn(f64) -> f64 + 'a,
-    k: u32,
+    k: usize,
 ) -> impl Iterator<Item = f64> + 'a {
     let unif_iter = uniform_01_detm_samp(k);
     unif_iter.map(inv_cdf)
 }
 
-/// Generates a deterministic sample of size `2*k*k - 1` for the
+/// Generates a deterministic sample of size `2*k - 1` for the
 /// uniform probability distribution in open interval `(0, 1)`.
 ///
 /// The sample covers the output range evenly throughout the generation process.
 ///
 /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
-pub fn uniform_01_detm_samp(k: u32) -> impl Iterator<Item = f64> {
-    BucketIter::new(false, 2_usize.pow(k) - 1).map(|(value, _)| value)
+pub fn uniform_01_detm_samp(k: usize) -> impl Iterator<Item = f64> {
+    BucketIter::new_finite(k)
 }
 
-/// Generates a deterministic sample of size `2*k*k - 1` for the
+/// Generates a deterministic sample of size `2*k - 1` for the
 /// uniform probability distribution in open interval `(lo, hi)`, assuming `lo < hi`.
 ///
 /// The sample covers the output range evenly throughout the generation process.
 ///
 /// If `lo > hi` then the sample will be in the interval `(hi, lo)`.
 /// If `lo == hi` then all samples will be equal to `lo`.
-pub fn uniform_detm_samp(lo: f64, hi: f64, k: u32) -> impl Iterator<Item = f64> {
+pub fn uniform_detm_samp(lo: f64, hi: f64, k: usize) -> impl Iterator<Item = f64> {
     uniform_01_detm_samp(k).map(move |v| (hi - lo) * v + lo)
 }
 
@@ -54,6 +54,7 @@ impl Iterator for UnifIter {
     }
 }
 
+#[allow(unused)]
 /// Generates the `i`-th observation for [`uniform_01_detm_samp`].
 ///
 /// The sample covers the output range evenly throughout the generation process.

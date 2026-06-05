@@ -431,20 +431,13 @@ mod detm_samp {
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
-    pub fn normal_detm_gen(
-        mu: f64,
-        sigma: f64,
-        base_samp_size: usize,
-    ) -> StatsResult<impl Iterator<Item = f64>> {
+    pub fn normal_detm_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
         let normal = Normal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
-        Ok(deterministic_gen(
-            move |p| normal.inverse_cdf(p),
-            base_samp_size,
-        ))
+        Ok(deterministic_gen(move |p| normal.inverse_cdf(p)))
     }
 
-    /// Generates a deterministic sample of size `2*k*k - 1` for the
+    /// Generates a deterministic sample of size `2*k - 1` for the
     /// normal distribution with mean `mu` and standard deviation `sigma`.
     ///
     /// The sample covers the output range evenly throughout the generation process.
@@ -454,7 +447,11 @@ mod detm_samp {
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
-    pub fn normal_detm_samp(mu: f64, sigma: f64, k: u32) -> StatsResult<impl Iterator<Item = f64>> {
+    pub fn normal_detm_samp(
+        mu: f64,
+        sigma: f64,
+        k: usize,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
         let normal = Normal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
         Ok(deterministic_samp(move |p| normal.inverse_cdf(p), k))
@@ -465,26 +462,16 @@ mod detm_samp {
     ///
     /// The sampling covers the output range evenly throughout the generation process.
     ///
-    /// For sample sizes of the form `2^k - 1`, where `k` is sufficiently large, the generated sample passes
-    /// the Kolmogorov-Smirnov test
-    ///
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
-    pub fn lognormal_detm_gen(
-        mu: f64,
-        sigma: f64,
-        base_samp_size: usize,
-    ) -> StatsResult<impl Iterator<Item = f64>> {
+    pub fn lognormal_detm_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
         let lognormal = LogNormal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
-        Ok(deterministic_gen(
-            move |p| lognormal.inverse_cdf(p),
-            base_samp_size,
-        ))
+        Ok(deterministic_gen(move |p| lognormal.inverse_cdf(p)))
     }
 
-    /// Generates a deterministic sample of size `2*k*k - 1` for the
+    /// Generates a deterministic sample of size `2*k - 1` for the
     /// log-normal distribution with parameters `mu` and `sigma`.
     ///
     /// The sample covers the output range evenly throughout the generation process.
@@ -497,7 +484,7 @@ mod detm_samp {
     pub fn lognormal_detm_samp(
         mu: f64,
         sigma: f64,
-        k: u32,
+        k: usize,
     ) -> StatsResult<impl Iterator<Item = f64>> {
         let lognormal = LogNormal::new(mu, sigma)
             .stats_result("`mu` must be finite and `sigma` must be positive")?;
