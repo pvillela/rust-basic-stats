@@ -12,7 +12,7 @@ Each module other than [`core`] (which is always enabled) has an associated carg
 
 # Error handling
 
-Functions in this library are designed not to panic. Although functions in crates this library depends on may panic, this library implements extensive error handling, validation, and testing to prevent panics. If you encounter a panic, it is a bug, so please [create an issue](https://github.com/pvillela/rust-basic-stats/issues/new) to report it.
+Most functions in this library are designed not to panic. Although functions in crates this library depends on may panic, this library implements extensive error handling, validation, and testing to prevent panics. Unless documented, if you encounter a panic, it is a bug, so please [create an issue](https://github.com/pvillela/rust-basic-stats/issues/new) to report it.
 
 Except in a couple of specifically documented places, functions in this library only return finite (i.e., not `NaN`, `Infinity`, or `-Infinity`) values unless a non-finite value is provided as an input.
 
