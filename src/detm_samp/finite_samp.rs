@@ -6,6 +6,9 @@ use crate::detm_samp::BucketIter;
 /// The sample covers the output range evenly throughout the generation process.
 ///
 /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
+///
+/// # Panics
+/// Panics if `k == 0`.
 pub fn deterministic_samp<'a>(
     inv_cdf: impl Fn(f64) -> f64 + 'a,
     k: usize,
@@ -20,6 +23,9 @@ pub fn deterministic_samp<'a>(
 /// The sample covers the output range evenly throughout the generation process.
 ///
 /// For sufficiently large `k`,  the generated sample passes the Kolmogorov-Smirnov test
+///
+/// # Panics
+/// Panics if `k == 0`.
 pub fn uniform_01_detm_samp(k: usize) -> impl Iterator<Item = f64> {
     BucketIter::new_finite(k)
 }
@@ -31,46 +37,51 @@ pub fn uniform_01_detm_samp(k: usize) -> impl Iterator<Item = f64> {
 ///
 /// If `lo > hi` then the sample will be in the interval `(hi, lo)`.
 /// If `lo == hi` then all samples will be equal to `lo`.
+///
+/// # Panics
+/// Panics if `k == 0`.
 pub fn uniform_detm_samp(lo: f64, hi: f64, k: usize) -> impl Iterator<Item = f64> {
     uniform_01_detm_samp(k).map(move |v| (hi - lo) * v + lo)
 }
 
 #[allow(unused)]
-pub(crate) struct UnifIter {
-    k: usize,
-    i: usize,
-}
-
-impl Iterator for UnifIter {
-    type Item = f64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.i >= 2 * self.k * self.k - 1 {
-            return None;
-        }
-        let item = uniform_observation(self.k, self.i);
-        self.i += 1;
-        Some(item)
+#[cfg(feature = "_stash")]
+pub mod stash {
+    pub(crate) struct UnifIter {
+        k: usize,
+        i: usize,
     }
-}
 
-#[allow(unused)]
-/// Generates the `i`-th observation for [`uniform_01_detm_samp`].
-///
-/// The sample covers the output range evenly throughout the generation process.
-#[inline(always)]
-fn uniform_observation(k: usize, i: usize) -> f64 {
-    let side = i % 2;
-    let j = i / 2;
-    let bucket_idx = j % k;
-    let item_idx = j / k;
-    let left_idx = bucket_idx * k + item_idx + 1;
-    let idx = if side == 0 {
-        left_idx
-    } else {
-        2 * k * k - left_idx
-    };
-    idx as f64 / (2 * k * k) as f64
+    impl Iterator for UnifIter {
+        type Item = f64;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.i >= 2 * self.k * self.k - 1 {
+                return None;
+            }
+            let item = uniform_observation(self.k, self.i);
+            self.i += 1;
+            Some(item)
+        }
+    }
+
+    /// Generates the `i`-th observation for [`uniform_01_detm_samp`].
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    #[inline(always)]
+    fn uniform_observation(k: usize, i: usize) -> f64 {
+        let side = i % 2;
+        let j = i / 2;
+        let bucket_idx = j % k;
+        let item_idx = j / k;
+        let left_idx = bucket_idx * k + item_idx + 1;
+        let idx = if side == 0 {
+            left_idx
+        } else {
+            2 * k * k - left_idx
+        };
+        idx as f64 / (2 * k * k) as f64
+    }
 }
 
 #[cfg(test)]

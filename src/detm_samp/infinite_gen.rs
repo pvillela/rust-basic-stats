@@ -37,7 +37,7 @@ enum Side {
 
 #[derive(Debug)]
 pub(crate) struct BucketIter {
-    is_initial_sample: bool,
+    // is_initial_sample: bool,
     is_infinite: bool,
     samp_size2: usize,
     bucket_size: usize,
@@ -50,7 +50,7 @@ pub(crate) struct BucketIter {
     granule: f64,
     last_value: f64,
     lowest_value_in_range: f64,
-    items_generated: u64,
+    items_generated: usize,
 }
 
 fn max_sqrt_divisor(n: usize) -> usize {
@@ -73,7 +73,7 @@ impl BucketIter {
 
     fn new_empty() -> Self {
         Self {
-            is_initial_sample: true,
+            // is_initial_sample: true,
             is_infinite: false,
             samp_size2: 0,
             bucket_size: 0,
@@ -84,7 +84,7 @@ impl BucketIter {
             // k: 0,
             side: Side::Left,
             granule: 0.0,
-            last_value: 0.0,
+            last_value: f64::NAN,
             lowest_value_in_range: f64::INFINITY,
             items_generated: 0,
         }
@@ -110,8 +110,7 @@ impl BucketIter {
         self.samp_size2 = samp_size2;
         self.bucket_size = max_sqrt_divisor(samp_size2);
         self.n_buckets = samp_size2 / self.bucket_size;
-        let samp_size2f = samp_size2 as f64;
-        self.granule = 0.5 / samp_size2f;
+        self.granule = 0.5 / samp_size2 as f64;
         self.bucket_idx = 1;
         self.samp_items_generated = 0;
         self.in_bucket_idx = 1;
@@ -121,7 +120,15 @@ impl BucketIter {
     fn increase_sample(&mut self) {
         self.update(self.samp_size2 * 2);
         self.is_infinite = true;
-        self.is_initial_sample = false;
+        // self.is_initial_sample = false;
+    }
+
+    fn is_initial_sample(&self) -> bool {
+        self.items_generated == self.samp_items_generated
+    }
+
+    fn filter_flag(&self, idx: usize) -> bool {
+        !self.is_initial_sample() && idx % 2 == 0
     }
 }
 
@@ -130,13 +137,6 @@ impl Iterator for BucketIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         assert!(self.samp_size2 > 0, "samp_size2 must be > 0");
-
-        if self.items_generated == 0 {
-            let ret = 0.5;
-            self.items_generated += 1;
-            self.samp_items_generated += 1;
-            return Some((ret, false));
-        }
 
         let samp_size = self.samp_size2 * 2 - 1;
         if self.samp_items_generated >= samp_size {
@@ -149,13 +149,20 @@ impl Iterator for BucketIter {
             }
         }
 
+        if self.samp_items_generated == 0 {
+            let ret = 0.5;
+            self.samp_items_generated += 1;
+            self.items_generated += 1;
+            return Some((ret, self.filter_flag(0)));
+        }
+
         let sign = match self.side {
             Side::Left => -1.0,
             Side::Right => 1.0,
         };
 
-        let k = (self.bucket_idx - 1) * self.bucket_size + self.in_bucket_idx;
-        let res = Self::MIDPOINT + sign * k as f64 * self.granule;
+        let idx = (self.bucket_idx - 1) * self.bucket_size + self.in_bucket_idx;
+        let res = Self::MIDPOINT + sign * idx as f64 * self.granule;
         self.last_value = res;
         self.lowest_value_in_range = self.lowest_value_in_range.min(res);
         self.items_generated += 1;
@@ -176,24 +183,24 @@ impl Iterator for BucketIter {
         }
 
         self.samp_items_generated += 1;
-        Some((res, !self.is_initial_sample && k % 2 == 0))
+        Some((res, self.filter_flag(idx)))
     }
 }
 
 #[cfg(test)]
-// cargo test --package basic_stats --lib --all-features -- detm_samp::test --nocapture
+// cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test --nocapture
 mod test {
     use super::*;
     use old_statrs::distribution::{InverseCDF, Normal, Uniform};
     use statest::ks::KSTest;
 
     const EPSILON: f64 = 0.005;
-    const SAMPLE_SIZE: usize = 25;
+    const SAMPLE_SIZE: usize = 50;
 
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::show_uniform_01 --exact --nocapture --include-ignored
     fn show_uniform_01() {
-        let samp_size = 20;
+        let samp_size = 45; // fails with `samp_size = 44`
         // let iter = uniform_01_detm_gen(1).take(10);
         let iter = BucketIter::new(true, 1).take(samp_size);
         let v: Vec<_> = iter.collect();

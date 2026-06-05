@@ -30,6 +30,7 @@ wilcoxon = ["normal"]
 
 # Private
 _aok_core = []
+_stash = []    # for stashed code
 
 # Shared with friends
 _dev_utils = [] # also used by `bench_utils` and `bench_diff`
