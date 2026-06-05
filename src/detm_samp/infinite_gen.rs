@@ -38,7 +38,6 @@ enum Side {
 #[derive(Debug)]
 pub(crate) struct BucketIter {
     // is_initial_sample: bool,
-    is_infinite: bool,
     samp_size2: usize,
     bucket_size: usize,
     n_buckets: usize,
@@ -74,7 +73,6 @@ impl BucketIter {
     fn new_empty() -> Self {
         Self {
             // is_initial_sample: true,
-            is_infinite: false,
             samp_size2: 0,
             bucket_size: 0,
             n_buckets: 0,
@@ -90,20 +88,21 @@ impl BucketIter {
         }
     }
 
-    pub(crate) fn new(is_infinite: bool, samp_size2: usize) -> Self {
+    pub(crate) fn new(samp_size2: usize) -> Self {
         let mut it = Self::new_empty();
         it.update(samp_size2);
-        it.is_infinite = is_infinite;
         it
     }
 
     pub(crate) fn new_finite(samp_size2: usize) -> impl Iterator<Item = f64> {
-        Self::new(false, samp_size2).map(|(value, _)| value)
+        let samp_size = 2 * samp_size2 - 1;
+        Self::new(samp_size2)
+            .map(|(value, _)| value)
+            .take(samp_size)
     }
 
     pub(crate) fn new_infinite(samp_size2: usize) -> impl Iterator<Item = f64> {
-        Self::new(true, samp_size2)
-            .filter_map(|(value, flag)| if flag { None } else { Some(value) })
+        Self::new(samp_size2).filter_map(|(value, flag)| if flag { None } else { Some(value) })
     }
 
     fn update(&mut self, samp_size2: usize) {
@@ -119,7 +118,6 @@ impl BucketIter {
 
     fn increase_sample(&mut self) {
         self.update(self.samp_size2 * 2);
-        self.is_infinite = true;
         // self.is_initial_sample = false;
     }
 
@@ -141,12 +139,8 @@ impl Iterator for BucketIter {
         let samp_size = self.samp_size2 * 2 - 1;
         if self.samp_items_generated >= samp_size {
             println!("*** old struct={self:?}");
-            if self.is_infinite {
-                self.increase_sample();
-                println!("*** new struct={self:?}");
-            } else {
-                return None;
-            }
+            self.increase_sample();
+            println!("*** new struct={self:?}");
         }
 
         if self.samp_items_generated == 0 {
@@ -202,7 +196,7 @@ mod test {
     fn test_buck_iter_new_1() {
         let samp_size = 45; // fails with `samp_size = 44`
         // let iter = uniform_01_detm_gen(1).take(10);
-        let iter = BucketIter::new(true, 1).take(samp_size);
+        let iter = BucketIter::new(1).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
         let v: Vec<_> = BucketIter::new_infinite(1).take(samp_size).collect();
@@ -220,7 +214,7 @@ mod test {
         let samp_size2 = 17;
         let samp_size = 2 * samp_size2 - 1;
         // let iter = uniform_01_detm_gen(1).take(10);
-        let iter = BucketIter::new(true, samp_size2).take(samp_size);
+        let iter = BucketIter::new(samp_size2).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
         let v: Vec<_> = BucketIter::new_infinite(samp_size2)
@@ -241,7 +235,7 @@ mod test {
         let delta = 30; // fails for delta = 29
         let samp_size = 2 * samp_size2 - 1 + delta;
         // let iter = uniform_01_detm_gen(1).take(10);
-        let iter = BucketIter::new(true, samp_size2).take(samp_size);
+        let iter = BucketIter::new(samp_size2).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
         let v: Vec<_> = BucketIter::new_infinite(samp_size2)
