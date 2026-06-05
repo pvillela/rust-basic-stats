@@ -198,15 +198,56 @@ mod test {
     const SAMPLE_SIZE: usize = 50;
 
     #[test]
-    // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::show_uniform_01 --exact --nocapture --include-ignored
-    fn show_uniform_01() {
+    // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_1 --exact --nocapture --include-ignored
+    fn test_buck_iter_new_1() {
         let samp_size = 45; // fails with `samp_size = 44`
         // let iter = uniform_01_detm_gen(1).take(10);
         let iter = BucketIter::new(true, 1).take(samp_size);
         let v: Vec<_> = iter.collect();
-        println!("*** unfiltered v.len()={}, v={:?}", v.len(), v);
-        let v: Vec<_> = uniform_01_detm_gen().take(samp_size).collect();
-        println!("*** filtered v.len()={}, v={:?}", v.len(), v);
+        println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
+        let v: Vec<_> = BucketIter::new_infinite(1).take(samp_size).collect();
+        println!("=== filtered v.len()={}, v={:?}", v.len(), v);
+        let dist = Uniform::new(0.0, 1.0).unwrap();
+        let ks = KSTest::new(&v);
+        let (p, _) = ks.ks1(&dist);
+        assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
+        // assert!(false);
+    }
+
+    #[test]
+    // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_17 --exact --nocapture --include-ignored
+    fn test_buck_iter_new_17() {
+        let samp_size2 = 17;
+        let samp_size = 2 * samp_size2 - 1;
+        // let iter = uniform_01_detm_gen(1).take(10);
+        let iter = BucketIter::new(true, samp_size2).take(samp_size);
+        let v: Vec<_> = iter.collect();
+        println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
+        let v: Vec<_> = BucketIter::new_infinite(samp_size2)
+            .take(samp_size)
+            .collect();
+        println!("=== filtered v.len()={}, v={:?}", v.len(), v);
+        let dist = Uniform::new(0.0, 1.0).unwrap();
+        let ks = KSTest::new(&v);
+        let (p, _) = ks.ks1(&dist);
+        assert!(1. - p < EPSILON, "1.-p={}, EPSILON={EPSILON}", 1. - p);
+        // assert!(false);
+    }
+
+    #[test]
+    // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_17_delta --exact --nocapture --include-ignored
+    fn test_buck_iter_new_17_delta() {
+        let samp_size2 = 17;
+        let delta = 30; // fails for delta = 29
+        let samp_size = 2 * samp_size2 - 1 + delta;
+        // let iter = uniform_01_detm_gen(1).take(10);
+        let iter = BucketIter::new(true, samp_size2).take(samp_size);
+        let v: Vec<_> = iter.collect();
+        println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
+        let v: Vec<_> = BucketIter::new_infinite(samp_size2)
+            .take(samp_size)
+            .collect();
+        println!("=== filtered v.len()={}, v={:?}", v.len(), v);
         let dist = Uniform::new(0.0, 1.0).unwrap();
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&dist);

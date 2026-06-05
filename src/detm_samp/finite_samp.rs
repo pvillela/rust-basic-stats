@@ -85,16 +85,18 @@ pub mod stash {
 }
 
 #[cfg(test)]
+// cargo test --package basic_stats --lib --all-features -- detm_samp::finite_samp::test --nocapture
 mod test {
     use super::*;
     use old_statrs::distribution::{InverseCDF, Normal, Uniform};
     use statest::ks::KSTest;
 
     const EPSILON: f64 = 0.005;
+    const SAMP_SIZE2: usize = 10; // sample size `= 2 * SAMP_SIZE2 - 1`
 
     #[test]
     fn test_uniform_01() {
-        let iter = uniform_01_detm_samp(10);
+        let iter = uniform_01_detm_samp(SAMP_SIZE2);
         let v: Vec<f64> = iter.collect();
         let dist = Uniform::new(0.0, 1.0).unwrap();
         let ks = KSTest::new(&v);
@@ -104,7 +106,7 @@ mod test {
 
     #[test]
     fn test_uniform() {
-        let iter = uniform_detm_samp(1., 4., 10);
+        let iter = uniform_detm_samp(1., 4., SAMP_SIZE2);
         let v: Vec<f64> = iter.collect();
         let dist = Uniform::new(1.0, 4.0).unwrap();
         let ks = KSTest::new(&v);
@@ -115,7 +117,7 @@ mod test {
     #[test]
     fn test_normal() {
         let normal = Normal::new(0., 1.).unwrap();
-        let iter = deterministic_samp(|x| normal.inverse_cdf(x), 10);
+        let iter = deterministic_samp(|x| normal.inverse_cdf(x), SAMP_SIZE2);
         let v: Vec<f64> = iter.collect();
         let ks = KSTest::new(&v);
         let (p, _) = ks.ks1(&normal);
