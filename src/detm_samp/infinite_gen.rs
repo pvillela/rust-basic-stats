@@ -190,6 +190,7 @@ mod test {
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::show_uniform_01 --exact --nocapture --include-ignored
     fn show_uniform_01() {
+        // let iter = uniform_01_detm_gen(1).take(10);
         let iter = uniform_01_detm_gen(1).take(10);
         let v: Vec<f64> = iter.collect();
         println!("*** v.len()={}, v={:?}", v.len(), v);
