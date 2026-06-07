@@ -18,7 +18,7 @@ pub fn deterministic_gen<'a>(inv_cdf: impl Fn(f64) -> f64 + 'a) -> impl Iterator
 ///
 /// For sufficiently large sample sizes, generated sample passes the Kolmogorov-Smirnov test.
 pub fn uniform_01_detm_gen() -> impl Iterator<Item = f64> {
-    BucketIter::new_infinite(1)
+    BucketIter::new_infinite(BucketIter::DEFAULT_N_BUCKETS, 1, false)
 }
 
 /// Returns an infinite iterator that samples from the
@@ -31,6 +31,21 @@ pub fn uniform_detm_gen(lo: f64, hi: f64) -> impl Iterator<Item = f64> {
     uniform_01_detm_gen().map(move |v| (hi - lo) * v + lo)
 }
 
+pub(crate) fn max_sqrt_divisor_no_greater_than(n: usize, upper: usize) -> usize {
+    if n == 0 {
+        return 0; // Handle 0 case to avoid division by zero or panic
+    }
+
+    let limit = upper.min((n as f64).sqrt() as usize);
+
+    for k in (1..=limit).rev() {
+        if n % k == 0 {
+            return k;
+        }
+    }
+    1 // Fallback for prime numbers
+}
+
 #[derive(Debug)]
 enum Side {
     Left,
@@ -40,7 +55,7 @@ enum Side {
 #[derive(Debug)]
 pub(crate) struct BucketIter {
     // is_initial_sample: bool,
-    samp_size2: usize,
+    // samp_size2: usize,
     bucket_size: usize,
     n_buckets: usize,
     bucket_idx: usize,
@@ -54,30 +69,16 @@ pub(crate) struct BucketIter {
     items_generated: usize,
 }
 
-fn max_sqrt_divisor(n: usize) -> usize {
-    if n == 0 {
-        return 0; // Handle 0 case to avoid division by zero or panic
-    }
-
-    let limit = (n as f64).sqrt() as usize;
-
-    for k in (1..=limit).rev() {
-        if n % k == 0 {
-            return k;
-        }
-    }
-    1 // Fallback for prime numbers
-}
-
 impl BucketIter {
     const MIDPOINT: f64 = 0.5;
+    pub(crate) const DEFAULT_N_BUCKETS: usize = 8;
 
     fn new_empty() -> Self {
         Self {
             // is_initial_sample: true,
-            samp_size2: 0,
-            bucket_size: 0,
+            // samp_size2: 0,
             n_buckets: 0,
+            bucket_size: 0,
             bucket_idx: 0,
             samp_items_generated: 0,
             in_bucket_idx: 0,
@@ -90,28 +91,38 @@ impl BucketIter {
         }
     }
 
-    pub(crate) fn new(samp_size2: usize) -> Self {
+    pub(crate) fn new(n_buckets: usize, bucket_size: usize) -> Self {
         let mut it = Self::new_empty();
-        it.update(samp_size2);
+        it.update(n_buckets, bucket_size);
         it
     }
 
-    pub(crate) fn new_finite(samp_size2: usize) -> impl Iterator<Item = f64> {
-        let samp_size = 2 * samp_size2 - 1;
-        Self::new(samp_size2)
+    pub(crate) fn new_finite(n_buckets: usize, bucket_size: usize) -> impl Iterator<Item = f64> {
+        let samp_size = 2 * n_buckets * bucket_size - 1;
+        Self::new(n_buckets, bucket_size)
             .map(|(value, _)| value)
             .take(samp_size)
     }
 
-    pub(crate) fn new_infinite(samp_size2: usize) -> impl Iterator<Item = f64> {
-        Self::new(samp_size2).filter_map(|(value, flag)| if flag { None } else { Some(value) })
+    pub(crate) fn new_infinite(
+        n_buckets: usize,
+        bucket_size: usize,
+        allow_duplicates: bool,
+    ) -> impl Iterator<Item = f64> {
+        Self::new(n_buckets, bucket_size).filter_map(move |(value, flag)| {
+            if !allow_duplicates && flag {
+                None
+            } else {
+                Some(value)
+            }
+        })
     }
 
-    fn update(&mut self, samp_size2: usize) {
-        self.samp_size2 = samp_size2;
-        self.bucket_size = max_sqrt_divisor(samp_size2);
-        self.n_buckets = samp_size2 / self.bucket_size;
-        self.granule = 0.5 / samp_size2 as f64;
+    fn update(&mut self, n_buckets: usize, bucket_size: usize) {
+        // self.samp_size2 = samp_size2;
+        self.n_buckets = n_buckets;
+        self.bucket_size = bucket_size;
+        self.granule = 0.5 / (n_buckets * bucket_size) as f64;
         self.bucket_idx = 1;
         self.samp_items_generated = 0;
         self.in_bucket_idx = 1;
@@ -119,7 +130,7 @@ impl BucketIter {
     }
 
     fn increase_sample(&mut self) {
-        self.update(self.samp_size2 * 2);
+        self.update(self.n_buckets, self.bucket_size * 2);
         // self.is_initial_sample = false;
     }
 
@@ -136,9 +147,12 @@ impl Iterator for BucketIter {
     type Item = (f64, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
-        assert!(self.samp_size2 > 0, "samp_size2 must be > 0");
+        assert!(
+            self.n_buckets * self.bucket_size > 0,
+            "`n_buckets` and `bucket_size` must be > 0"
+        );
 
-        let samp_size = self.samp_size2 * 2 - 1;
+        let samp_size = self.n_buckets * self.bucket_size * 2 - 1;
         if self.samp_items_generated >= samp_size {
             trace!("old struct={self:?}");
             self.increase_sample();
@@ -146,10 +160,10 @@ impl Iterator for BucketIter {
         }
 
         if self.samp_items_generated == 0 {
-            let ret = 0.5;
+            let value = 0.5;
             self.samp_items_generated += 1;
             self.items_generated += 1;
-            return Some((ret, self.filter_flag(0)));
+            return Some((value, self.filter_flag(0)));
         }
 
         let sign = match self.side {
@@ -158,9 +172,9 @@ impl Iterator for BucketIter {
         };
 
         let idx = (self.bucket_idx - 1) * self.bucket_size + self.in_bucket_idx;
-        let res = Self::MIDPOINT + sign * idx as f64 * self.granule;
-        self.last_value = res;
-        self.lowest_value_in_range = self.lowest_value_in_range.min(res);
+        let value = Self::MIDPOINT + sign * idx as f64 * self.granule;
+        self.last_value = value;
+        self.lowest_value_in_range = self.lowest_value_in_range.min(value);
         self.items_generated += 1;
 
         match self.side {
@@ -179,7 +193,7 @@ impl Iterator for BucketIter {
         }
 
         self.samp_items_generated += 1;
-        Some((res, self.filter_flag(idx)))
+        Some((value, self.filter_flag(idx)))
     }
 }
 
@@ -199,10 +213,12 @@ mod test {
         _ = env_logger::try_init();
 
         let samp_size = 45; // fails with `samp_size = 44`
-        let iter = BucketIter::new(1).take(samp_size);
+        let iter = BucketIter::new(BucketIter::DEFAULT_N_BUCKETS, 1).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
-        let v: Vec<_> = BucketIter::new_infinite(1).take(samp_size).collect();
+        let v: Vec<_> = BucketIter::new_infinite(BucketIter::DEFAULT_N_BUCKETS, 1, false)
+            .take(samp_size)
+            .collect();
         println!("=== filtered v.len()={}, v={:?}", v.len(), v);
         let dist = Uniform::new(0.0, 1.0).unwrap();
         let ks = KSTest::new(&v);
@@ -213,12 +229,13 @@ mod test {
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_17 --exact --nocapture --include-ignored
     fn test_buck_iter_new_17() {
-        let samp_size2 = 17;
-        let samp_size = 2 * samp_size2 - 1;
-        let iter = BucketIter::new(samp_size2).take(samp_size);
+        let n_buckets = 17;
+        let bucket_size = 1;
+        let samp_size = 2 * n_buckets * bucket_size - 1;
+        let iter = BucketIter::new(n_buckets, bucket_size).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
-        let v: Vec<_> = BucketIter::new_infinite(samp_size2)
+        let v: Vec<_> = BucketIter::new_infinite(n_buckets, bucket_size, false)
             .take(samp_size)
             .collect();
         println!("=== filtered v.len()={}, v={:?}", v.len(), v);
@@ -231,13 +248,14 @@ mod test {
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_17_delta --exact --nocapture --include-ignored
     fn test_buck_iter_new_17_delta() {
-        let samp_size2 = 17;
-        let delta = 30; // fails for delta = 29
-        let samp_size = 2 * samp_size2 - 1 + delta;
-        let iter = BucketIter::new(samp_size2).take(samp_size);
+        let n_buckets = 17;
+        let bucket_size = 1;
+        let delta = 30;
+        let samp_size = 2 * n_buckets * bucket_size - 1 + delta;
+        let iter = BucketIter::new(n_buckets, bucket_size).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
-        let v: Vec<_> = BucketIter::new_infinite(samp_size2)
+        let v: Vec<_> = BucketIter::new_infinite(n_buckets, bucket_size, false)
             .take(samp_size)
             .collect();
         println!("=== filtered v.len()={}, v={:?}", v.len(), v);
@@ -250,13 +268,14 @@ mod test {
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_skip_take --exact --nocapture --include-ignored
     fn test_skip_take() {
-        let samp_size2 = 17;
-        let delta = 30; // fails for delta = 29
-        let samp_size = 2 * samp_size2 - 1 + delta;
-        let iter = BucketIter::new(samp_size2).skip(samp_size).take(samp_size);
+        let n_buckets = 17;
+        let bucket_size = 1;
+        let delta = 30;
+        let samp_size = 2 * n_buckets * bucket_size - 1 + delta;
+        let iter = BucketIter::new(n_buckets, bucket_size).take(samp_size);
         let v: Vec<_> = iter.collect();
         println!("=== unfiltered v.len()={}, v={:?}", v.len(), v);
-        let v: Vec<_> = BucketIter::new_infinite(samp_size2)
+        let v: Vec<_> = BucketIter::new_infinite(n_buckets, bucket_size, false)
             .skip(samp_size)
             .take(samp_size)
             .collect();
