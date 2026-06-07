@@ -1,4 +1,4 @@
-use crate::detm_samp::{BucketIter, max_sqrt_divisor_no_greater_than};
+use crate::detm_samp::{BucketIter, finite_bucket_iterator, max_sqrt_divisor_no_greater_than};
 
 /// Generates a deterministic sample of size `samp_size` for the
 /// probability distribution given by the inverse CDF function `inv_cdf`.
@@ -24,7 +24,7 @@ pub fn uniform_01_detm_samp(samp_size: usize) -> impl Iterator<Item = f64> {
     let samp_size2 = (samp_size + (1 - samp_size % 2) + 1) / 2;
     let n_buckets = BucketIter::DEFAULT_N_BUCKETS.min(samp_size2);
     let bucket_size = max_sqrt_divisor_no_greater_than(samp_size, BucketIter::DEFAULT_N_BUCKETS);
-    BucketIter::new_finite(n_buckets, bucket_size).take(samp_size)
+    finite_bucket_iterator(n_buckets, bucket_size).take(samp_size)
 }
 
 /// Generates a deterministic sample of size `samp_size` for the

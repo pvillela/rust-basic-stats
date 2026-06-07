@@ -6,8 +6,11 @@
 //! The iterators provide a much leaner alternative to random number generators for uses that don't
 //! require randomness.
 
+mod bucket_iter;
 mod finite_samp;
 mod infinite_gen;
 
 pub use finite_samp::*;
 pub use infinite_gen::*;
+
+pub(crate) use bucket_iter::*;
