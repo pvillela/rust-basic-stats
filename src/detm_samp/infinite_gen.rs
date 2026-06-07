@@ -31,12 +31,6 @@ pub fn uniform_detm_gen(lo: f64, hi: f64) -> impl Iterator<Item = f64> {
     uniform_01_detm_gen().map(move |v| (hi - lo) * v + lo)
 }
 
-#[derive(Debug)]
-enum Side {
-    Left,
-    Right,
-}
-
 #[cfg(test)]
 // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test --nocapture
 mod test {

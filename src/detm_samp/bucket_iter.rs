@@ -176,7 +176,6 @@ mod test {
     use statest::ks::KSTest;
 
     const EPSILON: f64 = 0.005;
-    const SAMPLE_SIZE: usize = 50;
 
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_1 --exact --nocapture --include-ignored
