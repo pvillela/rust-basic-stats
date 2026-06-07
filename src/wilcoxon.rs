@@ -27,15 +27,18 @@ pub struct RankSum {
 }
 
 impl RankSum {
-    /// Instantiates `Self` from two samples in the form of two iterators of pairs. Each item returned
-    /// by the iterators is a pair whose first component is a data value and the second component is the
-    /// number of occurrences of the value in the sample.
+    /// Instantiates `Self` from two samples in the form of two **finite** iterators of pairs.
+    /// Each item returned by the iterators is a pair whose first component is a data value and the second
+    /// component is the number of occurrences of the value in the sample.
     ///
     /// # Errors
     ///
     /// Returns an error in any of these conditions:
     /// - An iterator does not yield data values in strictly increasing order.
     /// - Either sample is empty (`n_x == 0` or `n_y == 0` after reading all items).
+    ///
+    /// # May hang
+    /// Hangs unless both iterators are finite.
     pub fn from_iters_with_counts(
         mut itc_x: impl Iterator<Item = (f64, u64)>,
         mut itc_y: impl Iterator<Item = (f64, u64)>,
@@ -214,14 +217,17 @@ impl RankSum {
         })
     }
 
-    /// Instantiates `Self` from two samples in the form of two iterators. Each item returned
-    /// by the iterators is a data value.
+    /// Instantiates `Self` from two samples in the form of two **finite** iterators.
+    /// Each item returned by the iterators is a data value.
     ///
     /// # Errors
     ///
     /// Returns an error in any of these conditions:
     /// - An iterator does not yield data values in non-decreasing order.
     /// - Either sample is empty.
+    ///
+    /// # May hang
+    /// Hangs unless both iterators are finite.
     pub fn from_iters(
         it_x: impl Iterator<Item = f64>,
         it_y: impl Iterator<Item = f64>,

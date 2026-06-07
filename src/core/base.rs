@@ -125,7 +125,10 @@ impl SampleMoments {
         self.max = value.max(self.max);
     }
 
-    /// Instantiates `Self` from a sample provided by an iterator.
+    /// Instantiates `Self` from a sample provided by a **finite** iterator.
+    ///
+    /// # May hang
+    /// Hangs if the iterator is not finite.
     pub fn from_iterator(dataset: impl Iterator<Item = f64>) -> Self {
         let mut moments = SampleMoments::new_empty();
         for v in dataset {
@@ -134,13 +137,16 @@ impl SampleMoments {
         moments
     }
 
-    /// Instantiates `Self` from a pair of samples provided by iterators,
+    /// Instantiates `Self` from a pair of samples provided by **finite** iterators,
     /// by collecting the differences between the items in the first sample and the corresponding items
     /// in the second sample.
     ///
     /// # Errors
     ///
     /// Returns an error if the iterators do not have the same number of items.
+    ///
+    /// # May hang
+    /// Hangs unless both iterators are finite.
     pub fn from_paired_iterators(
         mut dataset1: impl Iterator<Item = f64>,
         mut dataset2: impl Iterator<Item = f64>,

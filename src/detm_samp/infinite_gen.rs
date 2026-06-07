@@ -1,3 +1,5 @@
+use log::{self, trace};
+
 /// Returns an infinite iterator that samples from the
 /// probability distribution given by the inverse CDF function `inv_cdf`.
 ///
@@ -138,9 +140,9 @@ impl Iterator for BucketIter {
 
         let samp_size = self.samp_size2 * 2 - 1;
         if self.samp_items_generated >= samp_size {
-            println!("*** old struct={self:?}");
+            trace!("old struct={self:?}");
             self.increase_sample();
-            println!("*** new struct={self:?}");
+            trace!("new struct={self:?}");
         }
 
         if self.samp_items_generated == 0 {
@@ -194,6 +196,8 @@ mod test {
     #[test]
     // cargo test --package basic_stats --lib --all-features -- detm_samp::infinite_gen::test::test_buck_iter_new_1 --exact --nocapture --include-ignored
     fn test_buck_iter_new_1() {
+        _ = env_logger::try_init();
+
         let samp_size = 45; // fails with `samp_size = 44`
         let iter = BucketIter::new(1).take(samp_size);
         let v: Vec<_> = iter.collect();
