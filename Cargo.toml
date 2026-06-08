@@ -14,8 +14,9 @@ exclude = ["CHANGELOG.md", "*.sh", ".gitignore", "R", "tests"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-statrs = { version = "0.18", optional = true }
 log = "0.4.32"
+rand = { version = "0.10.1", features = ["std_rng"], optional = true }
+statrs = { version = "0.18", optional = true }
 
 
 [dev-dependencies]
@@ -33,6 +34,7 @@ aok_f64 = ["_aok_core"]
 aok_stats = ["_aok_core"]
 binomial = ["normal"]
 normal = ["dep:statrs"]
+rand_samp = ["dep:rand"]
 wilcoxon = ["normal"]
 
 # Private

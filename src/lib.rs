@@ -9,6 +9,9 @@ pub mod aok;
 #[cfg(feature = "detm_samp")]
 pub mod detm_samp;
 
+#[cfg(feature = "rand_samp")]
+pub mod rand_samp;
+
 #[cfg(feature = "normal")]
 pub mod normal;
 

@@ -499,6 +499,88 @@ mod detm_samp {
     }
 }
 
+#[cfg(feature = "rand_samp")]
+pub use rand_samp::*;
+
+#[cfg(feature = "rand_samp")]
+mod rand_samp {
+    use super::*;
+    use crate::rand_samp::{random_gen, random_samp};
+    use statrs::distribution::LogNormal;
+
+    /// Returns an infinite iterator that samples from the
+    /// normal distribution with mean `mu` and standard deviation `sigma`.
+    ///
+    /// The sampling covers the output range evenly throughout the generation process.
+    ///
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn normal_rand_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
+        let normal = Normal::new(mu, sigma)
+            .stats_result("`mu` must be finite and `sigma` must be positive")?;
+        Ok(random_gen(move |p| normal.inverse_cdf(p)))
+    }
+
+    /// Generates a deterministic sample of size `samp_size` for the
+    /// normal distribution with mean `mu` and standard deviation `sigma`.
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    ///
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn normal_rand_samp(
+        mu: f64,
+        sigma: f64,
+        samp_size: usize,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
+        let normal = Normal::new(mu, sigma)
+            .stats_result("`mu` must be finite and `sigma` must be positive")?;
+        Ok(random_samp(move |p| normal.inverse_cdf(p), samp_size))
+    }
+
+    /// Returns an infinite iterator that samples from the
+    /// log-normal distribution with parameters `mu` and `sigma`.
+    ///
+    /// The sampling covers the output range evenly throughout the generation process.
+    ///
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn lognormal_rand_gen(mu: f64, sigma: f64) -> StatsResult<impl Iterator<Item = f64>> {
+        let lognormal = LogNormal::new(mu, sigma)
+            .stats_result("`mu` must be finite and `sigma` must be positive")?;
+        Ok(random_gen(move |p| lognormal.inverse_cdf(p)))
+    }
+
+    /// Generates a deterministic sample of size `samp_size` for the
+    /// log-normal distribution with parameters `mu` and `sigma`.
+    ///
+    /// The sample covers the output range evenly throughout the generation process.
+    ///
+    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `mu` is not finite or `sigma` is not positive.
+    pub fn lognormal_rand_samp(
+        mu: f64,
+        sigma: f64,
+        samp_size: usize,
+    ) -> StatsResult<impl Iterator<Item = f64>> {
+        let lognormal = LogNormal::new(mu, sigma)
+            .stats_result("`mu` must be finite and `sigma` must be positive")?;
+        Ok(random_samp(move |p| lognormal.inverse_cdf(p), samp_size))
+    }
+}
+
 #[cfg(test)]
 #[cfg(feature = "_dev_utils")]
 #[allow(clippy::too_many_arguments)]
