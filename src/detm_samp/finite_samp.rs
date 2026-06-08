@@ -21,6 +21,7 @@ pub fn deterministic_samp<'a>(
 ///
 /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
 pub fn uniform_01_detm_samp(samp_size: usize) -> impl Iterator<Item = f64> {
+    #[allow(clippy::manual_div_ceil)]
     let samp_size2 = (samp_size + (1 - samp_size % 2) + 1) / 2;
     let n_buckets = max_sqrt_divisor_no_greater_than(samp_size2, 10);
     let bucket_size = samp_size2 / n_buckets;

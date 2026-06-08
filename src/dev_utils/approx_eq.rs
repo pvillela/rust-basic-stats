@@ -49,6 +49,7 @@ where
     fn abs_rel_diff(self, other: Self) -> Self {
         let abs_diff = (self - other).abs();
         let abs_sum = self.abs() + other.abs();
+        #[allow(clippy::eq_op)]
         let zero = self - self;
 
         if abs_diff == zero {
@@ -65,6 +66,7 @@ where
             return true;
         }
         let rel_diff = self.abs_rel_diff(other);
+        #[allow(clippy::eq_op)]
         let zero = self - self;
         zero.approx_eq(rel_diff, epsilon)
     }

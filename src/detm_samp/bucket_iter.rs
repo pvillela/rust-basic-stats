@@ -8,7 +8,7 @@ pub(crate) fn max_sqrt_divisor_no_greater_than(n: usize, upper: usize) -> usize 
     let limit = upper.min((n as f64).sqrt() as usize);
 
     for k in (1..=limit).rev() {
-        if n % k == 0 {
+        if n.is_multiple_of(k) {
             return k;
         }
     }
@@ -110,7 +110,7 @@ impl BucketIter {
     }
 
     fn filter_flag(&self, idx: usize) -> bool {
-        !self.is_initial_sample() && idx % 2 == 0
+        !self.is_initial_sample() && idx.is_multiple_of(2)
     }
 }
 
