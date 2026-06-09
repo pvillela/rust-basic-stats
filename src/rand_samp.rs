@@ -86,7 +86,12 @@ impl Iterator for RandIter {
     type Item = f64;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let value: f64 = self.rng.random();
+        // The random number generator guarantees the value is in the interval [0.0, 1.0).
+        // We need to ensure 0.0 is not returned.
+        let mut value: f64 = 0.0;
+        while value == 0.0 {
+            value = self.rng.random();
+        }
         Some(value)
     }
 }
