@@ -1,6 +1,6 @@
 //! For use in statistical simulations, ***not*** for cryptographic use.
 
-use rand::{RngExt, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::Xoshiro256PlusPlus};
 
 /// Returns an infinite iterator that samples from the
 /// probability distribution given by the inverse CDF function `inv_cdf`.
@@ -69,7 +69,7 @@ pub fn uniform_rand_samp(lo: f64, hi: f64, samp_size: usize) -> impl Iterator<It
 }
 
 struct RandIter {
-    rng: StdRng,
+    rng: Xoshiro256PlusPlus,
 }
 
 impl RandIter {
@@ -77,7 +77,7 @@ impl RandIter {
 
     fn new(seed: u64) -> Self {
         Self {
-            rng: StdRng::seed_from_u64(seed),
+            rng: Xoshiro256PlusPlus::seed_from_u64(seed),
         }
     }
 }
