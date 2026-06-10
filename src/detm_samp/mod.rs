@@ -8,9 +8,13 @@
 
 mod bucket_iter;
 mod finite_samp;
+
+#[cfg(feature = "_stash")]
 mod infinite_gen;
 
 pub use finite_samp::*;
+
+#[cfg(feature = "_stash")]
 pub use infinite_gen::*;
 
 pub(crate) use bucket_iter::*;

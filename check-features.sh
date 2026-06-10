@@ -31,6 +31,9 @@ cargo check --lib --tests  --features detm_samp
 echo "*****  --features _dev_utils"
 cargo check --lib --tests  --features _dev_utils
 
+echo "*****  --features _stash"
+cargo check --lib --tests  --features _stash
+
 ### All targets and features
 
 echo "***** --all-targets --all-features"
@@ -65,8 +68,14 @@ cargo check --lib --tests --no-default-features --features detm_samp
 echo "***** --no-default-features --features normal,detm_samp"
 cargo check --lib --tests --no-default-features --features normal,detm_samp
 
+echo "***** --no-default-features --features normal,detm_samp,_stash"
+cargo check --lib --tests --no-default-features --features normal,detm_samp,_stash
+
 echo "***** --no-default-features --features _dev_utils"
 cargo check --lib --tests --no-default-features --features _dev_utils
+
+echo "***** --no-default-features --features _stash"
+cargo check --lib --tests --no-default-features --features _stash
 
 ### Benches
 

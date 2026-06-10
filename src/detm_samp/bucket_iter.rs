@@ -15,6 +15,7 @@ pub(crate) fn max_sqrt_divisor_no_greater_than(n: usize, upper: usize) -> usize 
     1 // Fallback for prime numbers
 }
 
+#[cfg(feature = "_stash")]
 #[doc(hidden)]
 pub fn infinite_bucket_iterator(
     n_buckets: usize,
@@ -63,6 +64,8 @@ pub(crate) struct BucketIter {
 
 impl BucketIter {
     const MIDPOINT: f64 = 0.5;
+
+    #[allow(unused)]
     pub(crate) const DEFAULT_N_BUCKETS: usize = 8;
 
     fn new_empty() -> Self {
@@ -169,8 +172,9 @@ impl Iterator for BucketIter {
 }
 
 #[cfg(test)]
+#[cfg(feature = "_stash")]
 // cargo test --package basic_stats --lib --all-features -- detm_samp::bucket_iter::test --nocapture
-mod test {
+mod test_infinite {
     use super::*;
     use old_statrs::distribution::Uniform;
     use statest::ks::KSTest;

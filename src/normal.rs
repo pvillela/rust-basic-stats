@@ -418,8 +418,12 @@ mod detm_samp {
     use statrs::distribution::LogNormal;
 
     use super::*;
-    use crate::detm_samp::{deterministic_gen, deterministic_samp};
+    use crate::detm_samp::deterministic_samp;
 
+    #[cfg(feature = "_stash")]
+    use crate::detm_samp::deterministic_gen;
+
+    #[cfg(feature = "_stash")]
     /// Returns an infinite iterator that samples from the
     /// normal distribution with mean `mu` and standard deviation `sigma`.
     ///
@@ -459,6 +463,7 @@ mod detm_samp {
         ))
     }
 
+    #[cfg(feature = "_stash")]
     /// Returns an infinite iterator that samples from the
     /// log-normal distribution with parameters `mu` and `sigma`.
     ///
