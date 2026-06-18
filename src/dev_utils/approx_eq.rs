@@ -121,7 +121,7 @@ mod macros {
         ($a:expr, $b:expr, $epsilon:expr $(,)?) => {
             if !$crate::dev_utils::ApproxEq::approx_eq($a, $b, $epsilon) {
                 panic!(
-                    "assertion for approximate equality failed: left={}, right={}, epsilon={})",
+                    "assertion for approximate equality failed: left={:?}, right={:?}, epsilon={})",
                     $a, $b, $epsilon
                 );
             }
@@ -135,7 +135,7 @@ mod macros {
             let rel_diff = $crate::dev_utils::ApproxEq::abs_rel_diff($a, $b);
             if !$crate::dev_utils::ApproxEq::rel_approx_eq($a, $b, $epsilon) {
                 panic!(
-                    "assertion for relative approximate equality failed: left={}, right={}, rel_diff={}, epsilon={})",
+                    "assertion for relative approximate equality failed: left={:?}, right={:?}, rel_diff={}, epsilon={})",
                     $a, $b, rel_diff, $epsilon
                 );
             }
