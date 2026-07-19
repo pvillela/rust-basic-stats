@@ -516,10 +516,6 @@ mod rand_samp {
     /// Returns an infinite iterator that samples from the
     /// normal distribution with mean `mu` and standard deviation `sigma`.
     ///
-    /// The sampling covers the output range evenly throughout the generation process.
-    ///
-    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
-    ///
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
@@ -529,12 +525,8 @@ mod rand_samp {
         Ok(random_gen(move |p| normal.inverse_cdf(p)))
     }
 
-    /// Generates a deterministic sample of size `samp_size` for the
+    /// Generates a random sample of size `samp_size` for the
     /// normal distribution with mean `mu` and standard deviation `sigma`.
-    ///
-    /// The sample covers the output range evenly throughout the generation process.
-    ///
-    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
     ///
     /// # Errors
     ///
@@ -552,10 +544,6 @@ mod rand_samp {
     /// Returns an infinite iterator that samples from the
     /// log-normal distribution with parameters `mu` and `sigma`.
     ///
-    /// The sampling covers the output range evenly throughout the generation process.
-    ///
-    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
-    ///
     /// # Errors
     ///
     /// Returns an error if `mu` is not finite or `sigma` is not positive.
@@ -567,10 +555,6 @@ mod rand_samp {
 
     /// Generates a deterministic sample of size `samp_size` for the
     /// log-normal distribution with parameters `mu` and `sigma`.
-    ///
-    /// The sample covers the output range evenly throughout the generation process.
-    ///
-    /// For sufficiently large `samp_size`, the generated sample passes the Kolmogorov-Smirnov test
     ///
     /// # Errors
     ///
