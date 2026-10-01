@@ -1,0 +1,70 @@
+{
+  "name": "Rust Dev Environment",
+  // Pinned to resolute (Ubuntu 26.04) deliberately, not merely inherited: it matches the host and
+  // the `ubuntu-26.04` runners in .github/workflows, so all three agree on one glibc and a binary
+  // built here behaves like the one CI ships. glibc is backward compatible only, so the release
+  // runs on 26.04 and every later release but nothing earlier. That floor is a property of the
+  // build image, which is why the tag is fixed rather than left to follow the newest.
+  "image": "mcr.microsoft.com/devcontainers/base:resolute",
+  // Each feature is one image layer. The install order is Node, Rust, then `./gui`.
+  //
+  // THE ORDER OF THE KEYS BELOW DOES NOT SET THE INSTALL ORDER. The devcontainer tooling sorts
+  // features alphabetically by identifier, so `.../node` installs before `.../rust`. A feature
+  // that declares `installsAfter` goes after the features it names: `./gui` names the other two
+  // in gui/devcontainer-feature.json, which is what makes it last. `overrideFeatureInstallOrder`
+  // is the setting that forces a different order.
+  //
+  // The layers below `./gui` hold no GUI packages, so a devcontainer without a GUI that names
+  // this image and the same two features, with the same options, takes them from Docker's build
+  // cache.
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/node:2": {},
+    // "./gui": {}
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  // // Not postCreateCommand: the session has to be re-established after a container restart too.
+  // "postStartCommand": "bash .devcontainer/start-wayland.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  },
+  // "containerEnv": {
+  //   // The headless Wayland session start-wayland.sh brings up. Nothing is shown on the host; the
+  //   // app is observed through screenshots (`grim`) and driven through `wtype`, sway's cursor
+  //   // commands and `.devcontainer/virtual-pointer.py`.
+  //   // Stated to match what sway binds, not chosen: libwayland names the first free socket from
+  //   // `wayland-1` upward, and start-wayland.sh removes any stale socket of this name before starting
+  //   // sway, so this is the name sway takes every time. The script waits for this exact socket and fails
+  //   // if it does not appear, so a sway that ever picks another name says so at startup.
+  //   "WAYLAND_DISPLAY": "wayland-1",
+  //   "XDG_SESSION_TYPE": "wayland",
+  //   // Where the Wayland socket, sway's IPC socket and the session bus are all bound. Vulkan
+  //   // refuses to initialise without this, so it is required rather than tidiness.
+  //   "XDG_RUNTIME_DIR": "/tmp/xdg-runtime",
+  //   // Tells xdg-desktop-portal which backend to answer with, for `rfd`'s file dialogs.
+  //   "XDG_CURRENT_DESKTOP": "KDE",
+  //   // Stated rather than discovered, so `swaymsg` works from any shell in the container and not
+  //   // only from a process the compositor started.
+  //   "SWAYSOCK": "/tmp/xdg-runtime/sway-ipc.sock",
+  //   // Where the file dialog is asked for: the portal is a service on this bus, and a client that
+  //   // cannot find the bus gets no dialog.
+  //   "DBUS_SESSION_BUS_ADDRESS": "unix:path=/tmp/xdg-runtime/bus"
+  // },
+  "runArgs": [
+    "--env-file",
+    ".devcontainer/devcontainer.env"
+  ],
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.omp,target=/home/vscode/.omp,type=bind,consistency=cached",
+    // "source=/home/pvillela/DEV/Rust/basic-stats,target=/workspaces/basic-stats,type=bind,consistency=cached,readonly"
+  ]
+}

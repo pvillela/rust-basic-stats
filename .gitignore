@@ -183,8 +183,15 @@ bin
 # Files from macOS
 .DS_Store
 
+# Coverage
+*.profdata
+*.profraw
+coverage/
+
+## Security
+**/devcontainer.env
+
 ## Other
-.devcontainer/
 .idea/
 .gradle/
 out/
